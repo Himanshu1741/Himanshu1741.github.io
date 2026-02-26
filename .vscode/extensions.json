@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    // JavaScript / React
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "dsznajder.es7-react-js-snippets",
+
+    // Tailwind CSS
+    "bradlc.vscode-tailwindcss",
+
+    // Node.js / Express
+    "christian-kohler.npm-intellisense",
+    "eg2.vscode-npm-script",
+
+    // Editor quality-of-life
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens",
+    "eamodio.gitlens",
+    "formulahendry.auto-rename-tag",
+    "naumovs.color-highlight"
+  ]
+}
