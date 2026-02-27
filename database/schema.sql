@@ -444,3 +444,21 @@ CREATE TABLE IF NOT EXISTS `time_logs` (
   CONSTRAINT `fk_tl_task` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_tl_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- is_suspended column (run if upgrading existing DB)
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `is_suspended` tinyint(1) DEFAULT '0';
+
+-- Admin audit log
+CREATE TABLE IF NOT EXISTS `admin_logs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `admin_id` int NOT NULL,
+  `admin_name` varchar(100) NOT NULL,
+  `action` varchar(100) NOT NULL,
+  `target_type` enum('user','project','system') NOT NULL,
+  `target_id` int DEFAULT NULL,
+  `target_label` varchar(200) DEFAULT NULL,
+  `details` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_al_admin` (`admin_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

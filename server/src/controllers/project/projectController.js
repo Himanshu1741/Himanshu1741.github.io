@@ -7,7 +7,6 @@ const Message = require("../../models/Message");
 const Activity = require("../../models/Activity");
 const Invitation = require("../../models/Invitation");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
 const sequelize = require("../../config/db");
 const { sendMemberInvitedEmail } = require("../../services/emailService");
@@ -685,8 +684,12 @@ exports.getMemberList = async (req, res) => {
 
     const memberships = await ProjectMember.findAll({
       where: { project_id: id },
-      attributes: ["user_id"],
+      attributes: ["user_id", "member_role"],
+      raw: true,
     });
+    const roleByUserId = new Map(
+      memberships.map((m) => [m.user_id, m.member_role]),
+    );
     const userIds = memberships.map((m) => m.user_id);
     const users = await User.findAll({
       where: { id: userIds },
@@ -698,6 +701,7 @@ exports.getMemberList = async (req, res) => {
       id: u.id,
       name: u.name,
       email: u.email,
+      member_role: roleByUserId.get(u.id) || null,
     }));
     return res.json(list);
   } catch (error) {
@@ -1095,31 +1099,160 @@ exports.sendInvitation = async (req, res) => {
         .json({ message: "Only project creator or admin can invite users" });
     }
 
+    // Remove any stale invitation for the same email+project before creating a new one
+    await Invitation.destroy({ where: { email: normalizedEmail, project_id } });
+
     const token = crypto.randomBytes(32).toString("hex");
+    await Invitation.create({ email: normalizedEmail, project_id, token });
 
-    await Invitation.create({
-      email: normalizedEmail,
-      project_id,
-      token,
-    });
+    const inviter = await User.findByPk(req.user.id, { attributes: ["name"] });
+    const inviterName = inviter?.name || "A team member";
+    const appBase = process.env.APP_URL || "http://localhost:3000";
+    const inviteLink = `${appBase}/accept-invite/${token}`;
 
-    const inviteLink = `http://localhost:3000/accept-invite/${token}`;
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER || "your_email@gmail.com",
-        pass: process.env.EMAIL_PASS || "your_app_password",
-      },
-    });
-
-    await transporter.sendMail({
+    const { sendEmail } = require("../../services/emailService");
+    await sendEmail({
       to: normalizedEmail,
-      subject: "Project Invitation",
-      html: `<a href="${inviteLink}">Accept project invitation</a>`,
+      subject: `[${project.title}] You've been invited to collaborate`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;">
+          <h2 style="color:#22d3ee;">Project Invitation</h2>
+          <p>Hi there,</p>
+          <p><strong>${inviterName}</strong> has invited you to collaborate on
+          <strong>${project.title}</strong> in StudentCollabHub.</p>
+          <a href="${inviteLink}"
+            style="display:inline-block;margin:16px 0;padding:10px 24px;
+                   background:#22d3ee;color:#0f172a;border-radius:8px;
+                   font-weight:600;text-decoration:none;">
+            Accept Invitation
+          </a>
+          <p style="color:#64748b;font-size:12px;">
+            Or copy this link: ${inviteLink}
+          </p>
+          <p style="color:#64748b;font-size:12px;">
+            This invitation is single-use and will expire once accepted.
+          </p>
+        </div>
+      `,
+      text: `${inviterName} invited you to join "${project.title}" on StudentCollabHub. Accept here: ${inviteLink}`,
     });
 
     return res.json({ message: "Invitation sent successfully" });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// ACCEPT INVITATION BY TOKEN
+exports.acceptInvitation = async (req, res) => {
+  try {
+    const { token } = req.params;
+    if (!token) return res.status(400).json({ message: "Token is required" });
+
+    const invitation = await Invitation.findOne({ where: { token } });
+    if (!invitation) {
+      return res
+        .status(404)
+        .json({ message: "Invitation not found or already used" });
+    }
+
+    const project = await Project.findByPk(invitation.project_id);
+    if (!project) {
+      await invitation.destroy();
+      return res.status(404).json({ message: "Project no longer exists" });
+    }
+
+    // Check if the logged-in user's email matches the invitation
+    const currentUser = await User.findByPk(req.user.id, {
+      attributes: ["id", "email", "name"],
+    });
+    if (!currentUser) return res.status(401).json({ message: "Unauthorized" });
+
+    if (currentUser.email.toLowerCase() !== invitation.email.toLowerCase()) {
+      return res.status(403).json({
+        message: `This invitation was sent to ${invitation.email}. Log in with that account to accept.`,
+      });
+    }
+
+    // Already a member?
+    const existing = await ProjectMember.findOne({
+      where: { project_id: invitation.project_id, user_id: req.user.id },
+    });
+    if (!existing) {
+      await ProjectMember.create({
+        project_id: invitation.project_id,
+        user_id: req.user.id,
+        can_manage_tasks: false,
+        can_manage_files: false,
+        can_chat: true,
+        can_change_project_name: false,
+        can_add_members: false,
+        member_role: "member",
+      });
+
+      await Activity.create({
+        action: `Joined project: ${project.title}`,
+        user_id: req.user.id,
+      });
+    }
+
+    // Consume the invitation token
+    await invitation.destroy();
+
+    return res.json({
+      message: "Invitation accepted successfully",
+      project_id: invitation.project_id,
+      project_title: project.title,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// GET RECENT TEAM ACTIVITY (across all projects current user is a member of)
+exports.getRecentActivity = async (req, res) => {
+  try {
+    const myMemberships = await ProjectMember.findAll({
+      where: { user_id: req.user.id },
+      attributes: ["project_id"],
+      raw: true,
+    });
+
+    if (myMemberships.length === 0) return res.json([]);
+
+    const projectIds = myMemberships.map((m) => m.project_id);
+
+    // Get all teammates' user IDs
+    const allMemberships = await ProjectMember.findAll({
+      where: { project_id: projectIds },
+      attributes: ["user_id"],
+      raw: true,
+    });
+    const userIds = [...new Set(allMemberships.map((m) => m.user_id))];
+
+    const activities = await Activity.findAll({
+      where: { user_id: userIds },
+      order: [["created_at", "DESC"]],
+      limit: 30,
+      raw: true,
+    });
+
+    if (activities.length === 0) return res.json([]);
+
+    const actorIds = [...new Set(activities.map((a) => a.user_id))];
+    const actors = await User.findAll({
+      where: { id: actorIds },
+      attributes: ["id", "name"],
+      raw: true,
+    });
+    const nameById = new Map(actors.map((u) => [u.id, u.name]));
+
+    const enriched = activities.map((a) => ({
+      ...a,
+      user_name: nameById.get(a.user_id) || "Unknown",
+    }));
+
+    return res.json(enriched);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

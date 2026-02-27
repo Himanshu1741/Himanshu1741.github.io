@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [user, setUser] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [activity, setActivity] = useState([]);
   const [form, setForm] = useState({ title: "", description: "" });
   const [projectQuery, setProjectQuery] = useState("");
   const [projectSlide, setProjectSlide] = useState("active");
@@ -81,6 +82,15 @@ export default function Dashboard() {
     }
   };
 
+  const loadActivity = async () => {
+    try {
+      const res = await API.get("/projects/activity");
+      setActivity(res.data || []);
+    } catch {
+      // non-critical, ignore
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -112,6 +122,7 @@ export default function Dashboard() {
 
     loadProjects();
     loadSummary();
+    loadActivity();
   }, [router.isReady, router.query.preview]);
 
   const createProject = async (e) => {
@@ -628,6 +639,59 @@ export default function Dashboard() {
                 </div>
               </section>
             ) : null}
+
+            {/* ── Team Activity Feed ─────────────────────────────────────────── */}
+            {activity.length > 0 && (
+              <section className="panel-card mb-6 p-5">
+                <h3 className="mb-4 text-lg font-semibold text-white">
+                  Team Activity
+                </h3>
+                <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                  {activity.map((a, i) => {
+                    const timeAgo = (() => {
+                      const diff = (Date.now() - new Date(a.created_at)) / 1000;
+                      if (diff < 60) return "just now";
+                      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                      if (diff < 86400)
+                        return `${Math.floor(diff / 3600)}h ago`;
+                      return `${Math.floor(diff / 86400)}d ago`;
+                    })();
+                    const initials = (a.user_name || "?")
+                      .split(" ")
+                      .map((w) => w[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase();
+                    const COLORS = [
+                      "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+                      "bg-violet-500/20 text-violet-300 border-violet-500/30",
+                      "bg-amber-500/20 text-amber-300 border-amber-500/30",
+                      "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+                    ];
+                    return (
+                      <div
+                        key={a.id ?? i}
+                        className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-900/50 px-3 py-2.5"
+                      >
+                        <span
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold ${COLORS[i % COLORS.length]}`}
+                        >
+                          {initials}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-slate-200 leading-snug">
+                            {a.action}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            {a.user_name} · {timeAgo}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             <section ref={createProjectRef} className="panel-card mb-6 p-5">
               <h3 className="mb-3 text-lg font-semibold text-white">

@@ -6,6 +6,7 @@ import FileUpload from "../../components/project/FileUpload";
 import ProjectCopilot from "../../components/project/ProjectCopilot";
 import Milestones from "../../components/project/Milestones";
 import Analytics from "../../components/project/Analytics";
+import ProjectOverview from "../../components/project/ProjectOverview";
 import Navbar from "../../components/layout/Navbar";
 import API from "../../services/api";
 
@@ -327,12 +328,7 @@ export default function ProjectPage() {
         <div className="tab-content-area">
           {/* Overview */}
           {activeTab === "overview" && (
-            <section className="panel-card p-5">
-              <p className="text-sm text-slate-400">
-                Project overview. Use the tabs above to manage tasks, files,
-                chat, and more.
-              </p>
-            </section>
+            <ProjectOverview projectId={id} project={project} />
           )}
 
           {/* Tasks */}

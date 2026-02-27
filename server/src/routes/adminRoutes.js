@@ -4,13 +4,26 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const adminController = require("../controllers/admin/adminController");
 
-router.get("/users", authMiddleware, adminMiddleware, adminController.getAllUsers);
-router.delete("/users/:id", authMiddleware, adminMiddleware, adminController.deleteUser);
-router.put("/users/promote/:id", authMiddleware, adminMiddleware, adminController.promoteUser);
-router.put("/users/demote/:id", authMiddleware, adminMiddleware, adminController.demoteUser);
+const AM = [authMiddleware, adminMiddleware];
 
-router.get("/projects", authMiddleware, adminMiddleware, adminController.getAllProjects);
-router.delete("/projects/:id", authMiddleware, adminMiddleware, adminController.deleteProject);
-router.get("/analytics", authMiddleware, adminMiddleware, adminController.getAnalytics);
+router.get("/users", ...AM, adminController.getAllUsers);
+router.delete("/users/:id", ...AM, adminController.deleteUser);
+router.put("/users/promote/:id", ...AM, adminController.promoteUser);
+router.put("/users/demote/:id", ...AM, adminController.demoteUser);
+router.put("/users/suspend/:id", ...AM, adminController.suspendUser);
+router.put("/users/unsuspend/:id", ...AM, adminController.unsuspendUser);
+router.post(
+  "/users/:id/force-reset",
+  ...AM,
+  adminController.forcePasswordReset,
+);
+router.post("/users/bulk-action", ...AM, adminController.bulkAction);
+
+router.get("/projects", ...AM, adminController.getAllProjects);
+router.delete("/projects/:id", ...AM, adminController.deleteProject);
+
+router.get("/analytics", ...AM, adminController.getAnalytics);
+router.get("/audit-log", ...AM, adminController.getAuditLog);
+router.post("/announcement", ...AM, adminController.sendAnnouncement);
 
 module.exports = router;

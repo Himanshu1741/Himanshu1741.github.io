@@ -27,6 +27,9 @@ export default function ProjectSettingsPage() {
     can_change_project_name: false,
   });
   const [isCreator, setIsCreator] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteStatus, setInviteStatus] = useState("idle"); // idle | loading | success | error
+  const [inviteMsg, setInviteMsg] = useState("");
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -155,7 +158,7 @@ export default function ProjectSettingsPage() {
         <section className="right dashboard-right">
           <div className="dashboard-content">
             <Navbar
-              title={`Project Settings: ${project?.title || id}`}
+              title={project?.title || `Project ${id}`}
               showDashboard
               onLogout={logout}
             />
@@ -470,6 +473,102 @@ export default function ProjectSettingsPage() {
                     </span>
                   </button>
                 </div>
+              </div>
+            ) : null}
+
+            {isCreator ? (
+              <div className="panel-card mb-6 p-5">
+                <h3 className="mb-1 text-lg font-semibold text-white">
+                  Invite by Email
+                </h3>
+                <p className="mb-4 text-xs text-slate-400">
+                  Send an email invitation link. The recipient must have an
+                  account with that email to accept.
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    className="input-modern flex-1"
+                    type="email"
+                    placeholder="colleague@example.com"
+                    value={inviteEmail}
+                    onChange={(e) => {
+                      setInviteEmail(e.target.value);
+                      setInviteStatus("idle");
+                      setInviteMsg("");
+                    }}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" &&
+                      document.getElementById("send-invite-btn").click()
+                    }
+                  />
+                  <button
+                    id="send-invite-btn"
+                    className="btn-primary shrink-0"
+                    disabled={inviteStatus === "loading"}
+                    onClick={async () => {
+                      if (!inviteEmail.trim()) {
+                        setInviteMsg("Please enter an email.");
+                        setInviteStatus("error");
+                        return;
+                      }
+                      setInviteStatus("loading");
+                      setInviteMsg("");
+                      try {
+                        await API.post("/projects/invite", {
+                          project_id: Number(id),
+                          email: inviteEmail.trim(),
+                        });
+                        setInviteStatus("success");
+                        setInviteMsg(
+                          `Invitation sent to ${inviteEmail.trim()}`,
+                        );
+                        setInviteEmail("");
+                      } catch (err) {
+                        setInviteStatus("error");
+                        setInviteMsg(
+                          err?.response?.data?.message ||
+                            "Failed to send invitation.",
+                        );
+                      }
+                    }}
+                  >
+                    {inviteStatus === "loading" ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
+                        Sending…
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            d="M22 2L11 13"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M22 2L15 22l-4-9-9-4 20-7z"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        Send Invite
+                      </span>
+                    )}
+                  </button>
+                </div>
+                {inviteMsg && (
+                  <p
+                    className={`mt-2 text-xs ${inviteStatus === "success" ? "text-emerald-400" : "text-rose-400"}`}
+                  >
+                    {inviteMsg}
+                  </p>
+                )}
               </div>
             ) : null}
 

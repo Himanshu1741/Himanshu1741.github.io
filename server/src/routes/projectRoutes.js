@@ -6,6 +6,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 router.post("/", authMiddleware, projectController.createProject);
 router.get("/", authMiddleware, projectController.getProjects);
 router.get("/summary", authMiddleware, projectController.getDashboardSummary);
+router.get("/activity", authMiddleware, projectController.getRecentActivity);
 router.get("/trash", authMiddleware, projectController.getDeletedProjects);
 router.post(
   "/trash/:id/restore",
@@ -45,6 +46,11 @@ router.put(
   projectController.updateProjectStatus,
 );
 router.post("/invite", authMiddleware, projectController.sendInvitation);
+router.post(
+  "/invite/accept/:token",
+  authMiddleware,
+  projectController.acceptInvitation,
+);
 router.delete("/:id", authMiddleware, projectController.deleteProject);
 
 module.exports = router;

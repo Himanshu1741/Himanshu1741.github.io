@@ -20,6 +20,7 @@ const MessageReaction = require("./models/MessageReaction");
 const User = require("./models/User");
 const ProjectMember = require("./models/ProjectMember");
 const Notification = require("./models/Notification");
+const AdminLog = require("./models/AdminLog");
 
 const http = require("http");
 const { Server } = require("socket.io");
