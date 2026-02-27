@@ -24,6 +24,8 @@ const Notification = require("./models/Notification");
 const http = require("http");
 const { Server } = require("socket.io");
 
+const path = require("path");
+
 const app = express();
 const server = http.createServer(app);
 
@@ -50,8 +52,8 @@ app.use("/api/files", fileRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-// Serve uploaded files
-app.use("/uploads", express.static("uploads"));
+// Serve uploaded files (absolute path — works regardless of cwd)
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Database Connection
 sequelize

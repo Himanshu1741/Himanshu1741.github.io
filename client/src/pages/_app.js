@@ -5,7 +5,9 @@ import { ThemeProvider } from "../context/ThemeContext";
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
-  const isAuthPage = ["/login", "/register", "/forgot-password"].includes(router.pathname);
+  const isAuthPage = ["/login", "/register", "/forgot-password"].includes(
+    router.pathname,
+  );
 
   return (
     <ThemeProvider>
@@ -22,6 +24,3 @@ export default function App({ Component, pageProps }) {
     </ThemeProvider>
   );
 }
-
-
-

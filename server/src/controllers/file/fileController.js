@@ -31,7 +31,8 @@ const ensureFileTrashTable = async () => {
 const uploadsRoot = path.resolve(__dirname, "..", "..", "uploads");
 const fileTrashRoot = path.join(uploadsRoot, ".trash");
 
-const resolveFromProjectRoot = (relativePath) => path.resolve(__dirname, "..", "..", relativePath || "");
+const resolveFromProjectRoot = (relativePath) =>
+  path.resolve(__dirname, "..", "..", relativePath || "");
 
 exports.uploadFile = async (req, res) => {
   try {
@@ -44,26 +45,27 @@ exports.uploadFile = async (req, res) => {
     const membership = await ProjectMember.findOne({
       where: {
         project_id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!membership) {
       return res.status(403).json({ message: "Not authorized" });
     }
     if (!membership.can_manage_files) {
-      return res.status(403).json({ message: "File management permission denied" });
+      return res
+        .status(403)
+        .json({ message: "File management permission denied" });
     }
 
     const file = await File.create({
       filename: req.file.filename,
-      filepath: req.file.path,
+      filepath: "uploads/" + req.file.filename, // always forward-slash, no absolute path
       project_id,
-      uploaded_by: req.user.id
+      uploaded_by: req.user.id,
     });
 
     res.json({ message: "File uploaded successfully", file });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -76,8 +78,8 @@ exports.getFilesByProject = async (req, res) => {
     const membership = await ProjectMember.findOne({
       where: {
         project_id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!membership) {
@@ -85,11 +87,10 @@ exports.getFilesByProject = async (req, res) => {
     }
 
     const files = await File.findAll({
-      where: { project_id }
+      where: { project_id },
     });
 
     res.json(files);
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -107,19 +108,23 @@ exports.deleteFile = async (req, res) => {
     const membership = await ProjectMember.findOne({
       where: {
         project_id: file.project_id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!membership) {
       return res.status(403).json({ message: "Not authorized" });
     }
     if (!membership.can_manage_files) {
-      return res.status(403).json({ message: "File management permission denied" });
+      return res
+        .status(403)
+        .json({ message: "File management permission denied" });
     }
 
     if (file.uploaded_by !== req.user.id) {
-      return res.status(403).json({ message: "Only uploader can delete this file" });
+      return res
+        .status(403)
+        .json({ message: "Only uploader can delete this file" });
     }
 
     await ensureFileTrashTable();
@@ -132,7 +137,9 @@ exports.deleteFile = async (req, res) => {
       const trashName = `${Date.now()}-${path.basename(file.filepath)}`;
       const destinationAbsolutePath = path.join(fileTrashRoot, trashName);
       fs.renameSync(sourceAbsolutePath, destinationAbsolutePath);
-      trashedPath = path.relative(path.resolve(__dirname, "..", ".."), destinationAbsolutePath).replace(/\\/g, "/");
+      trashedPath = path
+        .relative(path.resolve(__dirname, "..", ".."), destinationAbsolutePath)
+        .replace(/\\/g, "/");
     }
 
     await sequelize.query(
@@ -149,9 +156,9 @@ exports.deleteFile = async (req, res) => {
           trashedPath,
           file.project_id,
           file.uploaded_by || null,
-          req.user.id
-        ]
-      }
+          req.user.id,
+        ],
+      },
     );
 
     await file.destroy();
@@ -174,8 +181,8 @@ exports.downloadFile = async (req, res) => {
     const membership = await ProjectMember.findOne({
       where: {
         project_id: file.project_id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!membership) {
@@ -183,7 +190,12 @@ exports.downloadFile = async (req, res) => {
     }
 
     const uploadsDir = path.resolve(__dirname, "..", "..", "uploads");
-    const absolutePath = path.resolve(__dirname, "..", "..", file.filepath || "");
+    const absolutePath = path.resolve(
+      __dirname,
+      "..",
+      "..",
+      file.filepath || "",
+    );
 
     if (!absolutePath.startsWith(uploadsDir)) {
       return res.status(400).json({ message: "Invalid file path" });
@@ -193,7 +205,10 @@ exports.downloadFile = async (req, res) => {
       return res.status(404).json({ message: "File missing on server" });
     }
 
-    return res.download(absolutePath, file.filename || path.basename(absolutePath));
+    return res.download(
+      absolutePath,
+      file.filename || path.basename(absolutePath),
+    );
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -209,7 +224,9 @@ exports.getDeletedFilesByProject = async (req, res) => {
     }
 
     if (project.created_by !== req.user.id) {
-      return res.status(403).json({ message: "Only the project creator can view file trash" });
+      return res
+        .status(403)
+        .json({ message: "Only the project creator can view file trash" });
     }
 
     await ensureFileTrashTable();
@@ -221,7 +238,7 @@ exports.getDeletedFilesByProject = async (req, res) => {
         WHERE project_id = ?
         ORDER BY deleted_at DESC
       `,
-      { replacements: [project_id] }
+      { replacements: [project_id] },
     );
 
     return res.json(rows);
@@ -238,7 +255,7 @@ exports.restoreFile = async (req, res) => {
 
     const [rows] = await sequelize.query(
       `SELECT * FROM file_trash WHERE id = ? LIMIT 1`,
-      { replacements: [id] }
+      { replacements: [id] },
     );
     const trashedFile = rows?.[0];
 
@@ -252,17 +269,21 @@ exports.restoreFile = async (req, res) => {
     }
 
     if (project.created_by !== req.user.id) {
-      return res.status(403).json({ message: "Only the project creator can restore files" });
+      return res
+        .status(403)
+        .json({ message: "Only the project creator can restore files" });
     }
 
     const originalRelativePath = `uploads/${trashedFile.filename}`;
     let finalRelativePath = originalRelativePath;
+    let physicalFileRestored = false;
 
     if (trashedFile.filepath) {
       const trashAbsolutePath = resolveFromProjectRoot(trashedFile.filepath);
       if (fs.existsSync(trashAbsolutePath)) {
         fs.mkdirSync(uploadsRoot, { recursive: true });
-        let destinationAbsolutePath = resolveFromProjectRoot(originalRelativePath);
+        let destinationAbsolutePath =
+          resolveFromProjectRoot(originalRelativePath);
         if (fs.existsSync(destinationAbsolutePath)) {
           const ext = path.extname(trashedFile.filename || "");
           const base = path.basename(trashedFile.filename || "file", ext);
@@ -271,24 +292,28 @@ exports.restoreFile = async (req, res) => {
           destinationAbsolutePath = resolveFromProjectRoot(finalRelativePath);
         }
         fs.renameSync(trashAbsolutePath, destinationAbsolutePath);
-      } else {
-        return res.status(404).json({ message: "Deleted file content is missing on server" });
+        physicalFileRestored = true;
       }
+      // If file not on disk (e.g. uploaded before multer fix), still restore DB record
     }
 
     const restoredFile = await File.create({
       filename: path.basename(finalRelativePath),
       filepath: finalRelativePath,
       project_id: trashedFile.project_id,
-      uploaded_by: trashedFile.uploaded_by || req.user.id
+      uploaded_by: trashedFile.uploaded_by || req.user.id,
     });
 
-    await sequelize.query(
-      `DELETE FROM file_trash WHERE id = ?`,
-      { replacements: [id] }
-    );
+    await sequelize.query(`DELETE FROM file_trash WHERE id = ?`, {
+      replacements: [id],
+    });
 
-    return res.json({ message: "File restored successfully", file: restoredFile });
+    return res.json({
+      message: physicalFileRestored
+        ? "File restored successfully"
+        : "File record restored. The file content was not found on server (it may have been uploaded before a server fix) — please re-upload the file.",
+      file: restoredFile,
+    });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -302,7 +327,7 @@ exports.deleteFilePermanently = async (req, res) => {
 
     const [rows] = await sequelize.query(
       `SELECT id, project_id, filepath FROM file_trash WHERE id = ? LIMIT 1`,
-      { replacements: [id] }
+      { replacements: [id] },
     );
     const trashedFile = rows?.[0];
 
@@ -316,20 +341,24 @@ exports.deleteFilePermanently = async (req, res) => {
     }
 
     if (project.created_by !== req.user.id) {
-      return res.status(403).json({ message: "Only the project creator can permanently delete files" });
+      return res.status(403).json({
+        message: "Only the project creator can permanently delete files",
+      });
     }
 
     if (trashedFile.filepath) {
       const absolutePath = resolveFromProjectRoot(trashedFile.filepath);
-      if (absolutePath.startsWith(fileTrashRoot) && fs.existsSync(absolutePath)) {
+      if (
+        absolutePath.startsWith(fileTrashRoot) &&
+        fs.existsSync(absolutePath)
+      ) {
         fs.unlinkSync(absolutePath);
       }
     }
 
-    await sequelize.query(
-      `DELETE FROM file_trash WHERE id = ?`,
-      { replacements: [id] }
-    );
+    await sequelize.query(`DELETE FROM file_trash WHERE id = ?`, {
+      replacements: [id],
+    });
 
     return res.json({ message: "File permanently deleted from trash" });
   } catch (error) {

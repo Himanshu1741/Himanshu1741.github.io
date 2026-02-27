@@ -11,7 +11,7 @@ const localizer = momentLocalizer(moment);
 const PRIORITY_COLORS = {
   high: "#ef4444",
   medium: "#f59e0b",
-  low: "#10b981"
+  low: "#10b981",
 };
 
 export default function CalendarView() {
@@ -33,13 +33,12 @@ export default function CalendarView() {
       setLoading(true);
       try {
         const [projectRes, taskRes, milestoneRes] = await Promise.all([
-          API.get("/projects"),
+          API.get(`/projects/${id}/detail`),
           API.get(`/tasks/${id}`),
-          API.get(`/milestones/${id}`)
+          API.get(`/milestones/${id}`),
         ]);
 
-        const currentProject = projectRes.data.find((p) => String(p.id) === String(id));
-        setProject(currentProject || null);
+        setProject(projectRes.data || null);
 
         const taskEvents = taskRes.data
           .filter((t) => t.due_date)
@@ -49,7 +48,7 @@ export default function CalendarView() {
             start: new Date(t.due_date),
             end: new Date(t.due_date),
             allDay: true,
-            resource: { type: "task", priority: t.priority, status: t.status }
+            resource: { type: "task", priority: t.priority, status: t.status },
           }));
 
         const milestoneEvents = milestoneRes.data
@@ -60,7 +59,7 @@ export default function CalendarView() {
             start: new Date(m.due_date),
             end: new Date(m.due_date),
             allDay: true,
-            resource: { type: "milestone", status: m.status }
+            resource: { type: "milestone", status: m.status },
           }));
 
         setEvents([...taskEvents, ...milestoneEvents]);
@@ -94,8 +93,8 @@ export default function CalendarView() {
         borderRadius: "6px",
         color: "#fff",
         fontSize: "12px",
-        padding: "1px 4px"
-      }
+        padding: "1px 4px",
+      },
     };
   };
 
@@ -127,17 +126,33 @@ export default function CalendarView() {
             </p>
           </div>
           <div className="mt-6 space-y-2 text-xs text-slate-400">
-            <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm bg-red-500" /> High priority task</div>
-            <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm bg-amber-500" /> Medium priority task</div>
-            <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm bg-green-500" /> Completed / Low priority</div>
-            <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm bg-violet-500" /> Milestone</div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-sm bg-red-500" />{" "}
+              High priority task
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-sm bg-amber-500" />{" "}
+              Medium priority task
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-sm bg-green-500" />{" "}
+              Completed / Low priority
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-sm bg-violet-500" />{" "}
+              Milestone
+            </div>
           </div>
         </section>
 
         <section className="right dashboard-right">
           <div className="dashboard-content">
             <Navbar
-              title={project?.title ? `${project.title} – Calendar` : "Project Calendar"}
+              title={
+                project?.title
+                  ? `${project.title} – Calendar`
+                  : "Project Calendar"
+              }
               showDashboard
               onLogout={logout}
             />
@@ -152,7 +167,9 @@ export default function CalendarView() {
             </div>
 
             {loading ? (
-              <div className="panel-card p-8 text-center text-slate-400">Loading calendar…</div>
+              <div className="panel-card p-8 text-center text-slate-400">
+                Loading calendar…
+              </div>
             ) : (
               <div className="panel-card overflow-hidden p-4">
                 <style>{`

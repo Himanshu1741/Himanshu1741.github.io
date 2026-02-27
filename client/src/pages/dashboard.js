@@ -11,17 +11,15 @@ import {
   Legend,
   CategoryScale,
   LinearScale,
-  BarElement
+  BarElement,
 } from "chart.js";
 
-const Pie = dynamic(
-  () => import("react-chartjs-2").then((mod) => mod.Pie),
-  { ssr: false }
-);
-const Bar = dynamic(
-  () => import("react-chartjs-2").then((mod) => mod.Bar),
-  { ssr: false }
-);
+const Pie = dynamic(() => import("react-chartjs-2").then((mod) => mod.Pie), {
+  ssr: false,
+});
+const Bar = dynamic(() => import("react-chartjs-2").then((mod) => mod.Bar), {
+  ssr: false,
+});
 
 ChartJS.register(
   ArcElement,
@@ -29,7 +27,7 @@ ChartJS.register(
   Legend,
   CategoryScale,
   LinearScale,
-  BarElement
+  BarElement,
 );
 
 export default function Dashboard() {
@@ -55,7 +53,11 @@ export default function Dashboard() {
         router.push("/login");
         return;
       }
-      setPageError(error?.response?.data?.message || error?.response?.data?.error || "Failed to load projects");
+      setPageError(
+        error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          "Failed to load projects",
+      );
     }
   };
 
@@ -71,7 +73,11 @@ export default function Dashboard() {
         router.push("/login");
         return;
       }
-      setPageError(error?.response?.data?.message || error?.response?.data?.error || "Failed to load summary");
+      setPageError(
+        error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          "Failed to load summary",
+      );
     }
   };
 
@@ -126,8 +132,10 @@ export default function Dashboard() {
     const searched = !query
       ? projects
       : projects.filter((project) =>
-      `${project.title} ${project.description || ""}`.toLowerCase().includes(query)
-    );
+          `${project.title} ${project.description || ""}`
+            .toLowerCase()
+            .includes(query),
+        );
 
     if (projectSlide === "completed") {
       return searched.filter((project) => project.status === "completed");
@@ -140,7 +148,7 @@ export default function Dashboard() {
   const barOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } }
+    plugins: { legend: { display: false } },
   };
   const taskCompletionBreakdown = useMemo(() => {
     const total = Number(summary?.totalTasks ?? 0);
@@ -149,7 +157,15 @@ export default function Dashboard() {
     const completed = Number(summary?.totalCompletedTasks ?? 0);
 
     if (total <= 0) {
-      return { total: 0, todo, inProgress, completed, todoPct: 0, inProgressPct: 0, completedPct: 0 };
+      return {
+        total: 0,
+        todo,
+        inProgress,
+        completed,
+        todoPct: 0,
+        inProgressPct: 0,
+        completedPct: 0,
+      };
     }
 
     return {
@@ -159,12 +175,15 @@ export default function Dashboard() {
       completed,
       todoPct: Math.round((todo / total) * 100),
       inProgressPct: Math.round((inProgress / total) * 100),
-      completedPct: Math.round((completed / total) * 100)
+      completedPct: Math.round((completed / total) * 100),
     };
   }, [summary]);
 
   const scrollToCreateProject = () => {
-    createProjectRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    createProjectRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   const findProject = (value) => {
@@ -175,10 +194,18 @@ export default function Dashboard() {
     const exactId = projects.find((p) => String(p.id) === key);
     if (exactId) return exactId;
 
-    const exactTitle = projects.find((p) => String(p.title || "").toLowerCase() === lowerKey);
+    const exactTitle = projects.find(
+      (p) => String(p.title || "").toLowerCase() === lowerKey,
+    );
     if (exactTitle) return exactTitle;
 
-    return projects.find((p) => String(p.title || "").toLowerCase().includes(lowerKey)) || null;
+    return (
+      projects.find((p) =>
+        String(p.title || "")
+          .toLowerCase()
+          .includes(lowerKey),
+      ) || null
+    );
   };
 
   const executeGuideCommand = async (command) => {
@@ -189,15 +216,21 @@ export default function Dashboard() {
     if (command.type === "help") {
       return {
         message:
-          "Commands: help, list projects, create project <title> | <description>, open project <id|title>, open project settings <id|title>, open github <id|title>, delete project <id|title>, complete project <id|title>, activate project <id|title>, rename project <id|title> | <new title>, update project description <id|title> | <new description>, show active projects, show completed projects, search project <text>, clear search, go to create project, open settings, open dashboard, open admin, logout."
+          "Commands: help, list projects, create project <title> | <description>, open project <id|title>, open project settings <id|title>, delete project <id|title>, complete project <id|title>, activate project <id|title>, rename project <id|title> | <new title>, update project description <id|title> | <new description>, show active projects, show completed projects, search project <text>, clear search, go to create project, open settings, open dashboard, open admin, logout.",
       };
     }
 
     if (command.type === "list_projects") {
       if (!projects.length) {
-        return { message: "No projects found. Create one with: create project Demo App | Initial setup" };
+        return {
+          message:
+            "No projects found. Create one with: create project Demo App | Initial setup",
+        };
       }
-      const top = projects.slice(0, 8).map((p) => `${p.id}: ${p.title}`).join(", ");
+      const top = projects
+        .slice(0, 8)
+        .map((p) => `${p.id}: ${p.title}`)
+        .join(", ");
       return { message: `Projects (${projects.length}): ${top}` };
     }
 
@@ -205,7 +238,10 @@ export default function Dashboard() {
       const title = String(command.title || "").trim();
       const description = String(command.description || "").trim();
       if (!title) {
-        return { message: "Please provide a project title. Example: create project Demo App | Initial setup" };
+        return {
+          message:
+            "Please provide a project title. Example: create project Demo App | Initial setup",
+        };
       }
 
       try {
@@ -214,10 +250,15 @@ export default function Dashboard() {
         await loadSummary();
         return {
           message: `Project "${title}" created successfully.`,
-          actions: [{ label: "Go to Dashboard", type: "route", path: "/dashboard" }]
+          actions: [
+            { label: "Go to Dashboard", type: "route", path: "/dashboard" },
+          ],
         };
       } catch (error) {
-        return { message: error?.response?.data?.message || "Failed to create project." };
+        return {
+          message:
+            error?.response?.data?.message || "Failed to create project.",
+        };
       }
     }
 
@@ -246,13 +287,19 @@ export default function Dashboard() {
 
     if (command.type === "show_projects") {
       setProjectSlide(command.status === "completed" ? "completed" : "active");
-      return { message: `Showing ${command.status === "completed" ? "completed" : "active"} projects.` };
+      return {
+        message: `Showing ${command.status === "completed" ? "completed" : "active"} projects.`,
+      };
     }
 
     if (command.type === "search_project") {
       const value = String(command.query || "").trim();
       setProjectQuery(value);
-      return { message: value ? `Searching projects for "${value}".` : "Search cleared." };
+      return {
+        message: value
+          ? `Searching projects for "${value}".`
+          : "Search cleared.",
+      };
     }
 
     if (command.type === "clear_search") {
@@ -263,7 +310,9 @@ export default function Dashboard() {
     if (command.type === "open_project") {
       const value = String(command.project || "").trim();
       if (!value) {
-        return { message: "Provide a project id or title. Example: open project 12" };
+        return {
+          message: "Provide a project id or title. Example: open project 12",
+        };
       }
 
       const targetProject = findProject(value);
@@ -285,23 +334,12 @@ export default function Dashboard() {
       return { message: `Opening settings for "${targetProject.title}"...` };
     }
 
-    if (command.type === "open_github") {
-      const value = String(command.project || "").trim();
-      const targetProject = findProject(value);
-      if (!targetProject) {
-        return { message: `No project found for "${value}".` };
-      }
-      if (!targetProject.github_repo) {
-        return { message: `Project "${targetProject.title}" has no GitHub URL configured.` };
-      }
-      window.open(targetProject.github_repo, "_blank");
-      return { message: `Opening GitHub for "${targetProject.title}"...` };
-    }
-
     if (command.type === "delete_project") {
       const value = String(command.project || "").trim();
       if (!value) {
-        return { message: "Provide a project id or title. Example: delete project 12" };
+        return {
+          message: "Provide a project id or title. Example: delete project 12",
+        };
       }
 
       const targetProject = findProject(value);
@@ -310,7 +348,10 @@ export default function Dashboard() {
         return { message: `No project found for "${value}".` };
       }
 
-      if (!user || (user.id !== targetProject.created_by && user.role !== "admin")) {
+      if (
+        !user ||
+        (user.id !== targetProject.created_by && user.role !== "admin")
+      ) {
         return { message: "You don't have permission to delete this project." };
       }
 
@@ -318,9 +359,14 @@ export default function Dashboard() {
         await API.delete(`/projects/${targetProject.id}`);
         await loadProjects();
         await loadSummary();
-        return { message: `Project "${targetProject.title}" deleted successfully.` };
+        return {
+          message: `Project "${targetProject.title}" deleted successfully.`,
+        };
       } catch (error) {
-        return { message: error?.response?.data?.message || "Failed to delete project." };
+        return {
+          message:
+            error?.response?.data?.message || "Failed to delete project.",
+        };
       }
     }
 
@@ -331,47 +377,61 @@ export default function Dashboard() {
         return { message: `No project found for "${value}".` };
       }
       try {
-        await API.put(`/projects/${targetProject.id}/status`, { status: command.status });
+        await API.put(`/projects/${targetProject.id}/status`, {
+          status: command.status,
+        });
         await loadProjects();
         await loadSummary();
-        return { message: `Project "${targetProject.title}" marked as ${command.status}.` };
+        return {
+          message: `Project "${targetProject.title}" marked as ${command.status}.`,
+        };
       } catch (error) {
-        return { message: error?.response?.data?.message || "Failed to update project status." };
+        return {
+          message:
+            error?.response?.data?.message ||
+            "Failed to update project status.",
+        };
       }
     }
 
     if (command.type === "rename_project") {
       const targetProject = findProject(command.project);
       const nextTitle = String(command.title || "").trim();
-      if (!targetProject) return { message: `No project found for "${command.project}".` };
+      if (!targetProject)
+        return { message: `No project found for "${command.project}".` };
       if (!nextTitle) return { message: "New title is required." };
       try {
         await API.put(`/projects/${targetProject.id}`, {
           title: nextTitle,
           description: targetProject.description || "",
-          github_repo: targetProject.github_repo || ""
         });
         await loadProjects();
         return { message: `Project renamed to "${nextTitle}".` };
       } catch (error) {
-        return { message: error?.response?.data?.message || "Failed to rename project." };
+        return {
+          message:
+            error?.response?.data?.message || "Failed to rename project.",
+        };
       }
     }
 
     if (command.type === "update_project_description") {
       const targetProject = findProject(command.project);
       const nextDescription = String(command.description || "").trim();
-      if (!targetProject) return { message: `No project found for "${command.project}".` };
+      if (!targetProject)
+        return { message: `No project found for "${command.project}".` };
       try {
         await API.put(`/projects/${targetProject.id}`, {
           title: targetProject.title,
           description: nextDescription,
-          github_repo: targetProject.github_repo || ""
         });
         await loadProjects();
         return { message: `Description updated for "${targetProject.title}".` };
       } catch (error) {
-        return { message: error?.response?.data?.message || "Failed to update description." };
+        return {
+          message:
+            error?.response?.data?.message || "Failed to update description.",
+        };
       }
     }
 
@@ -404,15 +464,14 @@ export default function Dashboard() {
               every day.
             </h1>
             <p className="hero-sub">
-              Track progress, manage tasks, and collaborate in one place with your project members.
+              Track progress, manage tasks, and collaborate in one place with
+              your project members.
             </p>
           </div>
 
           <div className="stats">
             <div className="stat">
-              <div className="stat-num">
-                {summary?.totalProjects ?? 0}
-              </div>
+              <div className="stat-num">{summary?.totalProjects ?? 0}</div>
               <div className="stat-label">Total projects</div>
             </div>
             <div className="stat">
@@ -428,7 +487,6 @@ export default function Dashboard() {
               <div className="stat-label">Tasks completed</div>
             </div>
           </div>
-
         </section>
 
         <section className="right dashboard-right">
@@ -451,20 +509,36 @@ export default function Dashboard() {
             {summary ? (
               <section className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="glass-card p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-300">Total Projects</p>
-                  <p className="mt-1 text-3xl font-bold text-cyan-300">{summary.totalProjects}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-300">
+                    Total Projects
+                  </p>
+                  <p className="mt-1 text-3xl font-bold text-cyan-300">
+                    {summary.totalProjects}
+                  </p>
                 </div>
                 <div className="glass-card p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-300">Active My Projects</p>
-                  <p className="mt-1 text-3xl font-bold text-blue-300">{summary.totalActiveProjects ?? 0}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-300">
+                    Active My Projects
+                  </p>
+                  <p className="mt-1 text-3xl font-bold text-blue-300">
+                    {summary.totalActiveProjects ?? 0}
+                  </p>
                 </div>
                 <div className="glass-card p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-300">Completed My Projects</p>
-                  <p className="mt-1 text-3xl font-bold text-emerald-300">{summary.totalCompletedProjects ?? 0}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-300">
+                    Completed My Projects
+                  </p>
+                  <p className="mt-1 text-3xl font-bold text-emerald-300">
+                    {summary.totalCompletedProjects ?? 0}
+                  </p>
                 </div>
                 <div className="glass-card p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-300">Tasks Completed</p>
-                  <p className="mt-1 text-3xl font-bold text-lime-300">{summary.totalCompletedTasks}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-300">
+                    Tasks Completed
+                  </p>
+                  <p className="mt-1 text-3xl font-bold text-lime-300">
+                    {summary.totalCompletedTasks}
+                  </p>
                 </div>
               </section>
             ) : null}
@@ -472,7 +546,9 @@ export default function Dashboard() {
             {summary ? (
               <section className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div className="panel-card p-5">
-                  <h3 className="mb-4 text-lg font-semibold text-white">Task Completion</h3>
+                  <h3 className="mb-4 text-lg font-semibold text-white">
+                    Task Completion
+                  </h3>
                   <div className="h-56">
                     <Pie
                       data={{
@@ -482,35 +558,47 @@ export default function Dashboard() {
                             data: [
                               taskCompletionBreakdown.todo,
                               taskCompletionBreakdown.inProgress,
-                              taskCompletionBreakdown.completed
+                              taskCompletionBreakdown.completed,
                             ],
                             backgroundColor: ["#f59e0b", "#3b82f6", "#22c55e"],
-                            borderWidth: 0
-                          }
-                        ]
+                            borderWidth: 0,
+                          },
+                        ],
                       }}
                       options={pieOptions}
                     />
                   </div>
                   <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-slate-200 sm:grid-cols-3">
                     <p className="rounded-lg bg-slate-900/60 px-3 py-2">
-                      Todo: {taskCompletionBreakdown.todoPct}% ({taskCompletionBreakdown.todo})
+                      Todo: {taskCompletionBreakdown.todoPct}% (
+                      {taskCompletionBreakdown.todo})
                     </p>
                     <p className="rounded-lg bg-slate-900/60 px-3 py-2">
-                      In Progress: {taskCompletionBreakdown.inProgressPct}% ({taskCompletionBreakdown.inProgress})
+                      In Progress: {taskCompletionBreakdown.inProgressPct}% (
+                      {taskCompletionBreakdown.inProgress})
                     </p>
                     <p className="rounded-lg bg-slate-900/60 px-3 py-2">
-                      Completed: {taskCompletionBreakdown.completedPct}% ({taskCompletionBreakdown.completed})
+                      Completed: {taskCompletionBreakdown.completedPct}% (
+                      {taskCompletionBreakdown.completed})
                     </p>
                   </div>
                 </div>
 
                 <div className="panel-card p-5">
-                  <h3 className="mb-4 text-lg font-semibold text-white">Project Activity</h3>
+                  <h3 className="mb-4 text-lg font-semibold text-white">
+                    Project Activity
+                  </h3>
                   <div className="h-56">
                     <Bar
                       data={{
-                        labels: ["Projects", "Active", "Completed", "Tasks", "Files", "Messages"],
+                        labels: [
+                          "Projects",
+                          "Active",
+                          "Completed",
+                          "Tasks",
+                          "Files",
+                          "Messages",
+                        ],
                         datasets: [
                           {
                             label: "My Data",
@@ -520,12 +608,19 @@ export default function Dashboard() {
                               summary.totalCompletedProjects ?? 0,
                               summary.totalTasks,
                               summary.totalFiles,
-                              summary.totalMessages
+                              summary.totalMessages,
                             ],
-                            backgroundColor: ["#06b6d4", "#3b82f6", "#22c55e", "#6366f1", "#f59e0b", "#f43f5e"],
-                            borderRadius: 8
-                          }
-                        ]
+                            backgroundColor: [
+                              "#06b6d4",
+                              "#3b82f6",
+                              "#22c55e",
+                              "#6366f1",
+                              "#f59e0b",
+                              "#f43f5e",
+                            ],
+                            borderRadius: 8,
+                          },
+                        ],
                       }}
                       options={barOptions}
                     />
@@ -535,7 +630,9 @@ export default function Dashboard() {
             ) : null}
 
             <section ref={createProjectRef} className="panel-card mb-6 p-5">
-              <h3 className="mb-3 text-lg font-semibold text-white">Create Project</h3>
+              <h3 className="mb-3 text-lg font-semibold text-white">
+                Create Project
+              </h3>
               <form onSubmit={createProject} className="grid gap-3">
                 <input
                   className="input-modern"
@@ -547,11 +644,19 @@ export default function Dashboard() {
                   className="input-modern min-h-24"
                   placeholder="Project description"
                   value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
                 />
                 <button type="submit" className="btn-primary w-fit">
                   <span className="inline-flex items-center gap-2">
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                     </svg>
                     Create Project
@@ -562,7 +667,9 @@ export default function Dashboard() {
 
             <section className="panel-card p-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-white">My Project Access</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  My Project Access
+                </h3>
                 <div className="flex items-center gap-2">
                   <button
                     className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/70 text-slate-200 transition hover:border-cyan-400/70 hover:text-white"
@@ -570,10 +677,20 @@ export default function Dashboard() {
                     aria-label="Open project trash"
                     title="Project Trash"
                   >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M3 6h18" strokeLinecap="round" />
                       <path d="M8 6V4h8v2" strokeLinecap="round" />
-                      <path d="M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round" />
+                      <path
+                        d="M19 6l-1 14H6L5 6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   </button>
                   <div className="inline-flex rounded-xl border border-slate-700 bg-slate-900/70 p-1">
@@ -582,7 +699,11 @@ export default function Dashboard() {
                       onClick={() => setProjectSlide("active")}
                     >
                       <span className="inline-flex items-center gap-1">
-                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-3.5 w-3.5"
+                          fill="currentColor"
+                        >
                           <circle cx="12" cy="12" r="6" />
                         </svg>
                         Active
@@ -593,8 +714,18 @@ export default function Dashboard() {
                       onClick={() => setProjectSlide("completed")}
                     >
                       <span className="inline-flex items-center gap-1">
-                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M5 12l4 4 10-10" strokeLinecap="round" strokeLinejoin="round" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-3.5 w-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            d="M5 12l4 4 10-10"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                         Completed
                       </span>
@@ -613,12 +744,23 @@ export default function Dashboard() {
               />
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 {filteredProjects.map((project) => (
-                  <div key={project.id} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-                    <h4 className="text-lg font-semibold text-white">{project.title}</h4>
-                    <p className="mt-1 text-sm text-slate-300">{project.description || "No description"}</p>
+                  <div
+                    key={project.id}
+                    className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"
+                  >
+                    <h4 className="text-lg font-semibold text-white">
+                      {project.title}
+                    </h4>
+                    <p className="mt-1 text-sm text-slate-300">
+                      {project.description || "No description"}
+                    </p>
                     <div className="mt-3 flex items-center gap-2 text-xs">
-                      <span className={`rounded-full px-2 py-1 ${project.status === "completed" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"}`}>
-                        {project.status === "completed" ? "Completed" : "Active"}
+                      <span
+                        className={`rounded-full px-2 py-1 ${project.status === "completed" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"}`}
+                      >
+                        {project.status === "completed"
+                          ? "Completed"
+                          : "Active"}
                       </span>
                     </div>
 
@@ -628,26 +770,26 @@ export default function Dashboard() {
                         onClick={() => router.push(`/project/${project.id}`)}
                       >
                         <span className="inline-flex items-center gap-2">
-                          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path
+                              d="M5 12h14M12 5l7 7-7 7"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                           Open Project
                         </span>
                       </button>
-                      {project.github_repo && (
-                        <button
-                          className="btn-secondary"
-                          onClick={() => window.open(project.github_repo, "_blank")}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-                              <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.61.07-.61 1 .07 1.52 1.03 1.52 1.03.88 1.52 2.31 1.08 2.87.83.09-.64.35-1.08.63-1.33-2.22-.26-4.56-1.12-4.56-4.97 0-1.1.39-2 1.03-2.71-.1-.26-.45-1.3.1-2.7 0 0 .84-.27 2.75 1.03A9.6 9.6 0 0 1 12 6.8c.85 0 1.7.11 2.5.32 1.9-1.3 2.74-1.03 2.74-1.03.55 1.4.2 2.44.1 2.7.64.71 1.03 1.61 1.03 2.71 0 3.86-2.34 4.71-4.57 4.97.36.32.68.95.68 1.92v2.85c0 .27.18.58.69.48A10 10 0 0 0 12 2z" />
-                            </svg>
-                            GitHub
-                          </span>
-                        </button>
-                      )}
-                      {user && (user.id === project.created_by || user.role === "admin") ? (
+
+                      {user &&
+                      (user.id === project.created_by ||
+                        user.role === "admin") ? (
                         <button
                           className="btn-danger"
                           onClick={async () => {
@@ -657,10 +799,20 @@ export default function Dashboard() {
                           }}
                         >
                           <span className="inline-flex items-center gap-2">
-                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
                               <path d="M3 6h18" strokeLinecap="round" />
                               <path d="M8 6V4h8v2" strokeLinecap="round" />
-                              <path d="M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round" />
+                              <path
+                                d="M19 6l-1 14H6L5 6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
                             </svg>
                             Delete
                           </span>

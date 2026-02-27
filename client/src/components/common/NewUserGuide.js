@@ -7,7 +7,7 @@ const quickPrompts = [
   "show active projects",
   "How do I start?",
   "create project Demo App | Initial setup",
-  "open settings"
+  "open settings",
 ];
 
 function buildGuideReply(input, { user, projects }) {
@@ -17,55 +17,70 @@ function buildGuideReply(input, { user, projects }) {
 
   if (text.includes("start") || text.includes("new")) {
     return {
-      message: "Start with Create Project. Then open your project and use Tasks, Files, and Chat. Finally, update account details in Settings.",
+      message:
+        "Start with Create Project. Then open your project and use Tasks, Files, and Chat. Finally, update account details in Settings.",
       actions: [
         { label: "Go to Create Project", type: "create_project" },
-        { label: "Open Settings", type: "route", path: "/settings" }
-      ]
+        { label: "Open Settings", type: "route", path: "/settings" },
+      ],
     };
   }
 
   if (text.includes("create") || text.includes("project")) {
     return {
-      message: "Use the Create Project card on this dashboard. Add a title and description, then open the new project from My Project Access.",
+      message:
+        "Use the Create Project card on this dashboard. Add a title and description, then open the new project from My Project Access.",
       actions: [
         { label: "Go to Create Project", type: "create_project" },
-        ...(projectCount > 0 ? [{ label: "My Projects", type: "route", path: "/dashboard" }] : [])
-      ]
+        ...(projectCount > 0
+          ? [{ label: "My Projects", type: "route", path: "/dashboard" }]
+          : []),
+      ],
     };
   }
 
   if (text.includes("task") || text.includes("chat") || text.includes("file")) {
     if (!firstProjectId) {
       return {
-        message: "You need at least one project first. Create a project, then open it to access Task Board, File Upload, and Chat.",
-        actions: [{ label: "Create First Project", type: "create_project" }]
+        message:
+          "You need at least one project first. Create a project, then open it to access Task Board, File Upload, and Chat.",
+        actions: [{ label: "Create First Project", type: "create_project" }],
       };
     }
 
     return {
-      message: "Open any project to access Task Board, File Upload, and Team Chat in one place.",
-      actions: [{ label: "Open First Project", type: "route", path: `/project/${firstProjectId}` }]
+      message:
+        "Open any project to access Task Board, File Upload, and Team Chat in one place.",
+      actions: [
+        {
+          label: "Open First Project",
+          type: "route",
+          path: `/project/${firstProjectId}`,
+        },
+      ],
     };
   }
 
   if (text.includes("notification") || text.includes("setting")) {
     return {
-      message: "Notifications are in the bell icon on the top card. Account changes are in Settings.",
-      actions: [{ label: "Open Settings", type: "route", path: "/settings" }]
+      message:
+        "Notifications are in the bell icon on the top card. Account changes are in Settings.",
+      actions: [{ label: "Open Settings", type: "route", path: "/settings" }],
     };
   }
 
   if (user?.role === "admin" && text.includes("admin")) {
     return {
-      message: "As admin, you can manage users and projects from Admin Control Center.",
-      actions: [{ label: "Open Admin", type: "route", path: "/admin" }]
+      message:
+        "As admin, you can manage users and projects from Admin Control Center.",
+      actions: [{ label: "Open Admin", type: "route", path: "/admin" }],
     };
   }
 
   return {
-    message: "I can guide you through projects, tasks, chat, files, notifications, and settings. Try a quick prompt below.",
-    actions: []
+    message:
+      "I can guide you through projects, tasks, chat, files, notifications, and settings. Try a quick prompt below.",
+    actions: [],
   };
 }
 
@@ -86,7 +101,7 @@ function parseCommand(input) {
     return {
       type: "create_project",
       title: (titlePart || "").trim(),
-      description: (descriptionPart || "").trim()
+      description: (descriptionPart || "").trim(),
     };
   }
 
@@ -100,42 +115,63 @@ function parseCommand(input) {
   if (openAdmin) return { type: "open_admin" };
 
   const openProject = raw.match(/^open\s+project\s+(.+)$/i);
-  if (openProject) return { type: "open_project", project: openProject[1].trim() };
+  if (openProject)
+    return { type: "open_project", project: openProject[1].trim() };
 
   const openProjectSettings = raw.match(/^open\s+project\s+settings\s+(.+)$/i);
-  if (openProjectSettings) return { type: "open_project_settings", project: openProjectSettings[1].trim() };
-
-  const openGithub = raw.match(/^open\s+github\s+(.+)$/i);
-  if (openGithub) return { type: "open_github", project: openGithub[1].trim() };
+  if (openProjectSettings)
+    return {
+      type: "open_project_settings",
+      project: openProjectSettings[1].trim(),
+    };
 
   const deleteProject = raw.match(/^delete\s+project\s+(.+)$/i);
-  if (deleteProject) return { type: "delete_project", project: deleteProject[1].trim() };
+  if (deleteProject)
+    return { type: "delete_project", project: deleteProject[1].trim() };
 
   const completeProject = raw.match(/^complete\s+project\s+(.+)$/i);
-  if (completeProject) return { type: "set_project_status", project: completeProject[1].trim(), status: "completed" };
+  if (completeProject)
+    return {
+      type: "set_project_status",
+      project: completeProject[1].trim(),
+      status: "completed",
+    };
 
   const activateProject = raw.match(/^activate\s+project\s+(.+)$/i);
-  if (activateProject) return { type: "set_project_status", project: activateProject[1].trim(), status: "active" };
+  if (activateProject)
+    return {
+      type: "set_project_status",
+      project: activateProject[1].trim(),
+      status: "active",
+    };
 
   const renameProject = raw.match(/^rename\s+project\s+(.+)\s+\|\s+(.+)$/i);
   if (renameProject) {
-    return { type: "rename_project", project: renameProject[1].trim(), title: renameProject[2].trim() };
+    return {
+      type: "rename_project",
+      project: renameProject[1].trim(),
+      title: renameProject[2].trim(),
+    };
   }
 
-  const updateProjectDescription = raw.match(/^update\s+project\s+description\s+(.+)\s+\|\s+(.+)$/i);
+  const updateProjectDescription = raw.match(
+    /^update\s+project\s+description\s+(.+)\s+\|\s+(.+)$/i,
+  );
   if (updateProjectDescription) {
     return {
       type: "update_project_description",
       project: updateProjectDescription[1].trim(),
-      description: updateProjectDescription[2].trim()
+      description: updateProjectDescription[2].trim(),
     };
   }
 
   const showProjects = raw.match(/^show\s+(active|completed)\s+projects$/i);
-  if (showProjects) return { type: "show_projects", status: showProjects[1].toLowerCase() };
+  if (showProjects)
+    return { type: "show_projects", status: showProjects[1].toLowerCase() };
 
   const searchProjects = raw.match(/^search\s+project\s+(.+)$/i);
-  if (searchProjects) return { type: "search_project", query: searchProjects[1].trim() };
+  if (searchProjects)
+    return { type: "search_project", query: searchProjects[1].trim() };
 
   const clearSearch = raw.match(/^clear\s+search$/i);
   if (clearSearch) return { type: "clear_search" };
@@ -149,7 +185,12 @@ function parseCommand(input) {
   return null;
 }
 
-export default function NewUserGuide({ user, projects, onCreateProject, onExecuteCommand }) {
+export default function NewUserGuide({
+  user,
+  projects,
+  onCreateProject,
+  onExecuteCommand,
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [runningCommand, setRunningCommand] = useState(false);
@@ -157,8 +198,8 @@ export default function NewUserGuide({ user, projects, onCreateProject, onExecut
     {
       role: "assistant",
       message: `Hi ${user?.name?.split(" ")[0] || "there"}, I can help you navigate this website and run commands like: create project Demo App | Initial setup`,
-      actions: []
-    }
+      actions: [],
+    },
   ]);
 
   const askGuide = async (input) => {
@@ -167,7 +208,10 @@ export default function NewUserGuide({ user, projects, onCreateProject, onExecut
 
     const command = parseCommand(trimmed);
     if (command && onExecuteCommand) {
-      setMessages((prev) => [...prev, { role: "user", message: trimmed, actions: [] }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", message: trimmed, actions: [] },
+      ]);
       setRunningCommand(true);
       try {
         const result = await onExecuteCommand(command);
@@ -176,8 +220,8 @@ export default function NewUserGuide({ user, projects, onCreateProject, onExecut
           {
             role: "assistant",
             message: result?.message || "Command executed.",
-            actions: result?.actions || []
-          }
+            actions: result?.actions || [],
+          },
         ]);
       } catch {
         setMessages((prev) => [
@@ -185,8 +229,8 @@ export default function NewUserGuide({ user, projects, onCreateProject, onExecut
           {
             role: "assistant",
             message: "I could not run that command. Please try again.",
-            actions: []
-          }
+            actions: [],
+          },
         ]);
       } finally {
         setRunningCommand(false);
@@ -199,7 +243,11 @@ export default function NewUserGuide({ user, projects, onCreateProject, onExecut
     setMessages((prev) => [
       ...prev,
       { role: "user", message: trimmed, actions: [] },
-      { role: "assistant", message: reply.message, actions: reply.actions || [] }
+      {
+        role: "assistant",
+        message: reply.message,
+        actions: reply.actions || [],
+      },
     ]);
     setQuery("");
   };
@@ -250,7 +298,11 @@ export default function NewUserGuide({ user, projects, onCreateProject, onExecut
 
       <div className="mt-3 flex flex-wrap gap-2">
         {quickPrompts.map((prompt) => (
-          <button key={prompt} className="btn-secondary !px-3 !py-1.5 text-xs" onClick={() => askGuide(prompt)}>
+          <button
+            key={prompt}
+            className="btn-secondary !px-3 !py-1.5 text-xs"
+            onClick={() => askGuide(prompt)}
+          >
             {prompt}
           </button>
         ))}
@@ -269,7 +321,11 @@ export default function NewUserGuide({ user, projects, onCreateProject, onExecut
             }
           }}
         />
-        <button className="btn-primary shrink-0" onClick={() => askGuide(query)} disabled={runningCommand}>
+        <button
+          className="btn-primary shrink-0"
+          onClick={() => askGuide(query)}
+          disabled={runningCommand}
+        >
           {runningCommand ? "Running..." : "Ask"}
         </button>
       </div>

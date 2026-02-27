@@ -13,8 +13,6 @@ export default function ProjectPage() {
   const router = useRouter();
   const { id } = router.query;
   const [project, setProject] = useState(null);
-  const [commits, setCommits] = useState([]);
-  const [githubError, setGithubError] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [projectPermissions, setProjectPermissions] = useState({
     can_add_members: false,
@@ -45,10 +43,9 @@ export default function ProjectPage() {
         if (!storedUser) return;
 
         const user = JSON.parse(storedUser);
-        const projectRes = await API.get("/projects");
-        const currentProject = projectRes.data.find(
-          (p) => String(p.id) === String(id),
-        );
+        // Use dedicated single-project endpoint for always-fresh data
+        const projectRes = await API.get(`/projects/${id}/detail`);
+        const currentProject = projectRes.data;
         setProject(currentProject || null);
 
         const creator = Boolean(
@@ -72,69 +69,6 @@ export default function ProjectPage() {
 
     loadProjectAndPermissions();
   }, [id]);
-
-  const parseGithubOwnerRepo = (repoValue) => {
-    const value = String(repoValue || "").trim();
-    if (!value) return null;
-
-    const urlMatch = value.match(
-      /^https?:\/\/(?:www\.)?github\.com\/([^/]+)\/([^/]+?)(?:\.git|\/)?$/i,
-    );
-    if (urlMatch) {
-      return { owner: urlMatch[1], repo: urlMatch[2] };
-    }
-
-    const hostWithoutProtocolMatch = value.match(
-      /^(?:www\.)?github\.com\/([^/]+)\/([^/]+?)(?:\.git|\/)?$/i,
-    );
-    if (hostWithoutProtocolMatch) {
-      return {
-        owner: hostWithoutProtocolMatch[1],
-        repo: hostWithoutProtocolMatch[2],
-      };
-    }
-
-    const plainMatch = value.match(/^([^/]+)\/([^/]+)$/);
-    if (plainMatch) {
-      return { owner: plainMatch[1], repo: plainMatch[2] };
-    }
-
-    return null;
-  };
-
-  const fetchGithub = async (owner, repo) => {
-    const res = await API.get(`/projects/github/${owner}/${repo}`);
-    setCommits(res.data);
-  };
-
-  useEffect(() => {
-    const loadGithub = async () => {
-      if (!project?.github_repo) {
-        setCommits([]);
-        setGithubError("");
-        return;
-      }
-
-      const parsed = parseGithubOwnerRepo(project.github_repo);
-      if (!parsed) {
-        setCommits([]);
-        setGithubError("Invalid GitHub repository format");
-        return;
-      }
-
-      try {
-        setGithubError("");
-        await fetchGithub(parsed.owner, parsed.repo);
-      } catch (error) {
-        setCommits([]);
-        setGithubError(
-          error?.response?.data?.message || "Failed to fetch GitHub commits",
-        );
-      }
-    };
-
-    loadGithub();
-  }, [project]);
 
   const canOpenSettings =
     isCreator ||
@@ -296,18 +230,6 @@ export default function ProjectPage() {
                   <span className="project-status-dot" />
                   {project?.status === "completed" ? "Completed" : "Active"}
                 </span>
-                {project?.github_repo && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-600/60 bg-slate-800/70 px-2.5 py-0.5 text-xs text-slate-300">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-3 w-3"
-                      fill="currentColor"
-                    >
-                      <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" />
-                    </svg>
-                    GitHub linked
-                  </span>
-                )}
               </div>
               <h1 className="project-hero-title">
                 {project?.title || `Project ${id}`}
@@ -406,98 +328,10 @@ export default function ProjectPage() {
           {/* Overview */}
           {activeTab === "overview" && (
             <section className="panel-card p-5">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-base font-semibold text-white">
-                    Recent GitHub Commits
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Latest changes pushed to the linked repository
-                  </p>
-                </div>
-                <span className="commit-count-badge">
-                  {commits.length} commits
-                </span>
-              </div>
-
-              {githubError ? (
-                <div className="flex items-start gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="mt-0.5 h-4 w-4 shrink-0 text-rose-400"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <line
-                      x1="12"
-                      y1="8"
-                      x2="12"
-                      y2="12"
-                      strokeLinecap="round"
-                    />
-                    <line
-                      x1="12"
-                      y1="16"
-                      x2="12.01"
-                      y2="16"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <p className="text-sm text-rose-300">{githubError}</p>
-                </div>
-              ) : null}
-
-              {!githubError && commits.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 py-8 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/60">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-6 w-6 text-slate-400"
-                      fill="currentColor"
-                    >
-                      <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-200">
-                      No commits linked yet
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Add a GitHub repo in project settings to see commits here.
-                    </p>
-                  </div>
-                </div>
-              ) : null}
-
-              {commits.length > 0 ? (
-                <ul className="space-y-2">
-                  {commits.slice(0, 5).map((commit) => (
-                    <li key={commit.sha} className="commit-row">
-                      <div className="commit-sha">
-                        {commit.sha?.slice(0, 7)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-slate-100">
-                          {commit?.commit?.message || "No message"}
-                        </p>
-                        <p className="mt-0.5 text-xs text-slate-400">
-                          <span className="text-cyan-400/80">
-                            {commit?.commit?.author?.name || "Unknown"}
-                          </span>
-                          {" · "}
-                          {commit?.commit?.author?.date
-                            ? new Date(
-                                commit.commit.author.date,
-                              ).toLocaleDateString()
-                            : ""}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+              <p className="text-sm text-slate-400">
+                Project overview. Use the tabs above to manage tasks, files,
+                chat, and more.
+              </p>
             </section>
           )}
 
