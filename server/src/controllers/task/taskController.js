@@ -415,3 +415,40 @@ exports.deleteTaskPermanently = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+// GET ALL DEADLINES — tasks with due_date across all user's projects
+exports.getDeadlines = async (req, res) => {
+  try {
+    const { Op } = require("sequelize");
+
+    const memberships = await ProjectMember.findAll({
+      where: { user_id: req.user.id },
+      attributes: ["project_id"],
+    });
+    const projectIds = memberships.map((m) => m.project_id);
+    if (!projectIds.length) return res.json([]);
+
+    const tasks = await Task.findAll({
+      where: {
+        project_id: { [Op.in]: projectIds },
+        due_date: { [Op.ne]: null },
+      },
+      order: [["due_date", "ASC"]],
+    });
+
+    const projects = await Project.findAll({
+      where: { id: { [Op.in]: projectIds } },
+      attributes: ["id", "title"],
+    });
+    const projMap = Object.fromEntries(projects.map((p) => [p.id, p.title]));
+
+    const result = tasks.map((t) => ({
+      ...t.toJSON(),
+      project_title: projMap[t.project_id] || "Unknown",
+    }));
+
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};

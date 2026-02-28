@@ -1,6 +1,28 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/User");
+const ProjectMember = require("../../models/ProjectMember");
+const Task = require("../../models/Task");
+const sequelize = require("../../config/db");
+
+// ─── Ensure bio/skills columns exist on users table ───────────────────────────
+let _profileColumnsReady = false;
+async function ensureUserProfileColumns() {
+  if (_profileColumnsReady) return;
+  try {
+    const [cols] = await sequelize.query("SHOW COLUMNS FROM users");
+    const names = cols.map((c) => c.Field);
+    if (!names.includes("bio"))
+      await sequelize.query("ALTER TABLE users ADD COLUMN bio TEXT NULL");
+    if (!names.includes("skills"))
+      await sequelize.query(
+        "ALTER TABLE users ADD COLUMN skills VARCHAR(500) NULL",
+      );
+    _profileColumnsReady = true;
+  } catch (err) {
+    console.error("ensureUserProfileColumns:", err.message);
+  }
+}
 
 // REGISTER
 exports.register = async (req, res) => {
@@ -56,11 +78,9 @@ exports.login = async (req, res) => {
     }
 
     if (user.is_suspended) {
-      return res
-        .status(403)
-        .json({
-          message: "Your account has been suspended. Contact an administrator.",
-        });
+      return res.status(403).json({
+        message: "Your account has been suspended. Contact an administrator.",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -134,6 +154,11 @@ exports.updateProfile = async (req, res) => {
 
     user.name = nextName;
     user.email = nextEmail;
+    // optional profile fields
+    if (Object.prototype.hasOwnProperty.call(req.body, "bio"))
+      user.bio = (req.body.bio || "").trim() || null;
+    if (Object.prototype.hasOwnProperty.call(req.body, "skills"))
+      user.skills = (req.body.skills || "").trim() || null;
     await user.save();
 
     return res.json({
@@ -143,6 +168,8 @@ exports.updateProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        bio: user.bio || null,
+        skills: user.skills || null,
       },
     });
   } catch (error) {
@@ -246,6 +273,77 @@ exports.resetPassword = async (req, res) => {
     });
 
     return res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// GET PROFILE STATS (projects, tasks, achievements)
+exports.getProfileStats = async (req, res) => {
+  try {
+    await ensureUserProfileColumns();
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const { Op } = require("sequelize");
+
+    // Projects the user is a member of
+    const projectCount = await ProjectMember.count({
+      where: { user_id: req.user.id },
+    });
+
+    // Tasks assigned to this user
+    const tasksAssigned = await Task.count({
+      where: { assigned_to: req.user.id },
+    });
+
+    // Completed tasks (status done/completed)
+    const tasksCompleted = await Task.count({
+      where: {
+        assigned_to: req.user.id,
+        status: { [Op.in]: ["done", "completed", "Done", "Completed"] },
+      },
+    });
+
+    // In-progress tasks
+    const tasksInProgress = await Task.count({
+      where: {
+        assigned_to: req.user.id,
+        status: { [Op.in]: ["in-progress", "in_progress", "In Progress"] },
+      },
+    });
+
+    // Overdue tasks (has due_date, not done, past due)
+    const tasksOverdue = await Task.count({
+      where: {
+        assigned_to: req.user.id,
+        due_date: { [Op.lt]: new Date() },
+        status: { [Op.notIn]: ["done", "completed", "Done", "Completed"] },
+      },
+    });
+
+    return res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        bio: user.bio || null,
+        skills: user.skills || null,
+        created_at: user.created_at,
+      },
+      stats: {
+        projectCount,
+        tasksAssigned,
+        tasksCompleted,
+        tasksInProgress,
+        tasksOverdue,
+        completionRate:
+          tasksAssigned > 0
+            ? Math.round((tasksCompleted / tasksAssigned) * 100)
+            : 0,
+      },
+    });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

@@ -2,9 +2,21 @@ import "../styles/globals.css";
 import "../styles/login.css";
 import { useRouter } from "next/router";
 import { ThemeProvider } from "../context/ThemeContext";
+import { useEffect } from "react";
+
+function usePWA() {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .catch((err) => console.error("SW registration failed:", err));
+    }
+  }, []);
+}
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
+  usePWA();
   const isAuthPage = ["/login", "/register", "/forgot-password"].includes(
     router.pathname,
   );

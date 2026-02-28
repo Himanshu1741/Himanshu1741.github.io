@@ -7,6 +7,8 @@ import { useTheme } from "../../context/ThemeContext";
 const NAV = [
   { key: "dashboard", label: "Dashboard", emoji: "🏠", href: "/dashboard" },
   { key: "projects", label: "My Projects", emoji: "📁", href: "/projects" },
+  { key: "deadlines", label: "Deadlines", emoji: "📅", href: "/deadlines" },
+  { key: "profile", label: "My Profile", emoji: "👤", href: "/profile" },
   { key: "settings", label: "Settings", emoji: "⚙", href: "/settings" },
   { key: "trash", label: "Trash", emoji: "🗑", href: "/trash" },
 ];

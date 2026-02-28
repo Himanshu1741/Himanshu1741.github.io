@@ -4,6 +4,7 @@ const taskController = require("../controllers/task/taskController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/", authMiddleware, taskController.createTask);
+router.get("/deadlines", authMiddleware, taskController.getDeadlines);
 router.get("/trash", authMiddleware, taskController.getAllTrashedTasks);
 router.get(
   "/trash/:project_id",

@@ -36,6 +36,14 @@ const User = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    bio: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    skills: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
   },
   {
     tableName: "users",
