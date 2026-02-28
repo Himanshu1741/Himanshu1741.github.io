@@ -24,6 +24,7 @@ const AdminLog = require("./models/AdminLog");
 
 const http = require("http");
 const { Server } = require("socket.io");
+const socketInstance = require("./config/socketInstance");
 
 const path = require("path");
 
@@ -35,6 +36,9 @@ const io = new Server(server, {
     origin: "*",
   },
 });
+
+// Make io accessible from controllers
+socketInstance.setIo(io);
 
 app.use(cors());
 app.use(express.json());

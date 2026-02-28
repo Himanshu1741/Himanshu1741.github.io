@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const projectController = require("../controllers/project/projectController");
+const githubController = require("../controllers/github/githubController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/", authMiddleware, projectController.createProject);
@@ -52,5 +53,21 @@ router.post(
   projectController.acceptInvitation,
 );
 router.delete("/:id", authMiddleware, projectController.deleteProject);
+
+// ─── GitHub Integration ───────────────────────────────────────────────────────
+router.get("/:id/github", authMiddleware, githubController.getGithubData);
+router.put("/:id/github", authMiddleware, githubController.updateGithubRepo);
+router.get("/:id/github/commits", authMiddleware, githubController.getCommits);
+router.get("/:id/github/issues", authMiddleware, githubController.getIssues);
+router.get(
+  "/:id/github/branches",
+  authMiddleware,
+  githubController.getBranches,
+);
+router.get(
+  "/:id/github/pulls",
+  authMiddleware,
+  githubController.getPullRequests,
+);
 
 module.exports = router;

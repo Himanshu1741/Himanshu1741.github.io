@@ -5,6 +5,13 @@ const Notification = require("../../models/Notification");
 const User = require("../../models/User");
 const sequelize = require("../../config/db");
 const { sendTaskAssignedEmail } = require("../../services/emailService");
+const { getIo } = require("../../config/socketInstance");
+
+const emitToProject = (projectId, event, payload = {}) => {
+  try {
+    getIo()?.to(String(projectId)).emit(event, payload);
+  } catch {}
+};
 
 let taskTrashTableReady = false;
 
@@ -33,14 +40,27 @@ const ensureTaskTrashTable = async () => {
 // CREATE TASK
 exports.createTask = async (req, res) => {
   try {
-    const { title, description, project_id, assigned_to, due_date, priority, milestone_id, estimated_hours } = req.body;
+    const {
+      title,
+      description,
+      project_id,
+      assigned_to,
+      due_date,
+      priority,
+      milestone_id,
+      estimated_hours,
+    } = req.body;
 
     const membership = await ProjectMember.findOne({
-      where: { project_id, user_id: req.user.id }
+      where: { project_id, user_id: req.user.id },
     });
 
-    if (!membership) return res.status(403).json({ message: "Not a project member" });
-    if (!membership.can_manage_tasks) return res.status(403).json({ message: "Task management permission denied" });
+    if (!membership)
+      return res.status(403).json({ message: "Not a project member" });
+    if (!membership.can_manage_tasks)
+      return res
+        .status(403)
+        .json({ message: "Task management permission denied" });
 
     const task = await Task.create({
       title,
@@ -50,25 +70,29 @@ exports.createTask = async (req, res) => {
       due_date: due_date || null,
       priority: priority || "medium",
       milestone_id: milestone_id || null,
-      estimated_hours: estimated_hours || null
+      estimated_hours: estimated_hours || null,
     });
 
     if (assigned_to) {
       await Notification.create({
         message: `You have been assigned a new task: ${title}`,
-        user_id: assigned_to
+        user_id: assigned_to,
       });
       // Send email notification
       try {
-        const assignee = await User.findByPk(assigned_to, { attributes: ["id", "name", "email"] });
-        const project = await Project.findByPk(project_id, { attributes: ["id", "title"] });
+        const assignee = await User.findByPk(assigned_to, {
+          attributes: ["id", "name", "email"],
+        });
+        const project = await Project.findByPk(project_id, {
+          attributes: ["id", "title"],
+        });
         if (assignee && project) {
           await sendTaskAssignedEmail({
             toEmail: assignee.email,
             toName: assignee.name,
             taskTitle: title,
             projectTitle: project.title,
-            dueDate: due_date || null
+            dueDate: due_date || null,
           });
         }
       } catch (emailErr) {
@@ -76,6 +100,7 @@ exports.createTask = async (req, res) => {
       }
     }
 
+    emitToProject(project_id, "taskCreated", { task });
     res.status(201).json({ message: "Task created successfully", task });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -90,19 +115,18 @@ exports.getTasksByProject = async (req, res) => {
     const membership = await ProjectMember.findOne({
       where: {
         project_id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!membership) {
       return res.status(403).json({ message: "Not a project member" });
     }
     const tasks = await Task.findAll({
-      where: { project_id }
+      where: { project_id },
     });
 
     res.json(tasks);
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -112,16 +136,29 @@ exports.getTasksByProject = async (req, res) => {
 exports.updateTaskStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, priority, due_date, assigned_to, title, description, milestone_id, estimated_hours } = req.body;
+    const {
+      status,
+      priority,
+      due_date,
+      assigned_to,
+      title,
+      description,
+      milestone_id,
+      estimated_hours,
+    } = req.body;
 
     const task = await Task.findByPk(id);
     if (!task) return res.status(404).json({ message: "Task not found" });
 
     const membership = await ProjectMember.findOne({
-      where: { project_id: task.project_id, user_id: req.user.id }
+      where: { project_id: task.project_id, user_id: req.user.id },
     });
-    if (!membership) return res.status(403).json({ message: "Not a project member" });
-    if (!membership.can_manage_tasks) return res.status(403).json({ message: "Task management permission denied" });
+    if (!membership)
+      return res.status(403).json({ message: "Not a project member" });
+    if (!membership.can_manage_tasks)
+      return res
+        .status(403)
+        .json({ message: "Task management permission denied" });
 
     const updates = {};
     if (status !== undefined) updates.status = status;
@@ -131,26 +168,35 @@ exports.updateTaskStatus = async (req, res) => {
     if (title !== undefined && title.trim()) updates.title = title.trim();
     if (description !== undefined) updates.description = description || null;
     if (milestone_id !== undefined) updates.milestone_id = milestone_id || null;
-    if (estimated_hours !== undefined) updates.estimated_hours = estimated_hours || null;
+    if (estimated_hours !== undefined)
+      updates.estimated_hours = estimated_hours || null;
 
     await Task.update(updates, { where: { id } });
 
     // Notify new assignee (if changed)
-    if (assigned_to !== undefined && assigned_to && assigned_to !== task.assigned_to) {
-      const project = await Project.findByPk(task.project_id, { attributes: ["id", "title"] });
+    if (
+      assigned_to !== undefined &&
+      assigned_to &&
+      assigned_to !== task.assigned_to
+    ) {
+      const project = await Project.findByPk(task.project_id, {
+        attributes: ["id", "title"],
+      });
       await Notification.create({
         message: `You have been assigned a task: ${updates.title || task.title}`,
-        user_id: assigned_to
+        user_id: assigned_to,
       });
       try {
-        const assignee = await User.findByPk(assigned_to, { attributes: ["id", "name", "email"] });
+        const assignee = await User.findByPk(assigned_to, {
+          attributes: ["id", "name", "email"],
+        });
         if (assignee && project) {
           await sendTaskAssignedEmail({
             toEmail: assignee.email,
             toName: assignee.name,
             taskTitle: updates.title || task.title,
             projectTitle: project.title,
-            dueDate: updates.due_date || task.due_date
+            dueDate: updates.due_date || task.due_date,
           });
         }
       } catch (emailErr) {
@@ -159,6 +205,7 @@ exports.updateTaskStatus = async (req, res) => {
     }
 
     const updatedTask = await Task.findByPk(id);
+    emitToProject(updatedTask.project_id, "taskUpdated", { task: updatedTask });
     res.json({ message: "Task updated successfully", task: updatedTask });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -183,7 +230,9 @@ exports.deleteTask = async (req, res) => {
     }
 
     if (project.created_by !== req.user.id) {
-      return res.status(403).json({ message: "Only the project creator can delete tasks" });
+      return res
+        .status(403)
+        .json({ message: "Only the project creator can delete tasks" });
     }
 
     await ensureTaskTrashTable();
@@ -203,19 +252,40 @@ exports.deleteTask = async (req, res) => {
           task.description || null,
           task.status,
           task.assigned_to || null,
-          req.user.id
-        ]
-      }
+          req.user.id,
+        ],
+      },
     );
 
+    const projectId = task.project_id;
     await Task.destroy({
-      where: { id }
+      where: { id },
     });
 
+    emitToProject(projectId, "taskDeleted", { taskId: id });
     res.json({ message: "Task moved to trash successfully" });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+// GET ALL TRASHED TASKS (for current user across all their projects)
+exports.getAllTrashedTasks = async (req, res) => {
+  try {
+    await ensureTaskTrashTable();
+    const [rows] = await sequelize.query(
+      `SELECT tt.id, tt.task_id, tt.project_id, tt.title, tt.description,
+              tt.status, tt.assigned_to, tt.deleted_by, tt.deleted_at,
+              p.title AS project_title
+       FROM task_trash tt
+       JOIN projects p ON p.id = tt.project_id
+       WHERE p.created_by = ?
+       ORDER BY tt.deleted_at DESC`,
+      { replacements: [req.user.id] },
+    );
+    return res.json(rows);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -230,7 +300,9 @@ exports.getDeletedTasksByProject = async (req, res) => {
     }
 
     if (project.created_by !== req.user.id) {
-      return res.status(403).json({ message: "Only the project creator can view task trash" });
+      return res
+        .status(403)
+        .json({ message: "Only the project creator can view task trash" });
     }
 
     await ensureTaskTrashTable();
@@ -243,8 +315,8 @@ exports.getDeletedTasksByProject = async (req, res) => {
         ORDER BY deleted_at DESC
       `,
       {
-        replacements: [project_id]
-      }
+        replacements: [project_id],
+      },
     );
 
     return res.json(rows);
@@ -262,7 +334,7 @@ exports.restoreTask = async (req, res) => {
 
     const [rows] = await sequelize.query(
       `SELECT * FROM task_trash WHERE id = ? LIMIT 1`,
-      { replacements: [id] }
+      { replacements: [id] },
     );
 
     const trashedTask = rows?.[0];
@@ -276,7 +348,9 @@ exports.restoreTask = async (req, res) => {
     }
 
     if (project.created_by !== req.user.id) {
-      return res.status(403).json({ message: "Only the project creator can restore tasks" });
+      return res
+        .status(403)
+        .json({ message: "Only the project creator can restore tasks" });
     }
 
     const restoredTask = await Task.create({
@@ -284,17 +358,19 @@ exports.restoreTask = async (req, res) => {
       description: trashedTask.description,
       status: trashedTask.status,
       project_id: trashedTask.project_id,
-      assigned_to: trashedTask.assigned_to
+      assigned_to: trashedTask.assigned_to,
     });
 
-    await sequelize.query(
-      `DELETE FROM task_trash WHERE id = ?`,
-      { replacements: [id] }
-    );
+    await sequelize.query(`DELETE FROM task_trash WHERE id = ?`, {
+      replacements: [id],
+    });
 
+    emitToProject(restoredTask.project_id, "taskCreated", {
+      task: restoredTask,
+    });
     return res.json({
       message: "Task restored successfully",
-      task: restoredTask
+      task: restoredTask,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -310,7 +386,7 @@ exports.deleteTaskPermanently = async (req, res) => {
 
     const [rows] = await sequelize.query(
       `SELECT id, project_id FROM task_trash WHERE id = ? LIMIT 1`,
-      { replacements: [trash_id] }
+      { replacements: [trash_id] },
     );
 
     const trashedTask = rows?.[0];
@@ -324,13 +400,15 @@ exports.deleteTaskPermanently = async (req, res) => {
     }
 
     if (project.created_by !== req.user.id) {
-      return res.status(403).json({ message: "Only the project creator can permanently delete trashed tasks" });
+      return res.status(403).json({
+        message:
+          "Only the project creator can permanently delete trashed tasks",
+      });
     }
 
-    await sequelize.query(
-      `DELETE FROM task_trash WHERE id = ?`,
-      { replacements: [trash_id] }
-    );
+    await sequelize.query(`DELETE FROM task_trash WHERE id = ?`, {
+      replacements: [trash_id],
+    });
 
     return res.json({ message: "Task permanently deleted from trash" });
   } catch (error) {

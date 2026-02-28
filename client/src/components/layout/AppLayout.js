@@ -49,6 +49,7 @@ export default function AppLayout({
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const items = [...NAV];
   if (user?.role === "admin") {
@@ -72,9 +73,22 @@ export default function AppLayout({
         .page-fade { animation: fadeUp 0.2s ease; }
       `}</style>
 
+      {/* ── Mobile overlay ─────────────────────────────── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <aside
-        className="flex flex-col border-r border-slate-800 bg-slate-950 transition-all duration-300 z-20 shrink-0"
+        className={`
+          flex flex-col border-r border-slate-200 bg-white transition-all duration-300 z-40 shrink-0 dark:border-slate-800 dark:bg-slate-950
+          fixed inset-y-0 left-0 md:relative
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0
+        `}
         style={{ width: sidebarOpen ? 220 : 64 }}
       >
         {/* Brand */}
@@ -117,8 +131,8 @@ export default function AppLayout({
                 onClick={() => router.push(item.href)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                   isActive
-                    ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/20"
-                    : "text-slate-500 hover:bg-slate-800/60 hover:text-slate-300 border border-transparent"
+                    ? "bg-cyan-500/15 text-cyan-700 border border-cyan-500/20 dark:text-cyan-300"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-700 border border-transparent dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
                 }`}
                 title={!sidebarOpen ? item.label : undefined}
               >
@@ -136,17 +150,17 @@ export default function AppLayout({
         </nav>
 
         {/* User section */}
-        <div className="border-t border-slate-800 p-3">
+        <div className="border-t border-slate-200 p-3 dark:border-slate-800">
           <div
             className={`flex items-center gap-2.5 ${sidebarOpen ? "" : "justify-center"}`}
           >
             <Avatar name={user?.name} size="sm" />
             {sidebarOpen && (
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-slate-200">
+                <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {user?.name}
                 </p>
-                <p className="text-[10px] text-slate-600 capitalize">
+                <p className="text-[10px] capitalize text-slate-500 dark:text-slate-600">
                   {user?.role || "member"}
                 </p>
               </div>
@@ -154,7 +168,7 @@ export default function AppLayout({
             {sidebarOpen && (
               <button
                 onClick={onLogout}
-                className="shrink-0 rounded-lg px-1.5 py-1 text-[10px] font-semibold text-slate-600 hover:bg-rose-500/10 hover:text-rose-400 transition border border-transparent hover:border-rose-500/20"
+                className="shrink-0 rounded-lg px-1.5 py-1 text-[10px] font-semibold text-slate-500 hover:bg-rose-500/10 hover:text-rose-600 transition border border-transparent hover:border-rose-500/20 dark:text-slate-600 dark:hover:text-rose-400"
                 title="Sign out"
               >
                 Exit
@@ -168,14 +182,31 @@ export default function AppLayout({
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         {/* Header */}
         <header
-          className="flex h-16 shrink-0 items-center gap-4 border-b border-slate-800 bg-slate-950/80 px-6 z-10"
+          className="flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white/80 px-4 z-10 dark:border-slate-800 dark:bg-slate-950/80 sm:px-6"
           style={{ backdropFilter: "blur(12px)" }}
         >
-          <div>
-            <h1 className="text-base font-bold text-white">
+          {/* Hamburger — mobile only */}
+          <button
+            className="rounded-lg border border-slate-200 bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 md:hidden"
+            onClick={() => setMobileOpen((o) => !o)}
+            aria-label="Toggle sidebar"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" />
+            </svg>
+          </button>
+
+          <div className="min-w-0">
+            <h1 className="truncate text-sm font-bold text-slate-900 dark:text-white sm:text-base">
               {currentItem?.emoji} {currentItem?.label || "Workspace"}
             </h1>
-            <p className="text-[11px] text-slate-600">
+            <p className="hidden text-[11px] text-slate-400 dark:text-slate-600 sm:block">
               {new Date().toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",
@@ -187,12 +218,12 @@ export default function AppLayout({
 
           <div className="ml-auto flex items-center gap-2">
             {headerRight}
-            <div className="hidden w-56 sm:block">
+            <div className="hidden w-48 lg:block">
               <GlobalSearch />
             </div>
             <NotificationBell />
             <button
-              className="rounded-lg border border-slate-800 bg-slate-900 p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition"
+              className="rounded-lg border border-slate-200 bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
               onClick={toggleTheme}
               title={
                 theme === "dark"
@@ -235,7 +266,9 @@ export default function AppLayout({
 
         {/* Scrollable content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-6xl p-6 page-fade">{children}</div>
+          <div className="mx-auto max-w-6xl p-4 page-fade sm:p-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>

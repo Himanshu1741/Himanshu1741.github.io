@@ -4,6 +4,13 @@ const ProjectMember = require("../../models/ProjectMember");
 const Project = require("../../models/Project");
 const User = require("../../models/User");
 const { sendMilestoneCompletedEmail } = require("../../services/emailService");
+const { getIo } = require("../../config/socketInstance");
+
+const emitToProject = (projectId, event, payload = {}) => {
+  try {
+    getIo()?.to(String(projectId)).emit(event, payload);
+  } catch {}
+};
 
 // ensure milestones table exists
 const sequelize = require("../../config/db");
@@ -32,13 +39,17 @@ exports.getMilestones = async (req, res) => {
     await ensureMilestoneTable();
     const { project_id } = req.params;
     const membership = await ProjectMember.findOne({
-      where: { project_id, user_id: req.user.id }
+      where: { project_id, user_id: req.user.id },
     });
-    if (!membership) return res.status(403).json({ message: "Not a project member" });
+    if (!membership)
+      return res.status(403).json({ message: "Not a project member" });
 
     const milestones = await Milestone.findAll({
       where: { project_id },
-      order: [["due_date", "ASC"], ["created_at", "ASC"]]
+      order: [
+        ["due_date", "ASC"],
+        ["created_at", "ASC"],
+      ],
     });
 
     // Attach task counts per milestone (tasks linked by milestone_id)
@@ -47,17 +58,20 @@ exports.getMilestones = async (req, res) => {
     if (milestoneIds.length > 0) {
       const [rows] = await sequelize.query(
         `SELECT milestone_id, COUNT(*) AS total, SUM(status='completed') AS done
-         FROM tasks WHERE milestone_id IN (${milestoneIds.join(",")}) GROUP BY milestone_id`
+         FROM tasks WHERE milestone_id IN (${milestoneIds.join(",")}) GROUP BY milestone_id`,
       );
       rows.forEach((r) => {
-        taskCounts[r.milestone_id] = { total: Number(r.total), done: Number(r.done) };
+        taskCounts[r.milestone_id] = {
+          total: Number(r.total),
+          done: Number(r.done),
+        };
       });
     }
 
     const result = milestones.map((m) => ({
       ...m.toJSON(),
       task_count: taskCounts[m.id]?.total || 0,
-      done_count: taskCounts[m.id]?.done || 0
+      done_count: taskCounts[m.id]?.done || 0,
     }));
 
     res.json(result);
@@ -71,22 +85,28 @@ exports.createMilestone = async (req, res) => {
   try {
     await ensureMilestoneTable();
     const { project_id, title, description, due_date } = req.body;
-    if (!title || !title.trim()) return res.status(400).json({ message: "Title is required" });
+    if (!title || !title.trim())
+      return res.status(400).json({ message: "Title is required" });
 
     const membership = await ProjectMember.findOne({
-      where: { project_id, user_id: req.user.id }
+      where: { project_id, user_id: req.user.id },
     });
-    if (!membership) return res.status(403).json({ message: "Not a project member" });
-    if (!membership.can_manage_tasks) return res.status(403).json({ message: "Task management permission required" });
+    if (!membership)
+      return res.status(403).json({ message: "Not a project member" });
+    if (!membership.can_manage_tasks)
+      return res
+        .status(403)
+        .json({ message: "Task management permission required" });
 
     const milestone = await Milestone.create({
       project_id,
       title: title.trim(),
       description: description || null,
       due_date: due_date || null,
-      created_by: req.user.id
+      created_by: req.user.id,
     });
 
+    emitToProject(project_id, "milestoneCreated", { milestone });
     res.status(201).json(milestone);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -100,13 +120,18 @@ exports.updateMilestone = async (req, res) => {
     const { title, description, due_date, status } = req.body;
 
     const milestone = await Milestone.findByPk(id);
-    if (!milestone) return res.status(404).json({ message: "Milestone not found" });
+    if (!milestone)
+      return res.status(404).json({ message: "Milestone not found" });
 
     const membership = await ProjectMember.findOne({
-      where: { project_id: milestone.project_id, user_id: req.user.id }
+      where: { project_id: milestone.project_id, user_id: req.user.id },
     });
-    if (!membership) return res.status(403).json({ message: "Not a project member" });
-    if (!membership.can_manage_tasks) return res.status(403).json({ message: "Task management permission required" });
+    if (!membership)
+      return res.status(403).json({ message: "Not a project member" });
+    if (!membership.can_manage_tasks)
+      return res
+        .status(403)
+        .json({ message: "Task management permission required" });
 
     const wasOpen = milestone.status === "open";
     if (title) milestone.title = title.trim();
@@ -115,19 +140,26 @@ exports.updateMilestone = async (req, res) => {
     if (status) milestone.status = status;
     await milestone.save();
 
+    emitToProject(milestone.project_id, "milestoneUpdated", { milestone });
+
     // Send emails when milestone is completed
     if (wasOpen && milestone.status === "completed") {
       try {
         const project = await Project.findByPk(milestone.project_id);
-        const members = await ProjectMember.findAll({ where: { project_id: milestone.project_id } });
+        const members = await ProjectMember.findAll({
+          where: { project_id: milestone.project_id },
+        });
         const userIds = members.map((m) => m.user_id);
-        const users = await User.findAll({ where: { id: userIds }, attributes: ["id", "name", "email"] });
+        const users = await User.findAll({
+          where: { id: userIds },
+          attributes: ["id", "name", "email"],
+        });
         for (const user of users) {
           await sendMilestoneCompletedEmail({
             toEmail: user.email,
             toName: user.name,
             milestoneTitle: milestone.title,
-            projectTitle: project?.title || "Project"
+            projectTitle: project?.title || "Project",
           });
         }
       } catch (emailErr) {
@@ -146,15 +178,20 @@ exports.deleteMilestone = async (req, res) => {
   try {
     const { id } = req.params;
     const milestone = await Milestone.findByPk(id);
-    if (!milestone) return res.status(404).json({ message: "Milestone not found" });
+    if (!milestone)
+      return res.status(404).json({ message: "Milestone not found" });
 
     const project = await Project.findByPk(milestone.project_id);
     if (!project) return res.status(404).json({ message: "Project not found" });
     if (project.created_by !== req.user.id && req.user.role !== "admin") {
-      return res.status(403).json({ message: "Only project creator can delete milestones" });
+      return res
+        .status(403)
+        .json({ message: "Only project creator can delete milestones" });
     }
 
+    const projectId = milestone.project_id;
     await milestone.destroy();
+    emitToProject(projectId, "milestoneDeleted", { milestoneId: id });
     res.json({ message: "Milestone deleted" });
   } catch (error) {
     res.status(500).json({ error: error.message });

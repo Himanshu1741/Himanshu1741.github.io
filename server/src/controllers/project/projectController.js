@@ -518,7 +518,6 @@ exports.deleteTrashedProjectPermanently = async (req, res) => {
   }
 };
 
-// Helper: validate a github repo URL/slug against the GitHub API
 // UPDATE PROJECT (CREATOR OR PERMITTED MEMBER)
 exports.updateProject = async (req, res) => {
   try {
@@ -557,6 +556,13 @@ exports.updateProject = async (req, res) => {
 
     project.title = nextTitle;
     project.description = nextDescription;
+
+    // Allow github_repo updates through this endpoint as well
+    if (Object.prototype.hasOwnProperty.call(req.body, "github_repo")) {
+      const rawRepo = (req.body.github_repo || "").trim();
+      project.github_repo = rawRepo || null;
+    }
+
     await project.save();
 
     return res.json({ message: "Project updated successfully", project });
