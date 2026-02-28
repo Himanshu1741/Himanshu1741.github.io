@@ -6,6 +6,7 @@ import { useTheme } from "../../context/ThemeContext";
 
 const NAV = [
   { key: "dashboard", label: "Dashboard", emoji: "🏠", href: "/dashboard" },
+  { key: "projects", label: "My Projects", emoji: "📁", href: "/projects" },
   { key: "settings", label: "Settings", emoji: "⚙", href: "/settings" },
   { key: "trash", label: "Trash", emoji: "🗑", href: "/trash" },
 ];
