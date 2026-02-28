@@ -162,7 +162,7 @@ export default function TrashPage() {
       async () => {
         closeConfirm();
         try {
-          await API.post(`/projects/${id}/restore`);
+          await API.post(`/projects/trash/${id}/restore`);
           toast(`"${title}" restored`, "success");
           await loadTrash();
         } catch (err) {
@@ -178,7 +178,7 @@ export default function TrashPage() {
       async () => {
         closeConfirm();
         try {
-          await API.delete(`/projects/${id}/permanent`);
+          await API.delete(`/projects/trash/${id}/permanent`);
           toast(`"${title}" permanently deleted`, "success");
           await loadTrash();
         } catch (err) {
@@ -231,7 +231,7 @@ export default function TrashPage() {
         try {
           await Promise.allSettled([
             ...trashedProjects.map((p) =>
-              API.delete(`/projects/${p.id}/permanent`),
+              API.delete(`/projects/trash/${p.id}/permanent`),
             ),
             ...trashedTasks.map((t) =>
               API.delete(`/tasks/trash/${t.id}/permanent`),
