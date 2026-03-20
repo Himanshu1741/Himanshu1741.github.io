@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 import AppLayout from "../components/layout/AppLayout";
 import API from "../services/api";
+import socket from "../services/socket";
 
 // Load calendar only on client side (avoids SSR issues with react-big-calendar)
 const DeadlineCalendar = dynamic(
@@ -177,6 +178,8 @@ export default function DeadlinesPage() {
   const [user, setUser] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [timeTick, setTimeTick] = useState(0);
   const [view, setView] = useState("list"); // "list" | "calendar"
   const [filter, setFilter] = useState("all"); // all | overdue | today | week | upcoming
   const [projectFilter, setProjectFilter] = useState("all");
@@ -197,21 +200,78 @@ export default function DeadlinesPage() {
     }
   }, []);
 
-  const loadDeadlines = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await API.get("/tasks/deadlines");
-      setTasks(res.data || []);
-    } catch {
-      toast("Failed to load deadlines", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loadDeadlines = useCallback(
+    async (silent = false) => {
+      if (silent) setRefreshing(true);
+      else setLoading(true);
+      try {
+        const res = await API.get("/tasks/deadlines");
+        setTasks(res.data || []);
+      } catch {
+        toast("Failed to load deadlines", "error");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [toast],
+  );
 
   useEffect(() => {
-    if (user) loadDeadlines();
-  }, [user]);
+    if (user) loadDeadlines(false);
+  }, [user, loadDeadlines]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    socket.emit("registerUser", user.id);
+
+    let projectIds = [];
+
+    const joinAllProjectRooms = async () => {
+      try {
+        const res = await API.get("/projects");
+        projectIds = (res.data || []).map((p) => String(p.id));
+        projectIds.forEach((pid) => socket.emit("joinProject", pid));
+      } catch {
+        projectIds = [];
+      }
+    };
+
+    joinAllProjectRooms();
+
+    const refresh = () => loadDeadlines(true);
+
+    socket.on("taskUpdated", refresh);
+    socket.on("taskCreated", refresh);
+    socket.on("taskDeleted", refresh);
+    socket.on("milestoneUpdated", refresh);
+    socket.on("milestoneCreated", refresh);
+    socket.on("milestoneDeleted", refresh);
+    socket.on("projectUpdated", refresh);
+
+    const onFocus = () => loadDeadlines(true);
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      projectIds.forEach((pid) => socket.emit("leaveProject", pid));
+      socket.off("taskUpdated", refresh);
+      socket.off("taskCreated", refresh);
+      socket.off("taskDeleted", refresh);
+      socket.off("milestoneUpdated", refresh);
+      socket.off("milestoneCreated", refresh);
+      socket.off("milestoneDeleted", refresh);
+      socket.off("projectUpdated", refresh);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [user, loadDeadlines]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeTick((t) => t + 1);
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -233,14 +293,26 @@ export default function DeadlinesPage() {
     () =>
       tasks.map((t) => {
         const days = daysUntil(t.due_date);
-        return { ...t, daysLeft: days, overdue: days !== null && days < 0 };
+        const status = String(t.status || "").toLowerCase();
+        const isCompleted = status === "completed" || status === "done";
+        return {
+          ...t,
+          daysLeft: days,
+          isCompleted,
+          overdue: !isCompleted && days !== null && days < 0,
+        };
       }),
-    [tasks],
+    [tasks, timeTick],
+  );
+
+  const visibleEnriched = useMemo(
+    () => enriched.filter((t) => !t.isCompleted),
+    [enriched],
   );
 
   // Apply urgency + project filter
   const filtered = useMemo(() => {
-    let list = enriched;
+    let list = [...visibleEnriched];
     if (projectFilter !== "all")
       list = list.filter((t) => String(t.project_id) === projectFilter);
     switch (filter) {
@@ -268,25 +340,25 @@ export default function DeadlinesPage() {
         (PRIORITY_RANK[a.priority] ?? 99) - (PRIORITY_RANK[b.priority] ?? 99)
       );
     });
-  }, [enriched, filter, projectFilter]);
+  }, [visibleEnriched, filter, projectFilter]);
 
   // Summary stats
   const stats = useMemo(
     () => ({
-      overdue: enriched.filter((t) => t.overdue).length,
-      today: enriched.filter((t) => t.daysLeft === 0).length,
-      week: enriched.filter(
+      overdue: visibleEnriched.filter((t) => t.overdue).length,
+      today: visibleEnriched.filter((t) => t.daysLeft === 0).length,
+      week: visibleEnriched.filter(
         (t) => t.daysLeft !== null && t.daysLeft >= 0 && t.daysLeft <= 7,
       ).length,
-      total: enriched.length,
+      total: visibleEnriched.length,
     }),
-    [enriched],
+    [visibleEnriched],
   );
 
   // Calendar events
   const calEvents = useMemo(
     () =>
-      enriched.map((t) => ({
+      visibleEnriched.map((t) => ({
         id: t.id,
         title: `${t.title} [${t.project_title}]`,
         start: new Date(t.due_date),
@@ -295,7 +367,7 @@ export default function DeadlinesPage() {
         allDay: true,
         _task: t,
       })),
-    [enriched],
+    [visibleEnriched],
   );
 
   const STATUS_FILTERS = [
@@ -329,6 +401,7 @@ export default function DeadlinesPage() {
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {stats.total} tasks with deadlines &middot; {stats.overdue}{" "}
                   overdue
+                  {refreshing ? " · updating…" : ""}
                 </p>
               </div>
               {/* View toggle */}
