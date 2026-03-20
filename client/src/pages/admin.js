@@ -16,11 +16,28 @@ import {
   Filler,
 } from "chart.js";
 
-const Bar = dynamic(() => import("react-chartjs-2").then((m) => m.Bar), { ssr: false });
-const Line = dynamic(() => import("react-chartjs-2").then((m) => m.Line), { ssr: false });
-const Doughnut = dynamic(() => import("react-chartjs-2").then((m) => m.Doughnut), { ssr: false });
+const Bar = dynamic(() => import("react-chartjs-2").then((m) => m.Bar), {
+  ssr: false,
+});
+const Line = dynamic(() => import("react-chartjs-2").then((m) => m.Line), {
+  ssr: false,
+});
+const Doughnut = dynamic(
+  () => import("react-chartjs-2").then((m) => m.Doughnut),
+  { ssr: false },
+);
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+  Filler,
+);
 
 // --- Toast System ---
 function useToast() {
@@ -42,12 +59,18 @@ function ToastContainer({ toasts }) {
     warning: "border-amber-500/40 bg-amber-500/10 text-amber-300",
   };
   return (
-    <div className="fixed right-5 top-5 z-[9999] flex flex-col gap-2" style={{ pointerEvents: "none" }}>
+    <div
+      className="fixed right-5 top-5 z-[9999] flex flex-col gap-2"
+      style={{ pointerEvents: "none" }}
+    >
       {toasts.map((t) => (
         <div
           key={t.id}
           className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-medium shadow-xl backdrop-blur-sm ${colors[t.type]}`}
-          style={{ pointerEvents: "auto", animation: "slideInRight 0.25s ease" }}
+          style={{
+            pointerEvents: "auto",
+            animation: "slideInRight 0.25s ease",
+          }}
         >
           <span className="text-xs font-black">{icons[t.type]}</span>
           {t.msg}
@@ -58,20 +81,40 @@ function ToastContainer({ toasts }) {
 }
 
 // --- Confirm Modal ---
-function ConfirmModal({ open, title, message, onConfirm, onCancel, variant = "danger" }) {
+function ConfirmModal({
+  open,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+  variant = "danger",
+}) {
   if (!open) return null;
   const btnColors = {
     danger: "bg-rose-500 hover:bg-rose-400 text-white",
     warning: "bg-amber-500 hover:bg-amber-400 text-slate-900",
   };
   return (
-    <div className="fixed inset-0 z-[9990] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}>
+    <div
+      className="fixed inset-0 z-[9990] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
+    >
       <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
         <h3 className="mb-2 text-base font-bold text-white">{title}</h3>
         <p className="mb-5 text-sm text-slate-400">{message}</p>
         <div className="flex justify-end gap-2">
-          <button className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition" onClick={onCancel}>Cancel</button>
-          <button className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${btnColors[variant]}`} onClick={onConfirm}>Confirm</button>
+          <button
+            className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+          <button
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${btnColors[variant]}`}
+            onClick={onConfirm}
+          >
+            Confirm
+          </button>
         </div>
       </div>
     </div>
@@ -80,12 +123,29 @@ function ConfirmModal({ open, title, message, onConfirm, onCancel, variant = "da
 
 // --- Avatar ---
 function Avatar({ name, size = "md" }) {
-  const initials = (name || "?").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-  const colours = ["from-cyan-500 to-blue-500", "from-violet-500 to-purple-500", "from-emerald-500 to-teal-500", "from-amber-500 to-orange-500", "from-rose-500 to-pink-500"];
+  const initials = (name || "?")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  const colours = [
+    "from-cyan-500 to-blue-500",
+    "from-violet-500 to-purple-500",
+    "from-emerald-500 to-teal-500",
+    "from-amber-500 to-orange-500",
+    "from-rose-500 to-pink-500",
+  ];
   const bg = colours[initials.charCodeAt(0) % colours.length];
-  const sz = { sm: "h-7 w-7 text-[10px]", md: "h-9 w-9 text-xs", lg: "h-11 w-11 text-sm" };
+  const sz = {
+    sm: "h-7 w-7 text-[10px]",
+    md: "h-9 w-9 text-xs",
+    lg: "h-11 w-11 text-sm",
+  };
   return (
-    <div className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-bold text-white ${bg} ${sz[size]}`}>
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-bold text-white ${bg} ${sz[size]}`}
+    >
       {initials}
     </div>
   );
@@ -103,7 +163,9 @@ function Badge({ children, color = "slate" }) {
     cyan: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
   };
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${map[color]}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${map[color]}`}
+    >
       {children}
     </span>
   );
@@ -112,15 +174,31 @@ function Badge({ children, color = "slate" }) {
 // --- Stat Card ---
 function StatCard({ label, value, icon, accent, sub }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 p-5 transition hover:border-slate-700`}>
-      <div className={`absolute right-0 top-0 h-20 w-20 rounded-full blur-2xl opacity-20 ${accent}`} />
+    <div
+      className={`admin-stat-card relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 p-5 transition hover:border-slate-700`}
+    >
+      <div
+        className={`absolute right-0 top-0 h-20 w-20 rounded-full blur-2xl opacity-20 ${accent}`}
+      />
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-widest text-slate-500">{label}</p>
-          <p className={`mt-2 text-3xl font-extrabold tracking-tight text-white`}>{value ?? 0}</p>
-          {sub && <p className="mt-1 text-[11px] text-slate-600">{sub}</p>}
+          <p className="admin-stat-label text-[11px] font-medium uppercase tracking-widest text-slate-500">
+            {label}
+          </p>
+          <p
+            className={`admin-stat-value mt-2 text-3xl font-extrabold tracking-tight text-white`}
+          >
+            {value ?? 0}
+          </p>
+          {sub && (
+            <p className="admin-stat-sub mt-1 text-[11px] text-slate-600">
+              {sub}
+            </p>
+          )}
         </div>
-        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-xl ${accent}`}>
+        <div
+          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-xl ${accent}`}
+        >
           {icon}
         </div>
       </div>
@@ -129,18 +207,35 @@ function StatCard({ label, value, icon, accent, sub }) {
 }
 
 // --- Action Button ---
-function ActionBtn({ onClick, variant = "secondary", disabled, children, size = "sm" }) {
+function ActionBtn({
+  onClick,
+  variant = "secondary",
+  disabled,
+  children,
+  size = "sm",
+  className = "",
+}) {
   const base = `inline-flex items-center gap-1.5 rounded-lg border font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed ${size === "sm" ? "px-2.5 py-1 text-xs" : "px-3.5 py-1.5 text-sm"}`;
   const styles = {
-    secondary: "border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700",
-    danger: "border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/25",
-    success: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/25",
-    amber: "border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/25",
-    primary: "border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/25",
-    violet: "border-violet-500/40 bg-violet-500/10 text-violet-300 hover:bg-violet-500/25",
+    secondary:
+      "border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700",
+    danger:
+      "border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/25",
+    success:
+      "border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/25",
+    amber:
+      "border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/25",
+    primary:
+      "border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/25",
+    violet:
+      "border-violet-500/40 bg-violet-500/10 text-violet-300 hover:bg-violet-500/25",
   };
   return (
-    <button className={`${base} ${styles[variant]}`} onClick={onClick} disabled={disabled}>
+    <button
+      className={`${base} ${styles[variant]} ${className}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {children}
     </button>
   );
@@ -162,21 +257,37 @@ const CHART_OPTS = {
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: {
-    x: { ticks: { color: "#64748b" }, grid: { color: "rgba(100,116,139,0.06)" } },
-    y: { ticks: { color: "#64748b" }, grid: { color: "rgba(100,116,139,0.06)" } },
+    x: {
+      ticks: { color: "#64748b" },
+      grid: { color: "rgba(100,116,139,0.06)" },
+    },
+    y: {
+      ticks: { color: "#64748b" },
+      grid: { color: "rgba(100,116,139,0.06)" },
+    },
   },
 };
 
 const LINE_OPTS = {
   ...CHART_OPTS,
-  plugins: { legend: { display: true, labels: { color: "#94a3b8", usePointStyle: true, boxWidth: 8 } } },
+  plugins: {
+    legend: {
+      display: true,
+      labels: { color: "#94a3b8", usePointStyle: true, boxWidth: 8 },
+    },
+  },
 };
 
 const DONUT_OPTS = {
   responsive: true,
   maintainAspectRatio: false,
   cutout: "72%",
-  plugins: { legend: { position: "bottom", labels: { color: "#94a3b8", usePointStyle: true, boxWidth: 8 } } },
+  plugins: {
+    legend: {
+      position: "bottom",
+      labels: { color: "#94a3b8", usePointStyle: true, boxWidth: 8 },
+    },
+  },
 };
 
 // --- Sidebar nav items ---
@@ -208,7 +319,8 @@ export default function Admin() {
   const [auditLog, setAuditLog] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const [selected, setSelected] = useState(new Set());
@@ -217,7 +329,13 @@ export default function Admin() {
   const [announcingStatus, setAnnouncingStatus] = useState("idle");
   const [actionLoading, setActionLoading] = useState({});
 
-  const [confirm, setConfirm] = useState({ open: false, title: "", message: "", onConfirm: null, variant: "danger" });
+  const [confirm, setConfirm] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+    variant: "danger",
+  });
   const ask = (title, message, onConfirm, variant = "danger") =>
     setConfirm({ open: true, title, message, onConfirm, variant });
   const closeConfirm = () => setConfirm((c) => ({ ...c, open: false }));
@@ -228,14 +346,31 @@ export default function Admin() {
     router.push("/login");
   };
 
-  const loadUsers = useCallback(async () => { const r = await API.get("/admin/users"); setUsers(r.data); }, []);
-  const loadProjects = useCallback(async () => { const r = await API.get("/admin/projects"); setProjects(r.data); }, []);
-  const loadAnalytics = useCallback(async () => { const r = await API.get("/admin/analytics"); setAnalytics(r.data); }, []);
-  const loadAuditLog = useCallback(async () => { const r = await API.get("/admin/audit-log"); setAuditLog(r.data); }, []);
+  const loadUsers = useCallback(async () => {
+    const r = await API.get("/admin/users");
+    setUsers(r.data);
+  }, []);
+  const loadProjects = useCallback(async () => {
+    const r = await API.get("/admin/projects");
+    setProjects(r.data);
+  }, []);
+  const loadAnalytics = useCallback(async () => {
+    const r = await API.get("/admin/analytics");
+    setAnalytics(r.data);
+  }, []);
+  const loadAuditLog = useCallback(async () => {
+    const r = await API.get("/admin/audit-log");
+    setAuditLog(r.data);
+  }, []);
 
   const refreshAll = useCallback(async () => {
     setIsLoading(true);
-    await Promise.all([loadUsers(), loadProjects(), loadAnalytics(), loadAuditLog()]);
+    await Promise.all([
+      loadUsers(),
+      loadProjects(),
+      loadAnalytics(),
+      loadAuditLog(),
+    ]);
     setIsLoading(false);
   }, [loadUsers, loadProjects, loadAnalytics, loadAuditLog]);
 
@@ -243,18 +378,39 @@ export default function Admin() {
     const stored = localStorage.getItem("user");
     const parsed = stored ? JSON.parse(stored) : null;
     setUser(parsed);
-    if (!parsed || parsed.role !== "admin") { router.push("/login"); return; }
+    if (!parsed || parsed.role !== "admin") {
+      router.push("/login");
+      return;
+    }
     refreshAll().catch(() => router.push("/login"));
   }, []);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
   const filteredUsers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return q ? users.filter((u) => `${u.name} ${u.email} ${u.role}`.toLowerCase().includes(q)) : users;
+    return q
+      ? users.filter((u) =>
+          `${u.name} ${u.email} ${u.role}`.toLowerCase().includes(q),
+        )
+      : users;
   }, [users, searchQuery]);
 
   const filteredProjects = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return q ? projects.filter((p) => `${p.title} ${p.description || ""} ${p.creator_name || ""}`.toLowerCase().includes(q)) : projects;
+    return q
+      ? projects.filter((p) =>
+          `${p.title} ${p.description || ""} ${p.creator_name || ""}`
+            .toLowerCase()
+            .includes(q),
+        )
+      : projects;
   }, [projects, searchQuery]);
 
   const doUserAction = async (uid, key, apiCall, successMsg) => {
@@ -272,21 +428,29 @@ export default function Admin() {
   };
 
   const handleBulk = async (action) => {
-    ask(`Bulk ${action}`, `Apply "${action}" to ${selected.size} user(s)?`, async () => {
-      closeConfirm();
-      setBulkLoading(true);
-      try {
-        const res = await API.post("/admin/users/bulk-action", { action, userIds: [...selected] });
-        toast(res.data.message, "success");
-        setSelected(new Set());
-        await loadUsers();
-        await loadAuditLog();
-      } catch (err) {
-        toast(err?.response?.data?.message || "Bulk action failed", "error");
-      } finally {
-        setBulkLoading(false);
-      }
-    }, action === "delete" ? "danger" : "warning");
+    ask(
+      `Bulk ${action}`,
+      `Apply "${action}" to ${selected.size} user(s)?`,
+      async () => {
+        closeConfirm();
+        setBulkLoading(true);
+        try {
+          const res = await API.post("/admin/users/bulk-action", {
+            action,
+            userIds: [...selected],
+          });
+          toast(res.data.message, "success");
+          setSelected(new Set());
+          await loadUsers();
+          await loadAuditLog();
+        } catch (err) {
+          toast(err?.response?.data?.message || "Bulk action failed", "error");
+        } finally {
+          setBulkLoading(false);
+        }
+      },
+      action === "delete" ? "danger" : "warning",
+    );
   };
 
   const sendAnnouncement = async () => {
@@ -311,26 +475,77 @@ export default function Admin() {
   const growthData = {
     labels: analytics?.userGrowth?.map((r) => r.month) || [],
     datasets: [
-      { label: "New Users", data: analytics?.userGrowth?.map((r) => Number(r.count)) || [], borderColor: "#22d3ee", backgroundColor: "rgba(34,211,238,0.08)", tension: 0.4, fill: true, pointBackgroundColor: "#22d3ee" },
-      { label: "New Projects", data: analytics?.projectGrowth?.map((r) => Number(r.count)) || [], borderColor: "#a78bfa", backgroundColor: "rgba(167,139,250,0.08)", tension: 0.4, fill: true, pointBackgroundColor: "#a78bfa" },
+      {
+        label: "New Users",
+        data: analytics?.userGrowth?.map((r) => Number(r.count)) || [],
+        borderColor: "#22d3ee",
+        backgroundColor: "rgba(34,211,238,0.08)",
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: "#22d3ee",
+      },
+      {
+        label: "New Projects",
+        data: analytics?.projectGrowth?.map((r) => Number(r.count)) || [],
+        borderColor: "#a78bfa",
+        backgroundColor: "rgba(167,139,250,0.08)",
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: "#a78bfa",
+      },
     ],
   };
 
   const topProjectsData = {
     labels: analytics?.topProjects?.map((p) => p.title.slice(0, 18)) || [],
-    datasets: [{ data: analytics?.topProjects?.map((p) => Number(p.task_count)) || [], backgroundColor: ["#22d3ee", "#38bdf8", "#818cf8", "#a78bfa", "#c084fc"], borderRadius: 8, borderWidth: 0 }],
+    datasets: [
+      {
+        data: analytics?.topProjects?.map((p) => Number(p.task_count)) || [],
+        backgroundColor: [
+          "#22d3ee",
+          "#38bdf8",
+          "#818cf8",
+          "#a78bfa",
+          "#c084fc",
+        ],
+        borderRadius: 8,
+        borderWidth: 0,
+      },
+    ],
   };
 
-  const taskPct = analytics?.totalTasks > 0 ? Math.round((analytics.totalCompletedTasks / analytics.totalTasks) * 100) : 0;
-  const donutData = analytics ? {
-    labels: ["Completed", "Remaining"],
-    datasets: [{ data: [analytics.totalCompletedTasks, analytics.totalTasks - analytics.totalCompletedTasks], backgroundColor: ["#10b981", "#1e293b"], borderWidth: 0, hoverOffset: 4 }],
-  } : null;
+  const taskPct =
+    analytics?.totalTasks > 0
+      ? Math.round((analytics.totalCompletedTasks / analytics.totalTasks) * 100)
+      : 0;
+  const donutData = analytics
+    ? {
+        labels: ["Completed", "Remaining"],
+        datasets: [
+          {
+            data: [
+              analytics.totalCompletedTasks,
+              analytics.totalTasks - analytics.totalCompletedTasks,
+            ],
+            backgroundColor: ["#10b981", "#1e293b"],
+            borderWidth: 0,
+            hoverOffset: 4,
+          },
+        ],
+      }
+    : null;
 
-  const countBadge = { users: users.length, projects: projects.length, audit: auditLog.length };
+  const countBadge = {
+    users: users.length,
+    projects: projects.length,
+    audit: auditLog.length,
+  };
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "var(--bg)" }}>
+    <div
+      className="admin-mobile-page flex min-h-screen overflow-hidden md:h-screen"
+      style={{ background: "var(--bg)" }}
+    >
       <style>{`
         @keyframes slideInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
@@ -340,9 +555,16 @@ export default function Admin() {
       <ToastContainer toasts={toasts} />
       <ConfirmModal {...confirm} onCancel={closeConfirm} />
 
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-10 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className="relative flex flex-col border-r border-slate-800 bg-slate-950 transition-all duration-300 z-20"
+        className={`fixed inset-y-0 left-0 z-20 flex flex-col border-r border-slate-800 bg-slate-950 transition-all duration-300 md:relative ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
         style={{ width: sidebarOpen ? 220 : 64 }}
       >
         {/* Brand */}
@@ -367,7 +589,9 @@ export default function Admin() {
         {/* Admin label */}
         {sidebarOpen && (
           <div className="border-b border-slate-800 px-4 py-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600">Admin Panel</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+              Admin Panel
+            </p>
           </div>
         )}
 
@@ -379,19 +603,30 @@ export default function Admin() {
             return (
               <button
                 key={item.key}
-                onClick={() => { setActiveTab(item.key); setSearchQuery(""); setSelected(new Set()); }}
+                onClick={() => {
+                  setActiveTab(item.key);
+                  setSearchQuery("");
+                  setSelected(new Set());
+                  setMobileOpen(false);
+                }}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                   isActive
                     ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/20"
                     : "text-slate-500 hover:bg-slate-800/60 hover:text-slate-300 border border-transparent"
                 }`}
               >
-                <span className="shrink-0 text-base leading-none">{NAV_EMOJIS[item.key]}</span>
+                <span className="shrink-0 text-base leading-none">
+                  {NAV_EMOJIS[item.key]}
+                </span>
                 {sidebarOpen && (
                   <>
-                    <span className="flex-1 truncate text-left">{item.label}</span>
+                    <span className="flex-1 truncate text-left">
+                      {item.label}
+                    </span>
                     {cnt !== undefined && (
-                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isActive ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-800 text-slate-500"}`}>
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isActive ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-800 text-slate-500"}`}
+                      >
                         {cnt}
                       </span>
                     )}
@@ -404,16 +639,24 @@ export default function Admin() {
 
         {/* User */}
         <div className="border-t border-slate-800 p-3">
-          <div className={`flex items-center gap-2.5 ${sidebarOpen ? "" : "justify-center"}`}>
+          <div
+            className={`flex items-center gap-2.5 ${sidebarOpen ? "" : "justify-center"}`}
+          >
             <Avatar name={user.name} size="sm" />
             {sidebarOpen && (
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-slate-200">{user.name}</p>
+                <p className="truncate text-xs font-semibold text-slate-200">
+                  {user.name}
+                </p>
                 <p className="text-[10px] text-slate-600">Administrator</p>
               </div>
             )}
             {sidebarOpen && (
-              <button onClick={logout} className="shrink-0 rounded-lg px-1.5 py-1 text-[10px] font-semibold text-slate-600 hover:bg-rose-500/10 hover:text-rose-400 transition border border-transparent hover:border-rose-500/20" title="Sign out">
+              <button
+                onClick={logout}
+                className="shrink-0 rounded-lg px-1.5 py-1 text-[10px] font-semibold text-slate-600 hover:bg-rose-500/10 hover:text-rose-400 transition border border-transparent hover:border-rose-500/20"
+                title="Sign out"
+              >
                 Exit
               </button>
             )}
@@ -423,16 +666,47 @@ export default function Admin() {
 
       {/* Main */}
       <div className="flex flex-1 flex-col overflow-hidden">
-
         {/* Header */}
-        <header className="flex h-16 shrink-0 items-center gap-4 border-b border-slate-800 bg-slate-950/80 px-6 z-10" style={{ backdropFilter: "blur(12px)" }}>
+        <header
+          className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-800 bg-slate-950/80 px-3 z-10 sm:gap-4 sm:px-6"
+          style={{ backdropFilter: "blur(12px)" }}
+        >
+          <button
+            className="rounded-lg border border-slate-800 bg-slate-900 p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-200 md:hidden"
+            onClick={() =>
+              setMobileOpen((o) => {
+                const next = !o;
+                if (next) setSidebarOpen(true);
+                return next;
+              })
+            }
+            aria-label="Toggle admin sidebar"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" />
+            </svg>
+          </button>
+
           <div>
-            <h1 className="text-base font-bold text-white">
+            <h1 className="text-sm font-bold text-white sm:text-base">
               {NAV_EMOJIS[activeTab]}{" "}
-              {activeTab === "overview" ? "Admin Dashboard" : NAV_ITEMS.find((n) => n.key === activeTab)?.label}
+              {activeTab === "overview"
+                ? "Admin Dashboard"
+                : NAV_ITEMS.find((n) => n.key === activeTab)?.label}
             </h1>
-            <p className="text-[11px] text-slate-600">
-              {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            <p className="hidden text-[11px] text-slate-600 lg:block">
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </p>
           </div>
 
@@ -442,16 +716,17 @@ export default function Admin() {
               onClick={refreshAll}
               disabled={isLoading}
             >
-              {isLoading ? "Loading..." : "Refresh"}
+              {isLoading ? "..." : "Refresh"}
             </button>
             <button
-              className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition"
+              className="rounded-lg border border-slate-800 bg-slate-900 px-2 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition sm:px-3"
               onClick={() => router.push("/settings")}
             >
-              Settings
+              Setti
+              <span className="hidden sm:inline">ngs</span>
             </button>
             <button
-              className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition"
+              className="hidden rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition sm:block"
               onClick={() => router.push("/dashboard?preview=member")}
             >
               Member View
@@ -461,33 +736,64 @@ export default function Admin() {
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-6xl p-6">
-
+          <div className="mx-auto max-w-6xl p-3 sm:p-6">
             {/* OVERVIEW */}
             {activeTab === "overview" && (
               <div className="tab-content space-y-6">
                 <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6">
                   <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-cyan-500/8 blur-3xl" />
                   <div className="absolute right-32 -bottom-8 h-28 w-28 rounded-full bg-violet-500/8 blur-3xl" />
-                  <p className="mb-1 text-xs font-bold uppercase tracking-widest text-cyan-500">Admin Control Center</p>
-                  <h2 className="text-2xl font-extrabold tracking-tight text-white">Welcome back, {user.name}!</h2>
-                  <p className="mt-1 text-sm text-slate-500">Here is an overview of the platform activity.</p>
+                  <p className="mb-1 text-xs font-bold uppercase tracking-widest text-cyan-500">
+                    Admin Control Center
+                  </p>
+                  <h2 className="text-2xl font-extrabold tracking-tight text-white">
+                    Welcome back, {user.name}!
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Here is an overview of the platform activity.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <StatCard label="Total Users" value={analytics?.totalUsers} icon="👥" accent="bg-cyan-500/20" />
-                  <StatCard label="Active Projects" value={analytics?.totalActiveProjects} icon="🚀" accent="bg-emerald-500/20" />
-                  <StatCard label="Tasks Completed" value={analytics?.totalCompletedTasks} icon="✅" accent="bg-violet-500/20" />
-                  <StatCard label="Suspended" value={analytics?.suspendedUsers} icon="🚫" accent="bg-rose-500/20" />
+                  <StatCard
+                    label="Total Users"
+                    value={analytics?.totalUsers}
+                    icon="👥"
+                    accent="bg-cyan-500/20"
+                  />
+                  <StatCard
+                    label="Active Projects"
+                    value={analytics?.totalActiveProjects}
+                    icon="🚀"
+                    accent="bg-emerald-500/20"
+                  />
+                  <StatCard
+                    label="Tasks Completed"
+                    value={analytics?.totalCompletedTasks}
+                    icon="✅"
+                    accent="bg-violet-500/20"
+                  />
+                  <StatCard
+                    label="Suspended"
+                    value={analytics?.suspendedUsers}
+                    icon="🚫"
+                    accent="bg-rose-500/20"
+                  />
                 </div>
 
                 {/* Announcement */}
                 <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
                   <div className="mb-3 flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-base">📢</div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-base">
+                      📢
+                    </div>
                     <div>
-                      <p className="text-sm font-semibold text-white">Broadcast Announcement</p>
-                      <p className="text-[11px] text-slate-600">Sends a notification to every active user</p>
+                      <p className="text-sm font-semibold text-white">
+                        Broadcast Announcement
+                      </p>
+                      <p className="text-[11px] text-slate-600">
+                        Sends a notification to every active user
+                      </p>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -500,10 +806,14 @@ export default function Admin() {
                     />
                     <button
                       className="btn-primary shrink-0"
-                      disabled={announcingStatus === "loading" || !announcement.trim()}
+                      disabled={
+                        announcingStatus === "loading" || !announcement.trim()
+                      }
                       onClick={sendAnnouncement}
                     >
-                      {announcingStatus === "loading" ? "Sending..." : "Broadcast"}
+                      {announcingStatus === "loading"
+                        ? "Sending..."
+                        : "Broadcast"}
                     </button>
                   </div>
                 </div>
@@ -511,8 +821,15 @@ export default function Admin() {
                 {/* Recent activity */}
                 <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
                   <div className="mb-4 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">Recent Admin Activity</p>
-                    <button className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition" onClick={() => setActiveTab("audit")}>View all</button>
+                    <p className="text-sm font-semibold text-white">
+                      Recent Admin Activity
+                    </p>
+                    <button
+                      className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition"
+                      onClick={() => setActiveTab("audit")}
+                    >
+                      View all
+                    </button>
                   </div>
                   {auditLog.length === 0 ? (
                     <p className="text-xs text-slate-600">No activity yet.</p>
@@ -520,22 +837,43 @@ export default function Admin() {
                     <div className="space-y-0">
                       {auditLog.slice(0, 6).map((entry, i) => {
                         const isLast = i === Math.min(5, auditLog.length - 1);
-                        const actionColor = {
-                          DELETE_USER: "text-rose-400", BULK_DELETE_USERS: "text-rose-400", DELETE_PROJECT: "text-rose-400",
-                          SUSPEND_USER: "text-amber-400", FORCE_RESET: "text-sky-400", PROMOTE_USER: "text-violet-400",
-                          DEMOTE_USER: "text-amber-400", UNSUSPEND_USER: "text-emerald-400", ANNOUNCEMENT: "text-cyan-400",
-                        }[entry.action] || "text-slate-400";
+                        const actionColor =
+                          {
+                            DELETE_USER: "text-rose-400",
+                            BULK_DELETE_USERS: "text-rose-400",
+                            DELETE_PROJECT: "text-rose-400",
+                            SUSPEND_USER: "text-amber-400",
+                            FORCE_RESET: "text-sky-400",
+                            PROMOTE_USER: "text-violet-400",
+                            DEMOTE_USER: "text-amber-400",
+                            UNSUSPEND_USER: "text-emerald-400",
+                            ANNOUNCEMENT: "text-cyan-400",
+                          }[entry.action] || "text-slate-400";
                         return (
-                          <div key={entry.id} className={`flex items-start gap-3 py-2.5 ${!isLast ? "border-b border-slate-800/60" : ""}`}>
+                          <div
+                            key={entry.id}
+                            className={`flex items-start gap-3 py-2.5 ${!isLast ? "border-b border-slate-800/60" : ""}`}
+                          >
                             <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-slate-400">
                               {i + 1}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-1.5">
-                                <span className={`text-xs font-bold ${actionColor}`}>{entry.action.replace(/_/g, " ")}</span>
-                                {entry.target_label && <span className="text-xs text-slate-400">&rarr; {entry.target_label}</span>}
+                                <span
+                                  className={`text-xs font-bold ${actionColor}`}
+                                >
+                                  {entry.action.replace(/_/g, " ")}
+                                </span>
+                                {entry.target_label && (
+                                  <span className="text-xs text-slate-400">
+                                    &rarr; {entry.target_label}
+                                  </span>
+                                )}
                               </div>
-                              <p className="text-[11px] text-slate-600">by {entry.admin_name} &middot; {new Date(entry.created_at).toLocaleString()}</p>
+                              <p className="text-[11px] text-slate-600">
+                                by {entry.admin_name} &middot;{" "}
+                                {new Date(entry.created_at).toLocaleString()}
+                              </p>
                             </div>
                           </div>
                         );
@@ -555,7 +893,10 @@ export default function Admin() {
                       className="input-modern pl-4"
                       placeholder="Search by name, email or role..."
                       value={searchQuery}
-                      onChange={(e) => { setSearchQuery(e.target.value); setSelected(new Set()); }}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setSelected(new Set());
+                      }}
                     />
                   </div>
                   <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-500">
@@ -568,14 +909,27 @@ export default function Admin() {
                     <input
                       type="checkbox"
                       className="accent-cyan-400"
-                      checked={selected.size > 0 && selected.size === filteredUsers.filter((u) => u.id !== user.id).length}
+                      checked={
+                        selected.size > 0 &&
+                        selected.size ===
+                          filteredUsers.filter((u) => u.id !== user.id).length
+                      }
                       onChange={(e) => {
-                        if (e.target.checked) setSelected(new Set(filteredUsers.filter((u) => u.id !== user.id).map((u) => u.id)));
+                        if (e.target.checked)
+                          setSelected(
+                            new Set(
+                              filteredUsers
+                                .filter((u) => u.id !== user.id)
+                                .map((u) => u.id),
+                            ),
+                          );
                         else setSelected(new Set());
                       }}
                     />
                     Select all eligible
-                    {selected.size > 0 && <Badge color="cyan">{selected.size} selected</Badge>}
+                    {selected.size > 0 && (
+                      <Badge color="cyan">{selected.size} selected</Badge>
+                    )}
                   </label>
                 )}
 
@@ -589,59 +943,199 @@ export default function Admin() {
                     const isSelf = u.id === user.id;
                     const isChecked = selected.has(u.id);
                     const loading = (key) => actionLoading[`${u.id}-${key}`];
-                    const joinDate = u.created_at ? new Date(u.created_at).toLocaleDateString() : "?";
+                    const joinDate = u.created_at
+                      ? new Date(u.created_at).toLocaleDateString()
+                      : "?";
                     return (
                       <div
                         key={u.id}
-                        className={`rounded-2xl border p-4 transition-all ${isChecked ? "border-cyan-500/30 bg-cyan-500/5" : "border-slate-800 bg-slate-900/50 hover:border-slate-700"}`}
+                        className={`admin-user-card overflow-hidden rounded-2xl border p-3 transition-all sm:p-4 ${isChecked ? "border-cyan-500/30 bg-cyan-500/5" : "border-slate-800 bg-slate-900/50 hover:border-slate-700"}`}
                       >
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
                           {!isSelf && (
-                            <input type="checkbox" className="accent-cyan-400 shrink-0" checked={isChecked}
-                              onChange={() => setSelected((prev) => { const n = new Set(prev); n.has(u.id) ? n.delete(u.id) : n.add(u.id); return n; })} />
+                            <input
+                              type="checkbox"
+                              className="accent-cyan-400 shrink-0"
+                              checked={isChecked}
+                              onChange={() =>
+                                setSelected((prev) => {
+                                  const n = new Set(prev);
+                                  n.has(u.id) ? n.delete(u.id) : n.add(u.id);
+                                  return n;
+                                })
+                              }
+                            />
                           )}
                           <Avatar name={u.name} />
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-sm font-semibold text-slate-100">{u.name}</p>
-                              <Badge color={u.role === "admin" ? "violet" : "slate"}>{u.role}</Badge>
-                              {u.is_suspended && <Badge color="red">Suspended</Badge>}
+                              <p className="break-words text-sm font-semibold text-slate-100">
+                                {u.name}
+                              </p>
+                              <Badge
+                                color={u.role === "admin" ? "violet" : "slate"}
+                              >
+                                {u.role}
+                              </Badge>
+                              {u.is_suspended && (
+                                <Badge color="red">Suspended</Badge>
+                              )}
                               {isSelf && <Badge color="cyan">You</Badge>}
                             </div>
-                            <p className="mt-0.5 text-xs text-slate-500">{u.email}</p>
-                            <p className="mt-0.5 text-[11px] text-slate-600">Joined {joinDate} &middot; {u.project_count ?? 0} project{u.project_count !== 1 ? "s" : ""}</p>
+                            <p className="mt-0.5 break-all text-xs text-slate-500">
+                              {u.email}
+                            </p>
+                            <p className="mt-0.5 break-words text-[11px] text-slate-600">
+                              Joined {joinDate} &middot; {u.project_count ?? 0}{" "}
+                              project{u.project_count !== 1 ? "s" : ""}
+                            </p>
                           </div>
                           {!isSelf && (
-                            <div className="flex flex-wrap items-center gap-1.5">
+                            <div className="admin-user-actions grid w-full grid-cols-1 gap-1.5 min-[420px]:grid-cols-2 lg:flex lg:w-auto lg:flex-wrap lg:justify-end">
                               {u.role !== "admin" && (
-                                <ActionBtn variant="primary" disabled={loading("promote")}
-                                  onClick={() => doUserAction(u.id, "promote", () => API.put(`/admin/users/promote/${u.id}`), `${u.name} promoted`)}>
-                                  {loading("promote") ? <Spinner /> : null} Promote
+                                <ActionBtn
+                                  variant="primary"
+                                  className="w-full justify-center lg:w-auto"
+                                  disabled={loading("promote")}
+                                  onClick={() =>
+                                    doUserAction(
+                                      u.id,
+                                      "promote",
+                                      () =>
+                                        API.put(`/admin/users/promote/${u.id}`),
+                                      `${u.name} promoted`,
+                                    )
+                                  }
+                                >
+                                  {loading("promote") ? <Spinner /> : null}{" "}
+                                  Promote
                                 </ActionBtn>
                               )}
                               {u.role === "admin" && (
-                                <ActionBtn variant="amber" disabled={loading("demote")}
-                                  onClick={() => ask("Demote Admin", `Demote ${u.name} to member?`, () => { closeConfirm(); doUserAction(u.id, "demote", () => API.put(`/admin/users/demote/${u.id}`), `${u.name} demoted`); }, "warning")}>
-                                  {loading("demote") ? <Spinner /> : null} Demote
+                                <ActionBtn
+                                  variant="amber"
+                                  className="w-full justify-center lg:w-auto"
+                                  disabled={loading("demote")}
+                                  onClick={() =>
+                                    ask(
+                                      "Demote Admin",
+                                      `Demote ${u.name} to member?`,
+                                      () => {
+                                        closeConfirm();
+                                        doUserAction(
+                                          u.id,
+                                          "demote",
+                                          () =>
+                                            API.put(
+                                              `/admin/users/demote/${u.id}`,
+                                            ),
+                                          `${u.name} demoted`,
+                                        );
+                                      },
+                                      "warning",
+                                    )
+                                  }
+                                >
+                                  {loading("demote") ? <Spinner /> : null}{" "}
+                                  Demote
                                 </ActionBtn>
                               )}
                               {!u.is_suspended ? (
-                                <ActionBtn variant="amber" disabled={loading("suspend")}
-                                  onClick={() => ask("Suspend User", `Suspend ${u.name}? They won't be able to log in.`, () => { closeConfirm(); doUserAction(u.id, "suspend", () => API.put(`/admin/users/suspend/${u.id}`), `${u.name} suspended`); }, "warning")}>
-                                  {loading("suspend") ? <Spinner /> : null} Suspend
+                                <ActionBtn
+                                  variant="amber"
+                                  className="w-full justify-center lg:w-auto"
+                                  disabled={loading("suspend")}
+                                  onClick={() =>
+                                    ask(
+                                      "Suspend User",
+                                      `Suspend ${u.name}? They won't be able to log in.`,
+                                      () => {
+                                        closeConfirm();
+                                        doUserAction(
+                                          u.id,
+                                          "suspend",
+                                          () =>
+                                            API.put(
+                                              `/admin/users/suspend/${u.id}`,
+                                            ),
+                                          `${u.name} suspended`,
+                                        );
+                                      },
+                                      "warning",
+                                    )
+                                  }
+                                >
+                                  {loading("suspend") ? <Spinner /> : null}{" "}
+                                  Suspend
                                 </ActionBtn>
                               ) : (
-                                <ActionBtn variant="success" disabled={loading("unsuspend")}
-                                  onClick={() => doUserAction(u.id, "unsuspend", () => API.put(`/admin/users/unsuspend/${u.id}`), `${u.name} unsuspended`)}>
-                                  {loading("unsuspend") ? <Spinner /> : null} Unsuspend
+                                <ActionBtn
+                                  variant="success"
+                                  className="w-full justify-center lg:w-auto"
+                                  disabled={loading("unsuspend")}
+                                  onClick={() =>
+                                    doUserAction(
+                                      u.id,
+                                      "unsuspend",
+                                      () =>
+                                        API.put(
+                                          `/admin/users/unsuspend/${u.id}`,
+                                        ),
+                                      `${u.name} unsuspended`,
+                                    )
+                                  }
+                                >
+                                  {loading("unsuspend") ? <Spinner /> : null}{" "}
+                                  Unsuspend
                                 </ActionBtn>
                               )}
-                              <ActionBtn variant="secondary" disabled={loading("reset")}
-                                onClick={() => ask("Force Password Reset", `Send a reset email to ${u.email}?`, () => { closeConfirm(); doUserAction(u.id, "reset", () => API.post(`/admin/users/${u.id}/force-reset`), "Reset email sent"); }, "warning")}>
+                              <ActionBtn
+                                variant="secondary"
+                                className="w-full justify-center lg:w-auto"
+                                disabled={loading("reset")}
+                                onClick={() =>
+                                  ask(
+                                    "Force Password Reset",
+                                    `Send a reset email to ${u.email}?`,
+                                    () => {
+                                      closeConfirm();
+                                      doUserAction(
+                                        u.id,
+                                        "reset",
+                                        () =>
+                                          API.post(
+                                            `/admin/users/${u.id}/force-reset`,
+                                          ),
+                                        "Reset email sent",
+                                      );
+                                    },
+                                    "warning",
+                                  )
+                                }
+                              >
                                 {loading("reset") ? <Spinner /> : null} Reset PW
                               </ActionBtn>
-                              <ActionBtn variant="danger" disabled={loading("delete")}
-                                onClick={() => ask("Delete User", `Permanently delete ${u.name}? This cannot be undone.`, () => { closeConfirm(); doUserAction(u.id, "delete", () => API.delete(`/admin/users/${u.id}`), `${u.name} deleted`); })}>
+                              <ActionBtn
+                                variant="danger"
+                                className="w-full justify-center lg:w-auto"
+                                disabled={loading("delete")}
+                                onClick={() =>
+                                  ask(
+                                    "Delete User",
+                                    `Permanently delete ${u.name}? This cannot be undone.`,
+                                    () => {
+                                      closeConfirm();
+                                      doUserAction(
+                                        u.id,
+                                        "delete",
+                                        () =>
+                                          API.delete(`/admin/users/${u.id}`),
+                                        `${u.name} deleted`,
+                                      );
+                                    },
+                                  )
+                                }
+                              >
                                 {loading("delete") ? <Spinner /> : null} Delete
                               </ActionBtn>
                             </div>
@@ -678,44 +1172,117 @@ export default function Admin() {
                     </div>
                   )}
                   {filteredProjects.map((p) => {
-                    const pct = p.task_count > 0 ? Math.round((p.completed_task_count / p.task_count) * 100) : 0;
-                    const barColor = pct >= 100 ? "bg-emerald-400" : pct > 60 ? "bg-cyan-400" : pct > 30 ? "bg-amber-400" : "bg-violet-400";
+                    const pct =
+                      p.task_count > 0
+                        ? Math.round(
+                            (p.completed_task_count / p.task_count) * 100,
+                          )
+                        : 0;
+                    const barColor =
+                      pct >= 100
+                        ? "bg-emerald-400"
+                        : pct > 60
+                          ? "bg-cyan-400"
+                          : pct > 30
+                            ? "bg-amber-400"
+                            : "bg-violet-400";
                     return (
-                      <div key={p.id} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 hover:border-slate-700 transition-all">
-                        <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div
+                        key={p.id}
+                        className="admin-project-card overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition-all hover:border-slate-700"
+                      >
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                           <div className="min-w-0 flex-1">
                             <div className="mb-1 flex flex-wrap items-center gap-2">
-                              <p className="text-sm font-bold text-slate-100">{p.title}</p>
-                              <Badge color={p.status === "active" ? "green" : "slate"}>{p.status}</Badge>
+                              <p className="break-words text-sm font-bold text-slate-100">
+                                {p.title}
+                              </p>
+                              <Badge
+                                color={
+                                  p.status === "active" ? "green" : "slate"
+                                }
+                              >
+                                {p.status}
+                              </Badge>
                             </div>
-                            <p className="mb-3 text-xs text-slate-600 line-clamp-1">{p.description || "No description provided."}</p>
+                            <p className="mb-3 break-words text-xs text-slate-600">
+                              {p.description || "No description provided."}
+                            </p>
                             <div className="mb-3 flex flex-wrap gap-3 text-[11px] text-slate-500">
-                              <span>Creator: <strong className="text-slate-300">{p.creator_name}</strong></span>
-                              <span>{p.member_count} member{p.member_count !== 1 ? "s" : ""}</span>
-                              <span>{p.task_count} task{p.task_count !== 1 ? "s" : ""}</span>
+                              <span>
+                                Creator:{" "}
+                                <strong className="break-all text-slate-300">
+                                  {p.creator_name}
+                                </strong>
+                              </span>
+                              <span>
+                                {p.member_count} member
+                                {p.member_count !== 1 ? "s" : ""}
+                              </span>
+                              <span>
+                                {p.task_count} task
+                                {p.task_count !== 1 ? "s" : ""}
+                              </span>
                               <span>{p.completed_task_count} completed</span>
-                              {p.created_at && <span>{new Date(p.created_at).toLocaleDateString()}</span>}
+                              {p.created_at && (
+                                <span>
+                                  {new Date(p.created_at).toLocaleDateString()}
+                                </span>
+                              )}
                             </div>
                             {p.task_count > 0 && (
                               <div className="flex items-center gap-2">
                                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800">
-                                  <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+                                  <div
+                                    className={`h-full rounded-full transition-all ${barColor}`}
+                                    style={{ width: `${pct}%` }}
+                                  />
                                 </div>
-                                <span className="w-8 shrink-0 text-right text-[10px] font-semibold text-slate-500">{pct}%</span>
+                                <span className="w-8 shrink-0 text-right text-[10px] font-semibold text-slate-500">
+                                  {pct}%
+                                </span>
                               </div>
                             )}
                           </div>
-                          <div className="flex shrink-0 flex-col gap-2">
-                            <ActionBtn variant="primary" size="md" onClick={() => router.push(`/project/${p.id}`)}>Open</ActionBtn>
-                            <ActionBtn variant="danger" size="md"
-                              onClick={() => ask("Delete Project", `Permanently delete "${p.title}"? All data will be lost.`, async () => {
-                                closeConfirm();
-                                try {
-                                  await API.delete(`/admin/projects/${p.id}`);
-                                  await loadProjects(); await loadAuditLog();
-                                  toast(`"${p.title}" deleted`, "success");
-                                } catch (err) { toast(err?.response?.data?.message || "Delete failed", "error"); }
-                              })}>Delete</ActionBtn>
+                          <div className="admin-project-actions grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2 lg:flex lg:w-auto lg:flex-col">
+                            <ActionBtn
+                              variant="primary"
+                              size="md"
+                              className="w-full justify-center lg:w-auto"
+                              onClick={() => router.push(`/project/${p.id}`)}
+                            >
+                              Open
+                            </ActionBtn>
+                            <ActionBtn
+                              variant="danger"
+                              size="md"
+                              className="w-full justify-center lg:w-auto"
+                              onClick={() =>
+                                ask(
+                                  "Delete Project",
+                                  `Permanently delete "${p.title}"? All data will be lost.`,
+                                  async () => {
+                                    closeConfirm();
+                                    try {
+                                      await API.delete(
+                                        `/admin/projects/${p.id}`,
+                                      );
+                                      await loadProjects();
+                                      await loadAuditLog();
+                                      toast(`"${p.title}" deleted`, "success");
+                                    } catch (err) {
+                                      toast(
+                                        err?.response?.data?.message ||
+                                          "Delete failed",
+                                        "error",
+                                      );
+                                    }
+                                  },
+                                )
+                              }
+                            >
+                              Delete
+                            </ActionBtn>
                           </div>
                         </div>
                       </div>
@@ -729,28 +1296,90 @@ export default function Admin() {
             {activeTab === "analytics" && analytics && (
               <div className="tab-content space-y-5">
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
-                  <StatCard label="Total Users" value={analytics.totalUsers} icon="👥" accent="bg-cyan-500/20" />
-                  <StatCard label="Total Projects" value={analytics.totalProjects} icon="📁" accent="bg-emerald-500/20" />
-                  <StatCard label="Active Projects" value={analytics.totalActiveProjects} icon="🚀" accent="bg-sky-500/20" />
-                  <StatCard label="Total Tasks" value={analytics.totalTasks} icon="📋" accent="bg-violet-500/20" />
-                  <StatCard label="Completed Tasks" value={analytics.totalCompletedTasks} icon="✅" accent="bg-emerald-500/20" sub={`${taskPct}% completion`} />
-                  <StatCard label="Total Messages" value={analytics.totalMessages} icon="💬" accent="bg-amber-500/20" />
-                  <StatCard label="Suspended Users" value={analytics.suspendedUsers} icon="🚫" accent="bg-rose-500/20" />
-                  <StatCard label="Admin Accounts" value={analytics.adminUsers} icon="🛡" accent="bg-fuchsia-500/20" />
-                  <StatCard label="Completed Projects" value={analytics.totalCompletedProjects} icon="🏁" accent="bg-slate-500/20" />
-                  <StatCard label="Completion Rate" value={`${taskPct}%`} icon="📈" accent="bg-cyan-500/20" sub="of all tasks" />
+                  <StatCard
+                    label="Total Users"
+                    value={analytics.totalUsers}
+                    icon="👥"
+                    accent="bg-cyan-500/20"
+                  />
+                  <StatCard
+                    label="Total Projects"
+                    value={analytics.totalProjects}
+                    icon="📁"
+                    accent="bg-emerald-500/20"
+                  />
+                  <StatCard
+                    label="Active Projects"
+                    value={analytics.totalActiveProjects}
+                    icon="🚀"
+                    accent="bg-sky-500/20"
+                  />
+                  <StatCard
+                    label="Total Tasks"
+                    value={analytics.totalTasks}
+                    icon="📋"
+                    accent="bg-violet-500/20"
+                  />
+                  <StatCard
+                    label="Completed Tasks"
+                    value={analytics.totalCompletedTasks}
+                    icon="✅"
+                    accent="bg-emerald-500/20"
+                    sub={`${taskPct}% completion`}
+                  />
+                  <StatCard
+                    label="Total Messages"
+                    value={analytics.totalMessages}
+                    icon="💬"
+                    accent="bg-amber-500/20"
+                  />
+                  <StatCard
+                    label="Suspended Users"
+                    value={analytics.suspendedUsers}
+                    icon="🚫"
+                    accent="bg-rose-500/20"
+                  />
+                  <StatCard
+                    label="Admin Accounts"
+                    value={analytics.adminUsers}
+                    icon="🛡"
+                    accent="bg-fuchsia-500/20"
+                  />
+                  <StatCard
+                    label="Completed Projects"
+                    value={analytics.totalCompletedProjects}
+                    icon="🏁"
+                    accent="bg-slate-500/20"
+                  />
+                  <StatCard
+                    label="Completion Rate"
+                    value={`${taskPct}%`}
+                    icon="📈"
+                    accent="bg-cyan-500/20"
+                    sub="of all tasks"
+                  />
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-3">
                   <div className="md:col-span-2 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-                    <h3 className="mb-4 text-sm font-bold text-white">Platform Growth (Last 6 Months)</h3>
-                    <div className="h-56"><Line data={growthData} options={LINE_OPTS} /></div>
+                    <h3 className="mb-4 text-sm font-bold text-white">
+                      Platform Growth (Last 6 Months)
+                    </h3>
+                    <div className="h-56">
+                      <Line data={growthData} options={LINE_OPTS} />
+                    </div>
                   </div>
                   {donutData && (
                     <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 flex flex-col items-center">
-                      <h3 className="mb-4 w-full text-sm font-bold text-white">Task Completion</h3>
-                      <div className="h-44 w-full"><Doughnut data={donutData} options={DONUT_OPTS} /></div>
-                      <p className="mt-3 text-3xl font-extrabold text-emerald-400">{taskPct}%</p>
+                      <h3 className="mb-4 w-full text-sm font-bold text-white">
+                        Task Completion
+                      </h3>
+                      <div className="h-44 w-full">
+                        <Doughnut data={donutData} options={DONUT_OPTS} />
+                      </div>
+                      <p className="mt-3 text-3xl font-extrabold text-emerald-400">
+                        {taskPct}%
+                      </p>
                       <p className="text-xs text-slate-600">tasks completed</p>
                     </div>
                   )}
@@ -758,8 +1387,12 @@ export default function Admin() {
 
                 {analytics.topProjects?.length > 0 && (
                   <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-                    <h3 className="mb-4 text-sm font-bold text-white">Top 5 Most Active Projects (by Tasks)</h3>
-                    <div className="h-52"><Bar data={topProjectsData} options={CHART_OPTS} /></div>
+                    <h3 className="mb-4 text-sm font-bold text-white">
+                      Top 5 Most Active Projects (by Tasks)
+                    </h3>
+                    <div className="h-52">
+                      <Bar data={topProjectsData} options={CHART_OPTS} />
+                    </div>
                   </div>
                 )}
               </div>
@@ -769,8 +1402,12 @@ export default function Admin() {
             {activeTab === "audit" && (
               <div className="tab-content space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white">Admin Audit Log</h3>
-                  <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-500">{auditLog.length} entries</span>
+                  <h3 className="text-sm font-bold text-white">
+                    Admin Audit Log
+                  </h3>
+                  <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-500">
+                    {auditLog.length} entries
+                  </span>
                 </div>
 
                 {auditLog.length === 0 ? (
@@ -781,38 +1418,112 @@ export default function Admin() {
                   <div className="relative border-l border-slate-800 pl-6 space-y-3">
                     {auditLog.map((entry) => {
                       const meta = {
-                        DELETE_USER: { color: "text-rose-400", dot: "bg-rose-500", icon: "D" },
-                        BULK_DELETE_USERS: { color: "text-rose-400", dot: "bg-rose-500", icon: "D" },
-                        DELETE_PROJECT: { color: "text-rose-400", dot: "bg-rose-500", icon: "D" },
-                        SUSPEND_USER: { color: "text-amber-400", dot: "bg-amber-500", icon: "S" },
-                        BULK_SUSPEND_USERS: { color: "text-amber-400", dot: "bg-amber-500", icon: "S" },
-                        FORCE_RESET: { color: "text-sky-400", dot: "bg-sky-500", icon: "R" },
-                        PROMOTE_USER: { color: "text-violet-400", dot: "bg-violet-500", icon: "P" },
-                        DEMOTE_USER: { color: "text-amber-400", dot: "bg-amber-500", icon: "V" },
-                        BULK_DEMOTE_USERS: { color: "text-amber-400", dot: "bg-amber-500", icon: "V" },
-                        UNSUSPEND_USER: { color: "text-emerald-400", dot: "bg-emerald-500", icon: "U" },
-                        ANNOUNCEMENT: { color: "text-cyan-400", dot: "bg-cyan-500", icon: "A" },
-                      }[entry.action] || { color: "text-slate-400", dot: "bg-slate-600", icon: "-" };
+                        DELETE_USER: {
+                          color: "text-rose-400",
+                          dot: "bg-rose-500",
+                          icon: "D",
+                        },
+                        BULK_DELETE_USERS: {
+                          color: "text-rose-400",
+                          dot: "bg-rose-500",
+                          icon: "D",
+                        },
+                        DELETE_PROJECT: {
+                          color: "text-rose-400",
+                          dot: "bg-rose-500",
+                          icon: "D",
+                        },
+                        SUSPEND_USER: {
+                          color: "text-amber-400",
+                          dot: "bg-amber-500",
+                          icon: "S",
+                        },
+                        BULK_SUSPEND_USERS: {
+                          color: "text-amber-400",
+                          dot: "bg-amber-500",
+                          icon: "S",
+                        },
+                        FORCE_RESET: {
+                          color: "text-sky-400",
+                          dot: "bg-sky-500",
+                          icon: "R",
+                        },
+                        PROMOTE_USER: {
+                          color: "text-violet-400",
+                          dot: "bg-violet-500",
+                          icon: "P",
+                        },
+                        DEMOTE_USER: {
+                          color: "text-amber-400",
+                          dot: "bg-amber-500",
+                          icon: "V",
+                        },
+                        BULK_DEMOTE_USERS: {
+                          color: "text-amber-400",
+                          dot: "bg-amber-500",
+                          icon: "V",
+                        },
+                        UNSUSPEND_USER: {
+                          color: "text-emerald-400",
+                          dot: "bg-emerald-500",
+                          icon: "U",
+                        },
+                        ANNOUNCEMENT: {
+                          color: "text-cyan-400",
+                          dot: "bg-cyan-500",
+                          icon: "A",
+                        },
+                      }[entry.action] || {
+                        color: "text-slate-400",
+                        dot: "bg-slate-600",
+                        icon: "-",
+                      };
 
                       return (
                         <div key={entry.id} className="relative">
-                          <div className={`absolute -left-[25px] top-3.5 h-3 w-3 rounded-full border-2 border-slate-950 ${meta.dot}`} />
+                          <div
+                            className={`absolute -left-[25px] top-3.5 h-3 w-3 rounded-full border-2 border-slate-950 ${meta.dot}`}
+                          />
                           <div className="rounded-2xl border border-slate-800 bg-slate-900/50 px-4 py-3 hover:border-slate-700 transition-all">
                             <div className="flex flex-wrap items-start gap-3">
                               <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className={`text-xs font-bold ${meta.color}`}>{entry.action.replace(/_/g, " ")}</span>
+                                  <span
+                                    className={`text-xs font-bold ${meta.color}`}
+                                  >
+                                    {entry.action.replace(/_/g, " ")}
+                                  </span>
                                   {entry.target_type && (
-                                    <Badge color={entry.target_type === "user" ? "blue" : entry.target_type === "project" ? "green" : "slate"}>
+                                    <Badge
+                                      color={
+                                        entry.target_type === "user"
+                                          ? "blue"
+                                          : entry.target_type === "project"
+                                            ? "green"
+                                            : "slate"
+                                      }
+                                    >
                                       {entry.target_type}
                                     </Badge>
                                   )}
-                                  {entry.target_label && <span className="text-xs text-slate-300">&rarr; {entry.target_label}</span>}
+                                  {entry.target_label && (
+                                    <span className="text-xs text-slate-300">
+                                      &rarr; {entry.target_label}
+                                    </span>
+                                  )}
                                 </div>
-                                {entry.details && <p className="mt-0.5 text-[11px] text-slate-600 line-clamp-1">{entry.details}</p>}
+                                {entry.details && (
+                                  <p className="mt-0.5 break-words text-[11px] text-slate-600">
+                                    {entry.details}
+                                  </p>
+                                )}
                                 <p className="mt-1 text-[11px] text-slate-600">
-                                  by <strong className="text-slate-400">{entry.admin_name}</strong>
-                                  &nbsp;&middot;&nbsp;{new Date(entry.created_at).toLocaleString()}
+                                  by{" "}
+                                  <strong className="text-slate-400">
+                                    {entry.admin_name}
+                                  </strong>
+                                  &nbsp;&middot;&nbsp;
+                                  {new Date(entry.created_at).toLocaleString()}
                                 </p>
                               </div>
                             </div>
@@ -824,22 +1535,61 @@ export default function Admin() {
                 )}
               </div>
             )}
-
           </div>
         </main>
       </div>
 
       {/* Floating bulk bar */}
       {selected.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-950/95 px-5 py-3 shadow-2xl" style={{ backdropFilter: "blur(16px)" }}>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500/20 text-[11px] font-bold text-cyan-300">{selected.size}</div>
-          <span className="text-sm font-semibold text-slate-200">{selected.size} selected</span>
-          <div className="h-4 w-px bg-slate-800" />
-          <ActionBtn variant="amber" size="md" disabled={bulkLoading} onClick={() => handleBulk("suspend")}>Suspend All</ActionBtn>
-          <ActionBtn variant="amber" size="md" disabled={bulkLoading} onClick={() => handleBulk("demote")}>Demote All</ActionBtn>
-          <ActionBtn variant="danger" size="md" disabled={bulkLoading} onClick={() => handleBulk("delete")}>Delete All</ActionBtn>
-          <div className="h-4 w-px bg-slate-800" />
-          <ActionBtn variant="secondary" size="md" onClick={() => setSelected(new Set())}>Clear</ActionBtn>
+        <div
+          className="fixed bottom-4 left-1/2 z-50 w-[calc(100vw-1rem)] max-w-3xl -translate-x-1/2 rounded-2xl border border-slate-700 bg-slate-950/95 px-3 py-3 shadow-2xl sm:bottom-6 sm:w-auto sm:px-5"
+          style={{ backdropFilter: "blur(16px)" }}
+        >
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start sm:gap-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500/20 text-[11px] font-bold text-cyan-300">
+              {selected.size}
+            </div>
+            <span className="text-sm font-semibold text-slate-200">
+              {selected.size} selected
+            </span>
+            <div className="hidden h-4 w-px bg-slate-800 sm:block" />
+            <ActionBtn
+              variant="amber"
+              size="md"
+              className="justify-center"
+              disabled={bulkLoading}
+              onClick={() => handleBulk("suspend")}
+            >
+              Suspend All
+            </ActionBtn>
+            <ActionBtn
+              variant="amber"
+              size="md"
+              className="justify-center"
+              disabled={bulkLoading}
+              onClick={() => handleBulk("demote")}
+            >
+              Demote All
+            </ActionBtn>
+            <ActionBtn
+              variant="danger"
+              size="md"
+              className="justify-center"
+              disabled={bulkLoading}
+              onClick={() => handleBulk("delete")}
+            >
+              Delete All
+            </ActionBtn>
+            <div className="hidden h-4 w-px bg-slate-800 sm:block" />
+            <ActionBtn
+              variant="secondary"
+              size="md"
+              className="justify-center"
+              onClick={() => setSelected(new Set())}
+            >
+              Clear
+            </ActionBtn>
+          </div>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import NotificationBell from "../common/NotificationBell";
 import GlobalSearch from "../common/GlobalSearch";
@@ -54,6 +54,23 @@ export default function AppLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [router.asPath]);
+
+  const navigateTo = (href) => {
+    router.push(href);
+    setMobileOpen(false);
+  };
+
   const items = [...NAV];
   if (user?.role === "admin") {
     items.push({
@@ -68,7 +85,7 @@ export default function AppLayout({
 
   return (
     <div
-      className="flex h-screen overflow-hidden"
+      className="flex min-h-screen overflow-hidden md:h-screen"
       style={{ background: "var(--bg)" }}
     >
       <style>{`
@@ -98,7 +115,7 @@ export default function AppLayout({
         <div className="flex h-16 shrink-0 items-center gap-3 border-b border-slate-800 px-4">
           <div
             className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-sm font-black text-white shadow-lg shadow-cyan-500/20"
-            onClick={() => router.push("/dashboard")}
+            onClick={() => navigateTo("/dashboard")}
           >
             S
           </div>
@@ -131,7 +148,7 @@ export default function AppLayout({
             return (
               <button
                 key={item.key}
-                onClick={() => router.push(item.href)}
+                onClick={() => navigateTo(item.href)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                   isActive
                     ? "bg-cyan-500/15 text-cyan-700 border border-cyan-500/20 dark:text-cyan-300"
@@ -191,7 +208,13 @@ export default function AppLayout({
           {/* Hamburger — mobile only */}
           <button
             className="rounded-lg border border-slate-200 bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 md:hidden"
-            onClick={() => setMobileOpen((o) => !o)}
+            onClick={() =>
+              setMobileOpen((o) => {
+                const next = !o;
+                if (next) setSidebarOpen(true);
+                return next;
+              })
+            }
             aria-label="Toggle sidebar"
           >
             <svg

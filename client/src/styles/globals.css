@@ -3,6 +3,21 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body,
+  #__next {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
   :root {
     --bg: #070d1a;
     --bg-card: #0f172a;
@@ -1469,4 +1484,51 @@
 }
 [data-theme="light"] *::-webkit-scrollbar-thumb {
   background: rgba(100, 116, 139, 0.25);
+}
+
+/* ── Admin page mobile compatibility ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  .admin-mobile-page .admin-stat-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .admin-mobile-page .admin-stat-label {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .admin-mobile-page .admin-stat-value {
+    margin-top: 6px;
+    font-size: 1.35rem;
+    line-height: 1.1;
+  }
+
+  .admin-mobile-page .admin-stat-sub {
+    font-size: 10px;
+  }
+
+  .admin-mobile-page .admin-user-card,
+  .admin-mobile-page .admin-project-card {
+    border-radius: 14px;
+  }
+
+  .admin-mobile-page .admin-user-card p,
+  .admin-mobile-page .admin-project-card p,
+  .admin-mobile-page .admin-user-card span,
+  .admin-mobile-page .admin-project-card span {
+    line-height: 1.35;
+  }
+
+  .admin-mobile-page .admin-user-actions,
+  .admin-mobile-page .admin-project-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-mobile-page .admin-user-actions button,
+  .admin-mobile-page .admin-project-actions button {
+    min-height: 36px;
+    font-size: 12px;
+    border-radius: 10px;
+  }
 }

@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import "../styles/login.css";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { ThemeProvider } from "../context/ThemeContext";
 import { useEffect, useState } from "react";
@@ -138,6 +139,12 @@ export default function App({ Component, pageProps }) {
 
   return (
     <ThemeProvider>
+      <Head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+      </Head>
       <div className="app-shell">
         {!isAuthPage ? (
           <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
