@@ -11,6 +11,9 @@ export default function FileUpload({ projectId }) {
   const [uploadMode, setUploadMode] = useState("files");
   const [isUploading, setIsUploading] = useState(false);
 
+  const fileInputMultipleRef = useRef(null);
+  const fileInputFolderRef = useRef(null);
+
   const loadFiles = async () => {
     try {
       const res = await API.get(`/files/${projectId}`);
@@ -32,6 +35,35 @@ export default function FileUpload({ projectId }) {
     }
     loadFiles();
   }, [projectId]);
+
+  // Debug: Check file input attributes
+  useEffect(() => {
+    console.log("📋 Checking file input attributes:");
+
+    if (fileInputMultipleRef.current) {
+      const input = fileInputMultipleRef.current;
+      console.log("  Multiple Files Input:");
+      console.log("    - multiple:", input.hasAttribute("multiple"));
+      console.log("    - accept:", input.getAttribute("accept"));
+      console.log("    - type:", input.getAttribute("type"));
+      console.log(
+        "    - webkitdirectory:",
+        input.hasAttribute("webkitdirectory"),
+      );
+    }
+
+    if (fileInputFolderRef.current) {
+      const input = fileInputFolderRef.current;
+      console.log("  Folder Input:");
+      console.log(
+        "    - webkitdirectory:",
+        input.hasAttribute("webkitdirectory"),
+      );
+      console.log("    - mozdirectory:", input.hasAttribute("mozdirectory"));
+      console.log("    - type:", input.getAttribute("type"));
+      console.log("    - multiple:", input.hasAttribute("multiple"));
+    }
+  }, [uploadMode]);
 
   useEffect(() => {
     const loadPermissions = async () => {
@@ -87,10 +119,8 @@ export default function FileUpload({ projectId }) {
       await loadFiles();
       setSelectedFiles([]);
 
-      const fileInputMain = document.getElementById("file-input-main");
-      const fileInputFolder = document.getElementById("file-input-folder");
-      if (fileInputMain) fileInputMain.value = "";
-      if (fileInputFolder) fileInputFolder.value = "";
+      if (fileInputMultipleRef.current) fileInputMultipleRef.current.value = "";
+      if (fileInputFolderRef.current) fileInputFolderRef.current.value = "";
 
       alert(`✅ Successfully uploaded ${selectedFiles.length} file(s)`);
     } catch (error) {
@@ -144,6 +174,19 @@ export default function FileUpload({ projectId }) {
     console.log("Upload mode:", uploadMode);
     console.log("Files in input:", fileList?.length || 0);
 
+    // Debug: Check if multiple selection is supported
+    const input = e.target;
+    console.log("Input element attributes:");
+    console.log("  - multiple:", input.getAttribute("multiple") !== null);
+    console.log(
+      "  - webkitdirectory:",
+      input.getAttribute("webkitdirectory") !== null,
+    );
+    console.log(
+      "  - mozdirectory:",
+      input.getAttribute("mozdirectory") !== null,
+    );
+
     if (fileList && fileList.length > 0) {
       const filesArray = Array.from(fileList);
       console.log(`✅ Selected ${filesArray.length} file(s)`);
@@ -159,11 +202,17 @@ export default function FileUpload({ projectId }) {
   };
 
   const clearSelection = () => {
+    console.log("🧹 Clearing file selection");
     setSelectedFiles([]);
-    const fileInputMain = document.getElementById("file-input-main");
-    const fileInputFolder = document.getElementById("file-input-folder");
-    if (fileInputMain) fileInputMain.value = "";
-    if (fileInputFolder) fileInputFolder.value = "";
+
+    if (fileInputMultipleRef.current) {
+      fileInputMultipleRef.current.value = "";
+      console.log("  ✓ Cleared multiple files input");
+    }
+    if (fileInputFolderRef.current) {
+      fileInputFolderRef.current.value = "";
+      console.log("  ✓ Cleared folder input");
+    }
   };
 
   return (
@@ -222,25 +271,27 @@ export default function FileUpload({ projectId }) {
           <div>
             {uploadMode === "files" && (
               <input
+                ref={fileInputMultipleRef}
                 key="multiple-files-input"
                 id="file-input-main"
                 className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
                 type="file"
                 onChange={handleFileSelection}
-                multiple
+                multiple={true}
                 accept="*/*"
                 disabled={isUploading}
               />
             )}
             {uploadMode === "folder" && (
               <input
+                ref={fileInputFolderRef}
                 key="folder-input"
                 id="file-input-folder"
                 className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
                 type="file"
                 onChange={handleFileSelection}
-                webkitdirectory=""
-                mozdirectory=""
+                webkitdirectory
+                mozdirectory
                 disabled={isUploading}
               />
             )}
