@@ -17,13 +17,19 @@ const PRECACHE = [
 // ─── Install: pre-cache core pages ───────────────────────────────────────────
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) =>
-        Promise.allSettled(
-          PRECACHE.map((url) => cache.add(url).catch(() => {})),
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(
+        PRECACHE.map((url) =>
+          fetch(url)
+            .then((res) => {
+              if (res.ok) return cache.put(url, res);
+            })
+            .catch((err) => {
+              console.warn(`[SW] Failed to precache ${url}:`, err.message);
+            }),
         ),
       ),
+    ),
   );
   self.skipWaiting();
 });
@@ -130,10 +136,15 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) =>
       cache.match(request).then((cached) => {
-        const fetchPromise = fetch(request).then((res) => {
-          if (res.ok) cache.put(request, res.clone());
-          return res;
-        });
+        const fetchPromise = fetch(request)
+          .then((res) => {
+            if (res.ok) cache.put(request, res.clone());
+            return res;
+          })
+          .catch((err) => {
+            console.warn("[SW] Fetch failed:", request.url, err);
+            return cached || new Response("Network error", { status: 503 });
+          });
         return cached || fetchPromise;
       }),
     ),
