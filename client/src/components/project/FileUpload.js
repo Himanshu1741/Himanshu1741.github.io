@@ -54,22 +54,17 @@ export default function FileUpload({ projectId }) {
     }
 
     setIsUploading(true);
-    const newProgress = {};
 
     try {
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("project_id", projectId);
+      const formData = new FormData();
+      formData.append("project_id", projectId);
 
-        newProgress[file.name] = 0;
-        setUploadProgress({ ...newProgress });
+      // Add all files to FormData
+      selectedFiles.forEach((file) => {
+        formData.append("files", file);
+      });
 
-        await API.post("/files", formData);
-        newProgress[file.name] = 100;
-        setUploadProgress({ ...newProgress });
-      }
+      const response = await API.post("/files", formData);
 
       await loadFiles();
       setSelectedFiles([]);
@@ -112,7 +107,8 @@ export default function FileUpload({ projectId }) {
   const handleFileSelection = (e) => {
     const fileList = e.target.files;
     if (fileList) {
-      setSelectedFiles(Array.from(fileList));
+      const filesArray = Array.from(fileList);
+      setSelectedFiles(filesArray);
     }
   };
 
@@ -172,16 +168,25 @@ export default function FileUpload({ projectId }) {
 
         {/* File Input */}
         <div className="flex flex-col gap-2">
-          <input
-            key={uploadMode}
-            className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
-            type="file"
-            onChange={handleFileSelection}
-            multiple={uploadMode === "files"}
-            webkitdirectory={uploadMode === "folder" ? true : undefined}
-            directory={uploadMode === "folder" ? true : undefined}
-            disabled={isUploading}
-          />
+          {uploadMode === "files" ? (
+            <input
+              key="files-input"
+              className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
+              type="file"
+              onChange={handleFileSelection}
+              multiple
+              disabled={isUploading}
+            />
+          ) : (
+            <input
+              key="folder-input"
+              className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
+              type="file"
+              onChange={handleFileSelection}
+              webkitdirectory
+              disabled={isUploading}
+            />
+          )}
 
           {/* Selected Files Preview */}
           {selectedFiles.length > 0 && (

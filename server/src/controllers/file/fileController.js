@@ -71,6 +71,50 @@ exports.uploadFile = async (req, res) => {
   }
 };
 
+exports.uploadFiles = async (req, res) => {
+  try {
+    const { project_id } = req.body;
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No files selected" });
+    }
+
+    const membership = await ProjectMember.findOne({
+      where: {
+        project_id,
+        user_id: req.user.id,
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    if (!membership.can_manage_files) {
+      return res
+        .status(403)
+        .json({ message: "File management permission denied" });
+    }
+
+    const uploadedFiles = [];
+    for (const file of req.files) {
+      const createdFile = await File.create({
+        filename: file.filename,
+        filepath: "uploads/" + file.filename,
+        project_id,
+        uploaded_by: req.user.id,
+      });
+      uploadedFiles.push(createdFile);
+    }
+
+    res.json({
+      message: `${uploadedFiles.length} file(s) uploaded successfully`,
+      files: uploadedFiles,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.getFilesByProject = async (req, res) => {
   try {
     const { project_id } = req.params;
