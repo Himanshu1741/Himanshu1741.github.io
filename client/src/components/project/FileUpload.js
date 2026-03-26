@@ -170,30 +170,37 @@ export default function FileUpload({ projectId }) {
 
   const handleFileSelection = (e) => {
     const fileList = e.target.files;
+    const input = e.target;
+    const isFolderMode = uploadMode === "folder" || input.hasAttribute("webkitdirectory");
+    
     console.log("📁 File input triggered");
     console.log("Upload mode:", uploadMode);
+    console.log("Is folder mode:", isFolderMode);
     console.log("Files in input:", fileList?.length || 0);
 
-    // Debug: Check if multiple selection is supported
-    const input = e.target;
+    // Debug: Check input attributes
     console.log("Input element attributes:");
-    console.log("  - multiple:", input.getAttribute("multiple") !== null);
-    console.log(
-      "  - webkitdirectory:",
-      input.getAttribute("webkitdirectory") !== null,
-    );
-    console.log(
-      "  - mozdirectory:",
-      input.getAttribute("mozdirectory") !== null,
-    );
+    console.log("  - multiple:", input.hasAttribute("multiple"));
+    console.log("  - webkitdirectory:", input.hasAttribute("webkitdirectory"));
+    console.log("  - mozdirectory:", input.hasAttribute("mozdirectory"));
+    console.log("  - type:", input.getAttribute("type"));
+    console.log("  - element id:", input.id);
 
     if (fileList && fileList.length > 0) {
       const filesArray = Array.from(fileList);
       console.log(`✅ Selected ${filesArray.length} file(s)`);
-      filesArray.forEach((f) => console.log(`  - ${f.name} (${f.size} bytes)`));
+      if (isFolderMode) {
+        console.log("📂 Folder contents:");
+      }
+      filesArray.forEach((f) => {
+        const path = f.webkitRelativePath || f.name;
+        console.log(`  - ${path} (${f.size} bytes)`);
+      });
       setSelectedFiles(filesArray);
     } else {
       console.log("⚠️ No files selected");
+      console.log("💡 Folder selection might not be supported in your browser");
+      console.log("   Supported browsers: Chrome, Edge, Firefox (with mozdirectory)");
     }
   };
 
@@ -292,6 +299,7 @@ export default function FileUpload({ projectId }) {
                 onChange={handleFileSelection}
                 webkitdirectory
                 mozdirectory
+                multiple={true}
                 disabled={isUploading}
               />
             )}
