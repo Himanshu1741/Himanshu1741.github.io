@@ -465,8 +465,8 @@ export default function FileUpload({ projectId }) {
                   className="w-full cursor-pointer"
                   type="file"
                   onChange={handleFileSelection}
-                  webkitdirectory=""
-                  mozdirectory=""
+                  webkitdirectory
+                  mozdirectory
                   multiple={true}
                   disabled={isUploading}
                 />
