@@ -38,25 +38,9 @@ API.interceptors.response.use(
   },
   (error) => {
     if (typeof window !== "undefined") {
-      console.error(`[API Error] ${error.response?.status || error.code} ${error.config?.url || "unknown"}`);
-    }
-    return Promise.reject(error);
-  }
-);
-
-export default API;
-
-// Add response interceptor for debugging
-API.interceptors.response.use(
-  (res) => {
-    if (typeof window !== "undefined") {
-      console.log(`[API Response] ${res.status} ${res.statusText}`);
-    }
-    return res;
-  },
-  (error) => {
-    if (typeof window !== "undefined") {
-      console.error(`[API Error] ${error.message}`, error.response?.status);
+      console.error(
+        `[API Error] ${error.response?.status || error.code} ${error.config?.url || "unknown"}`,
+      );
     }
     return Promise.reject(error);
   },

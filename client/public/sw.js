@@ -19,29 +19,30 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       Promise.allSettled(
-        PRECACHE.map((url) =>
-          new Promise((resolve) => {
-            // Add timeout to prevent hanging on unresponsive pages
-            const timeout = setTimeout(() => {
-              console.warn(`[SW] Timeout precaching ${url}`);
-              resolve();
-            }, 5000);
+        PRECACHE.map(
+          (url) =>
+            new Promise((resolve) => {
+              // Add timeout to prevent hanging on unresponsive pages
+              const timeout = setTimeout(() => {
+                console.warn(`[SW] Timeout precaching ${url}`);
+                resolve();
+              }, 5000);
 
-            fetch(url, { mode: "navigate" })
-              .then((res) => {
-                clearTimeout(timeout);
-                if (res.ok || res.status === 302 || res.status === 307) {
-                  return cache.put(url, res);
-                }
-                console.warn(`[SW] Failed to precache ${url}: ${res.status}`);
-                resolve();
-              })
-              .catch((err) => {
-                clearTimeout(timeout);
-                console.warn(`[SW] Error precaching ${url}:`, err.message);
-                resolve();
-              });
-          }),
+              fetch(url, { mode: "navigate" })
+                .then((res) => {
+                  clearTimeout(timeout);
+                  if (res.ok || res.status === 302 || res.status === 307) {
+                    return cache.put(url, res);
+                  }
+                  console.warn(`[SW] Failed to precache ${url}: ${res.status}`);
+                  resolve();
+                })
+                .catch((err) => {
+                  clearTimeout(timeout);
+                  console.warn(`[SW] Error precaching ${url}:`, err.message);
+                  resolve();
+                });
+            }),
         ),
       ),
     ),
