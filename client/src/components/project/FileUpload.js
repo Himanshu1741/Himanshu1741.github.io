@@ -53,6 +53,10 @@ export default function FileUpload({ projectId }) {
       alert("File management permission denied");
       return;
     }
+    if (!projectId) {
+      alert("Project ID is missing");
+      return;
+    }
 
     setIsUploading(true);
 
@@ -60,15 +64,22 @@ export default function FileUpload({ projectId }) {
       const formData = new FormData();
       formData.append("project_id", projectId);
 
+      console.log("📦 Building FormData with", selectedFiles.length, "files");
+
       for (let i = 0; i < selectedFiles.length; i++) {
-        formData.append("files", selectedFiles[i]);
+        const file = selectedFiles[i];
+        console.log(`  [${i + 1}]`, file.name, `-`, file.size, "bytes");
+        formData.append("files", file);
       }
 
-      console.log("Uploading", selectedFiles.length, "files");
+      console.log("🚀 Sending request to /api/files");
+      console.log("Project ID:", projectId);
 
       const response = await API.post("/files", formData);
 
-      console.log("Upload response:", response.data);
+      console.log("✅ Upload successful!");
+      console.log("Response:", response.data);
+
       await loadFiles();
       setSelectedFiles([]);
       setUploadProgress({});
@@ -76,12 +87,19 @@ export default function FileUpload({ projectId }) {
       if (filesInputRef.current) filesInputRef.current.value = "";
       if (folderInputRef.current) folderInputRef.current.value = "";
 
-      alert(`Successfully uploaded ${selectedFiles.length} file(s)`);
+      alert(`✅ Successfully uploaded ${selectedFiles.length} file(s)`);
     } catch (error) {
-      console.error("Upload error:", error.response?.data || error.message);
-      alert(
-        error?.response?.data?.message || error?.message || "Upload failed",
-      );
+      console.error("❌ Upload failed");
+      console.error("Status:", error.response?.status);
+      console.error("Data:", error.response?.data);
+      console.error("Message:", error.message);
+
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Upload failed";
+      alert(`❌ ${errorMsg}`);
     } finally {
       setIsUploading(false);
     }

@@ -75,8 +75,19 @@ exports.uploadFiles = async (req, res) => {
   try {
     const { project_id } = req.body;
 
+    console.log("📤 Upload request received");
+    console.log("Files received:", req.files?.length || 0);
+    console.log("Project ID:", project_id);
+    console.log("User ID:", req.user?.id);
+
     if (!req.files || req.files.length === 0) {
+      console.log("❌ No files in request");
       return res.status(400).json({ message: "No files selected" });
+    }
+
+    if (!project_id) {
+      console.log("❌ No project_id provided");
+      return res.status(400).json({ message: "project_id is required" });
     }
 
     const membership = await ProjectMember.findOne({
@@ -87,16 +98,25 @@ exports.uploadFiles = async (req, res) => {
     });
 
     if (!membership) {
+      console.log("❌ User not member of project");
       return res.status(403).json({ message: "Not authorized" });
     }
     if (!membership.can_manage_files) {
+      console.log("❌ User lacks file management permission");
       return res
         .status(403)
         .json({ message: "File management permission denied" });
     }
 
+    console.log(
+      `✅ Permission check passed. Uploading ${req.files.length} files`,
+    );
+
     const uploadedFiles = [];
     for (const file of req.files) {
+      console.log(
+        `  - Processing file: ${file.originalname} (${file.size} bytes)`,
+      );
       const createdFile = await File.create({
         filename: file.filename,
         filepath: "uploads/" + file.filename,
@@ -104,13 +124,17 @@ exports.uploadFiles = async (req, res) => {
         uploaded_by: req.user.id,
       });
       uploadedFiles.push(createdFile);
+      console.log(`    ✅ Saved to DB with ID: ${createdFile.id}`);
     }
 
+    console.log(`✅ All ${uploadedFiles.length} files uploaded successfully`);
     res.json({
       message: `${uploadedFiles.length} file(s) uploaded successfully`,
       files: uploadedFiles,
     });
   } catch (error) {
+    console.error("❌ Upload error:", error.message);
+    console.error("Stack:", error.stack);
     res.status(500).json({ error: error.message });
   }
 };

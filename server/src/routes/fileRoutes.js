@@ -4,10 +4,31 @@ const fileController = require("../controllers/file/fileController");
 const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../config/multer");
 
+// Multer error handler middleware
+const handleMulterError = (err, req, res, next) => {
+  if (err) {
+    console.error("❌ Multer error:", err.message);
+    return res.status(400).json({ message: `Upload error: ${err.message}` });
+  }
+  next();
+};
+
+// Request logging middleware
+const logUploadRequest = (req, res, next) => {
+  console.log("\n📨 Incoming file upload request");
+  console.log("Headers:", {
+    contentType: req.headers["content-type"],
+    contentLength: req.headers["content-length"],
+  });
+  next();
+};
+
 router.post(
   "/",
   authMiddleware,
+  logUploadRequest,
   upload.array("files", 100),
+  handleMulterError,
   fileController.uploadFiles,
 );
 router.get(
