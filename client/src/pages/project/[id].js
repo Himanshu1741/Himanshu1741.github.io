@@ -1,14 +1,14 @@
 // PROJECT PAGE — dashboard-style UI
 import { useRouter } from "next/router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppLayout from "../../components/layout/AppLayout";
-import ChatBox from "../../components/project/ChatBox";
-import TaskBoard from "../../components/project/TaskBoard";
-import FileUpload from "../../components/project/FileUpload";
-import ProjectCopilot from "../../components/project/ProjectCopilot";
-import Milestones from "../../components/project/Milestones";
 import Analytics from "../../components/project/Analytics";
+import ChatBox from "../../components/project/ChatBox";
+import FileUpload from "../../components/project/FileUpload";
+import Milestones from "../../components/project/Milestones";
+import ProjectCopilot from "../../components/project/ProjectCopilot";
 import ProjectOverview from "../../components/project/ProjectOverview";
+import TaskBoard from "../../components/project/TaskBoard";
 import API from "../../services/api";
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */

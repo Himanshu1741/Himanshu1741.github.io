@@ -238,11 +238,16 @@ export default function FileUpload({ projectId }) {
       </div>
 
       <div className="mb-4">
-        {/* Upload Mode Toggle Buttons */}
-        <div className="mb-4">
+        {/* Upload Mode Toggle Buttons - ALWAYS VISIBLE */}
+        <div
+          className="mb-4"
+          style={{ display: "block", visibility: "visible" }}
+        >
           <div className="flex flex-wrap gap-2 mb-3">
             <button
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
+              type="button"
+              name="upload-mode-files"
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition cursor-pointer ${
                 uploadMode === "files"
                   ? "bg-cyan-500 text-white"
                   : "bg-slate-700 text-slate-300 hover:bg-slate-600"
@@ -256,7 +261,9 @@ export default function FileUpload({ projectId }) {
               📄 Multiple Files
             </button>
             <button
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
+              type="button"
+              name="upload-mode-folder"
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition cursor-pointer ${
                 uploadMode === "folder"
                   ? "bg-cyan-500 text-white"
                   : "bg-slate-700 text-slate-300 hover:bg-slate-600"
@@ -285,6 +292,7 @@ export default function FileUpload({ projectId }) {
                 ref={fileInputMultipleRef}
                 key="multiple-files-input"
                 id="file-input-main"
+                name="files-input"
                 className="w-full cursor-pointer"
                 type="file"
                 onChange={handleFileSelection}
@@ -298,6 +306,7 @@ export default function FileUpload({ projectId }) {
                 ref={fileInputFolderRef}
                 key="folder-input"
                 id="file-input-folder"
+                name="folder-input"
                 className="w-full cursor-pointer"
                 type="file"
                 onChange={handleFileSelection}
