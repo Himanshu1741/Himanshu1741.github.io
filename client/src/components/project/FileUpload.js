@@ -343,8 +343,8 @@ export default function FileUpload({ projectId }) {
     if (pendingDirectories.length > 0) {
       Promise.all(
         pendingDirectories.map((dirEntry) =>
-          collectFilesFromDir(dirEntry, droppedFiles)
-        )
+          collectFilesFromDir(dirEntry, droppedFiles),
+        ),
       ).then(() => {
         if (droppedFiles.length > 0) {
           console.log(`✅ Dropped ${droppedFiles.length} file(s) total`);

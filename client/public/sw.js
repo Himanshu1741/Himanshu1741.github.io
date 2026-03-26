@@ -2,19 +2,16 @@
 const CACHE_NAME = "collabhub-v2";
 const OFFLINE_PAGE = "/offline";
 
+// Only precache static routes that don't require authentication or dynamic data
 const PRECACHE = [
   "/",
   "/offline",
-  "/dashboard",
-  "/projects",
-  "/deadlines",
-  "/profile",
   "/manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
 
-// ─── Install: pre-cache core pages (with graceful handling) ───────────────────
+// ─── Install: pre-cache only static pages (with graceful handling) ───────────────────
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
@@ -28,10 +25,10 @@ self.addEventListener("install", (event) => {
                 resolve();
               }, 5000);
 
-              fetch(url, { mode: "navigate" })
+              fetch(url)
                 .then((res) => {
                   clearTimeout(timeout);
-                  if (res.ok || res.status === 302 || res.status === 307) {
+                  if (res.ok) {
                     return cache.put(url, res);
                   }
                   console.warn(`[SW] Failed to precache ${url}: ${res.status}`);
