@@ -62,7 +62,16 @@ export default function FileUpload({ projectId }) {
       console.log("    - mozdirectory:", input.hasAttribute("mozdirectory"));
       console.log("    - type:", input.getAttribute("type"));
       console.log("    - multiple:", input.hasAttribute("multiple"));
+      console.log("    - element id:", input.id);
+      console.log("    - element name:", input.name);
     }
+
+    // Check browser support for webkitdirectory
+    const testInput = document.createElement("input");
+    testInput.type = "file";
+    testInput.webkitdirectory = true;
+    const supportsFolderUpload = testInput.hasAttribute("webkitdirectory");
+    console.log("🌐 Browser folder upload support:", supportsFolderUpload);
   }, [uploadMode]);
 
   useEffect(() => {
@@ -225,6 +234,42 @@ export default function FileUpload({ projectId }) {
     }
   };
 
+  const handleFolderButtonClick = () => {
+    console.log("📁 Folder button clicked");
+    console.log("Switching to Folder mode");
+    setUploadMode("folder");
+    clearSelection();
+
+    // Trigger folder input click after a brief delay to ensure state update
+    setTimeout(() => {
+      console.log("🖱️ Attempting to click folder input");
+      if (fileInputFolderRef.current) {
+        fileInputFolderRef.current.click();
+        console.log("✅ Folder input clicked");
+      } else {
+        console.warn("⚠️ Folder input ref not found");
+      }
+    }, 100);
+  };
+
+  const handleMultipleButtonClick = () => {
+    console.log("📄 Multiple files button clicked");
+    console.log("Switching to Multiple Files mode");
+    setUploadMode("files");
+    clearSelection();
+
+    // Trigger multiple files input click after state update
+    setTimeout(() => {
+      console.log("🖱️ Attempting to click multiple files input");
+      if (fileInputMultipleRef.current) {
+        fileInputMultipleRef.current.click();
+        console.log("✅ Multiple files input clicked");
+      } else {
+        console.warn("⚠️ Multiple files input ref not found");
+      }
+    }, 100);
+  };
+
   return (
     <section className="panel-card mb-6 p-5">
       {previewFile && (
@@ -252,11 +297,7 @@ export default function FileUpload({ projectId }) {
                   ? "bg-cyan-500 text-white"
                   : "bg-slate-700 text-slate-300 hover:bg-slate-600"
               }`}
-              onClick={() => {
-                console.log("Switching to Multiple Files mode");
-                setUploadMode("files");
-                clearSelection();
-              }}
+              onClick={handleMultipleButtonClick}
             >
               📄 Multiple Files
             </button>
@@ -268,11 +309,7 @@ export default function FileUpload({ projectId }) {
                   ? "bg-cyan-500 text-white"
                   : "bg-slate-700 text-slate-300 hover:bg-slate-600"
               }`}
-              onClick={() => {
-                console.log("Switching to Folder mode");
-                setUploadMode("folder");
-                clearSelection();
-              }}
+              onClick={handleFolderButtonClick}
             >
               📁 Upload Folder
             </button>
