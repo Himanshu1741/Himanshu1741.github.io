@@ -77,8 +77,10 @@ export default function FileUpload({ projectId }) {
       await loadFiles();
       setSelectedFiles([]);
 
-      const fileInput = document.getElementById("file-input-main");
-      if (fileInput) fileInput.value = "";
+      const fileInputMain = document.getElementById("file-input-main");
+      const fileInputFolder = document.getElementById("file-input-folder");
+      if (fileInputMain) fileInputMain.value = "";
+      if (fileInputFolder) fileInputFolder.value = "";
 
       alert(`✅ Successfully uploaded ${selectedFiles.length} file(s)`);
     } catch (error) {
@@ -141,8 +143,10 @@ export default function FileUpload({ projectId }) {
 
   const clearSelection = () => {
     setSelectedFiles([]);
-    const fileInput = document.getElementById("file-input-main");
-    if (fileInput) fileInput.value = "";
+    const fileInputMain = document.getElementById("file-input-main");
+    const fileInputFolder = document.getElementById("file-input-folder");
+    if (fileInputMain) fileInputMain.value = "";
+    if (fileInputFolder) fileInputFolder.value = "";
   };
 
   return (
@@ -190,15 +194,27 @@ export default function FileUpload({ projectId }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <input
-            id="file-input-main"
-            className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
-            type="file"
-            onChange={handleFileSelection}
-            multiple={uploadMode === "files"}
-            {...(uploadMode === "folder" && { webkitdirectory: "" })}
-            disabled={isUploading}
-          />
+          {uploadMode === "files" ? (
+            <input
+              id="file-input-main"
+              className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
+              type="file"
+              onChange={handleFileSelection}
+              multiple
+              accept="*/*"
+              disabled={isUploading}
+            />
+          ) : (
+            <input
+              id="file-input-folder"
+              className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
+              type="file"
+              onChange={handleFileSelection}
+              webkitdirectory=""
+              mozdirectory=""
+              disabled={isUploading}
+            />
+          )}
 
           {selectedFiles.length > 0 && (
             <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-3">
