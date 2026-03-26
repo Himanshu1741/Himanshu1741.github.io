@@ -316,6 +316,7 @@ export default function FileUpload({ projectId }) {
     // Collect files from dropped items (handles folders and files)
     const droppedFiles = [];
     let folderCount = 0;
+    let pendingDirectories = [];
 
     for (let i = 0; i < droppedItems.length; i++) {
       const item = droppedItems[i];
@@ -326,8 +327,8 @@ export default function FileUpload({ projectId }) {
         if (entry?.isDirectory) {
           folderCount++;
           console.log(`📂 Folder detected: ${entry.name}`);
-          // For directory drops, we'll collect all files in it
-          collectFilesFromDir(entry, droppedFiles);
+          // Collect directories for processing
+          pendingDirectories.push(entry);
         } else {
           const file = item.getAsFile();
           if (file) {
@@ -338,22 +339,34 @@ export default function FileUpload({ projectId }) {
       }
     }
 
-    if (droppedFiles.length > 0) {
-      console.log(`✅ Dropped ${droppedFiles.length} file(s)`);
-      if (folderCount > 0) {
-        setUploadMode("folder");
-        console.log(
-          `📁 Switched to folder upload mode (${folderCount} folder)`,
-        );
-      }
-      setSelectedFiles(droppedFiles);
+    // If there are directories, process them
+    if (pendingDirectories.length > 0) {
+      Promise.all(
+        pendingDirectories.map((dirEntry) =>
+          collectFilesFromDir(dirEntry, droppedFiles)
+        )
+      ).then(() => {
+        if (droppedFiles.length > 0) {
+          console.log(`✅ Dropped ${droppedFiles.length} file(s) total`);
+          setUploadMode("folder");
+          setSelectedFiles([...droppedFiles]);
+        } else {
+          console.warn("⚠️ No files found in drop");
+        }
+      });
     } else {
-      console.warn("⚠️ No files found in drop");
+      // No directories, just use the dropped files
+      if (droppedFiles.length > 0) {
+        console.log(`✅ Dropped ${droppedFiles.length} file(s)`);
+        setSelectedFiles(droppedFiles);
+      } else {
+        console.warn("⚠️ No files found in drop");
+      }
     }
   };
 
   // Recursively collect files from directory
-  const collectFilesFromDir = async (dirEntry, fileList) => {
+  const collectFilesFromDir = (dirEntry, fileList) => {
     const reader = dirEntry.createReader();
 
     return new Promise((resolve) => {
@@ -364,18 +377,27 @@ export default function FileUpload({ projectId }) {
             return;
           }
 
+          let pendingCount = entries.length;
+
           entries.forEach((entry) => {
             if (entry.isDirectory) {
-              collectFilesFromDir(entry, fileList);
+              collectFilesFromDir(entry, fileList).then(() => {
+                pendingCount--;
+                if (pendingCount === 0) {
+                  readEntries();
+                }
+              });
             } else if (entry.isFile) {
               entry.file((file) => {
                 fileList.push(file);
                 console.log(`  ├─ ${entry.fullPath} (${file.size} bytes)`);
+                pendingCount--;
+                if (pendingCount === 0) {
+                  readEntries();
+                }
               });
             }
           });
-
-          readEntries();
         });
       };
 
