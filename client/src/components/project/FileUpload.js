@@ -46,16 +46,22 @@ export default function FileUpload({ projectId }) {
   }, [projectId]);
 
   const handleUpload = async () => {
+    console.log("🚀 Upload clicked");
+    console.log("Selected files:", selectedFiles.length);
+    console.log("Upload mode:", uploadMode);
+    console.log("Can manage files:", canManageFiles);
+    console.log("Project ID:", projectId);
+
     if (selectedFiles.length === 0) {
-      alert("Please select files first");
+      alert("❌ Please select files first");
       return;
     }
     if (!canManageFiles) {
-      alert("File management permission denied");
+      alert("❌ File management permission denied");
       return;
     }
     if (!projectId) {
-      alert("Error: Project ID is missing");
+      alert("❌ Error: Project ID is missing");
       return;
     }
 
@@ -65,15 +71,19 @@ export default function FileUpload({ projectId }) {
       const formData = new FormData();
       formData.append("project_id", projectId);
 
-      selectedFiles.forEach((file) => {
+      console.log("📦 Adding files to FormData:");
+      selectedFiles.forEach((file, index) => {
+        console.log(`  [${index + 1}] ${file.name} (${file.size} bytes)`);
         formData.append("files", file);
       });
 
-      console.log("📤 Uploading", selectedFiles.length, "file(s)...");
+      console.log("🌐 Sending POST request to /api/files");
 
       const response = await API.post("/files", formData);
 
-      console.log("✅ Upload successful:", response.data);
+      console.log("✅ Upload successful!");
+      console.log("Response:", response.data);
+
       await loadFiles();
       setSelectedFiles([]);
 
@@ -84,17 +94,18 @@ export default function FileUpload({ projectId }) {
 
       alert(`✅ Successfully uploaded ${selectedFiles.length} file(s)`);
     } catch (error) {
-      console.error("❌ Upload error:");
-      console.error("  Status:", error.response?.status);
-      console.error("  Message:", error.response?.data?.message);
-      console.error("  Error:", error.response?.data?.error);
+      console.error("❌ Upload FAILED");
+      console.error("Error object:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Response data:", error.response?.data);
+      console.error("Message:", error.message);
 
       const errorMsg =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         error?.message ||
-        "Upload failed";
-      alert(errorMsg);
+        "Upload failed - check browser console";
+      alert(`❌ ${errorMsg}`);
     } finally {
       setIsUploading(false);
     }
@@ -129,11 +140,17 @@ export default function FileUpload({ projectId }) {
 
   const handleFileSelection = (e) => {
     const fileList = e.target.files;
+    console.log("📁 File input triggered");
+    console.log("Upload mode:", uploadMode);
+    console.log("Files in input:", fileList?.length || 0);
+
     if (fileList && fileList.length > 0) {
       const filesArray = Array.from(fileList);
       console.log(`✅ Selected ${filesArray.length} file(s)`);
       filesArray.forEach((f) => console.log(`  - ${f.name} (${f.size} bytes)`));
       setSelectedFiles(filesArray);
+    } else {
+      console.log("⚠️ No files selected");
     }
   };
 
@@ -171,6 +188,7 @@ export default function FileUpload({ projectId }) {
                   : "text-slate-500 hover:text-slate-300"
               }`}
               onClick={() => {
+                console.log("Switching to Multiple Files mode");
                 setUploadMode("files");
                 clearSelection();
               }}
@@ -184,6 +202,7 @@ export default function FileUpload({ projectId }) {
                   : "text-slate-500 hover:text-slate-300"
               }`}
               onClick={() => {
+                console.log("Switching to Folder mode");
                 setUploadMode("folder");
                 clearSelection();
               }}
@@ -191,30 +210,41 @@ export default function FileUpload({ projectId }) {
               📁 Upload Folder
             </button>
           </div>
+          {uploadMode === "files" && (
+            <span className="text-[10px] text-slate-500">Select 1+ files</span>
+          )}
+          {uploadMode === "folder" && (
+            <span className="text-[10px] text-slate-500">Select a folder</span>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
-          {uploadMode === "files" ? (
-            <input
-              id="file-input-main"
-              className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
-              type="file"
-              onChange={handleFileSelection}
-              multiple
-              accept="*/*"
-              disabled={isUploading}
-            />
-          ) : (
-            <input
-              id="file-input-folder"
-              className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
-              type="file"
-              onChange={handleFileSelection}
-              webkitdirectory=""
-              mozdirectory=""
-              disabled={isUploading}
-            />
-          )}
+          <div>
+            {uploadMode === "files" && (
+              <input
+                key="multiple-files-input"
+                id="file-input-main"
+                className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
+                type="file"
+                onChange={handleFileSelection}
+                multiple
+                accept="*/*"
+                disabled={isUploading}
+              />
+            )}
+            {uploadMode === "folder" && (
+              <input
+                key="folder-input"
+                id="file-input-folder"
+                className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
+                type="file"
+                onChange={handleFileSelection}
+                webkitdirectory=""
+                mozdirectory=""
+                disabled={isUploading}
+              />
+            )}
+          </div>
 
           {selectedFiles.length > 0 && (
             <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-3">
