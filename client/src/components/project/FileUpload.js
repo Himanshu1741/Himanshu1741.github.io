@@ -121,6 +121,8 @@ export default function FileUpload({ projectId }) {
       });
 
       console.log("🌐 Sending POST request to /api/files");
+      console.log("API Base URL:", API.defaults.baseURL);
+      console.log("FormData keys:", Array.from(formData.keys()));
 
       const response = await API.post("/files", formData);
 
@@ -137,16 +139,25 @@ export default function FileUpload({ projectId }) {
     } catch (error) {
       console.error("❌ Upload FAILED");
       console.error("Error object:", error);
+      console.error("Error code:", error.code);
       console.error("Status:", error.response?.status);
       console.error("Response data:", error.response?.data);
       console.error("Message:", error.message);
+      console.error("API Base URL:", API.defaults.baseURL);
 
-      const errorMsg =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Upload failed - check browser console";
-      alert(`❌ ${errorMsg}`);
+      let errorMsg = "Upload failed - check browser console";
+
+      if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+        errorMsg = `❌ Network Error: Cannot connect to server at ${API.defaults.baseURL}. Ensure the backend server is running on port 5000.`;
+      } else {
+        errorMsg =
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          errorMsg;
+      }
+
+      alert(errorMsg);
     } finally {
       setIsUploading(false);
     }
