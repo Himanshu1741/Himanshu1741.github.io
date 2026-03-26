@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import API from "../../services/api";
 import FilePreview from "./FilePreview";
 
@@ -10,13 +10,14 @@ export default function FileUpload({ projectId }) {
   const [previewFile, setPreviewFile] = useState(null);
   const [uploadMode, setUploadMode] = useState("files");
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState({});
-  const filesInputRef = useRef(null);
-  const folderInputRef = useRef(null);
 
   const loadFiles = async () => {
-    const res = await API.get(`/files/${projectId}`);
-    setFiles(res.data);
+    try {
+      const res = await API.get(`/files/${projectId}`);
+      setFiles(res.data);
+    } catch (error) {
+      console.error("Error loading files:", error.message);
+    }
   };
 
   useEffect(() => {
@@ -54,7 +55,7 @@ export default function FileUpload({ projectId }) {
       return;
     }
     if (!projectId) {
-      alert("Project ID is missing");
+      alert("Error: Project ID is missing");
       return;
     }
 
@@ -64,42 +65,34 @@ export default function FileUpload({ projectId }) {
       const formData = new FormData();
       formData.append("project_id", projectId);
 
-      console.log("📦 Building FormData with", selectedFiles.length, "files");
-
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        console.log(`  [${i + 1}]`, file.name, `-`, file.size, "bytes");
+      selectedFiles.forEach((file) => {
         formData.append("files", file);
-      }
+      });
 
-      console.log("🚀 Sending request to /api/files");
-      console.log("Project ID:", projectId);
+      console.log("📤 Uploading", selectedFiles.length, "file(s)...");
 
       const response = await API.post("/files", formData);
 
-      console.log("✅ Upload successful!");
-      console.log("Response:", response.data);
-
+      console.log("✅ Upload successful:", response.data);
       await loadFiles();
       setSelectedFiles([]);
-      setUploadProgress({});
 
-      if (filesInputRef.current) filesInputRef.current.value = "";
-      if (folderInputRef.current) folderInputRef.current.value = "";
+      const fileInput = document.getElementById("file-input-main");
+      if (fileInput) fileInput.value = "";
 
       alert(`✅ Successfully uploaded ${selectedFiles.length} file(s)`);
     } catch (error) {
-      console.error("❌ Upload failed");
-      console.error("Status:", error.response?.status);
-      console.error("Data:", error.response?.data);
-      console.error("Message:", error.message);
+      console.error("❌ Upload error:");
+      console.error("  Status:", error.response?.status);
+      console.error("  Message:", error.response?.data?.message);
+      console.error("  Error:", error.response?.data?.error);
 
       const errorMsg =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         error?.message ||
         "Upload failed";
-      alert(`❌ ${errorMsg}`);
+      alert(errorMsg);
     } finally {
       setIsUploading(false);
     }
@@ -136,13 +129,9 @@ export default function FileUpload({ projectId }) {
     const fileList = e.target.files;
     if (fileList && fileList.length > 0) {
       const filesArray = Array.from(fileList);
-      console.log(
-        "Selected files:",
-        filesArray.map((f) => f.name),
-      );
+      console.log(`✅ Selected ${filesArray.length} file(s)`);
+      filesArray.forEach((f) => console.log(`  - ${f.name} (${f.size} bytes)`));
       setSelectedFiles(filesArray);
-    } else {
-      console.log("No files selected");
     }
   };
 
@@ -152,7 +141,8 @@ export default function FileUpload({ projectId }) {
 
   const clearSelection = () => {
     setSelectedFiles([]);
-    setUploadProgress({});
+    const fileInput = document.getElementById("file-input-main");
+    if (fileInput) fileInput.value = "";
   };
 
   return (
@@ -200,25 +190,15 @@ export default function FileUpload({ projectId }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          {uploadMode === "files" ? (
-            <input
-              ref={filesInputRef}
-              className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
-              type="file"
-              onChange={handleFileSelection}
-              multiple
-              disabled={isUploading}
-            />
-          ) : (
-            <input
-              ref={folderInputRef}
-              className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
-              type="file"
-              onChange={handleFileSelection}
-              webkitdirectory=""
-              disabled={isUploading}
-            />
-          )}
+          <input
+            id="file-input-main"
+            className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
+            type="file"
+            onChange={handleFileSelection}
+            multiple={uploadMode === "files"}
+            {...(uploadMode === "folder" && { webkitdirectory: "" })}
+            disabled={isUploading}
+          />
 
           {selectedFiles.length > 0 && (
             <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-3">
