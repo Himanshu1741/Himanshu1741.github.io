@@ -171,8 +171,9 @@ export default function FileUpload({ projectId }) {
   const handleFileSelection = (e) => {
     const fileList = e.target.files;
     const input = e.target;
-    const isFolderMode = uploadMode === "folder" || input.hasAttribute("webkitdirectory");
-    
+    const isFolderMode =
+      uploadMode === "folder" || input.hasAttribute("webkitdirectory");
+
     console.log("📁 File input triggered");
     console.log("Upload mode:", uploadMode);
     console.log("Is folder mode:", isFolderMode);
@@ -200,7 +201,9 @@ export default function FileUpload({ projectId }) {
     } else {
       console.log("⚠️ No files selected");
       console.log("💡 Folder selection might not be supported in your browser");
-      console.log("   Supported browsers: Chrome, Edge, Firefox (with mozdirectory)");
+      console.log(
+        "   Supported browsers: Chrome, Edge, Firefox (with mozdirectory)",
+      );
     }
   };
 
@@ -235,13 +238,14 @@ export default function FileUpload({ projectId }) {
       </div>
 
       <div className="mb-4">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="inline-flex rounded-xl border border-slate-800 bg-slate-900/60 p-1 gap-1">
+        {/* Upload Mode Toggle Buttons */}
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-2 mb-3">
             <button
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
                 uploadMode === "files"
-                  ? "bg-cyan-500/20 text-cyan-300"
-                  : "text-slate-500 hover:text-slate-300"
+                  ? "bg-cyan-500 text-white"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
               }`}
               onClick={() => {
                 console.log("Switching to Multiple Files mode");
@@ -252,10 +256,10 @@ export default function FileUpload({ projectId }) {
               📄 Multiple Files
             </button>
             <button
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
                 uploadMode === "folder"
-                  ? "bg-cyan-500/20 text-cyan-300"
-                  : "text-slate-500 hover:text-slate-300"
+                  ? "bg-cyan-500 text-white"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
               }`}
               onClick={() => {
                 console.log("Switching to Folder mode");
@@ -266,22 +270,22 @@ export default function FileUpload({ projectId }) {
               📁 Upload Folder
             </button>
           </div>
-          {uploadMode === "files" && (
-            <span className="text-[10px] text-slate-500">Select 1+ files</span>
-          )}
-          {uploadMode === "folder" && (
-            <span className="text-[10px] text-slate-500">Select a folder</span>
-          )}
+          <p className="text-xs text-slate-400 mb-3">
+            {uploadMode === "files"
+              ? "Select one or more files"
+              : "Select a folder with files inside"}
+          </p>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <div>
+        {/* File Input Section */}
+        <div className="mb-4">
+          <div className="border-2 border-dashed border-slate-600 rounded-lg p-4 bg-slate-900/50">
             {uploadMode === "files" && (
               <input
                 ref={fileInputMultipleRef}
                 key="multiple-files-input"
                 id="file-input-main"
-                className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
+                className="w-full cursor-pointer"
                 type="file"
                 onChange={handleFileSelection}
                 multiple={true}
@@ -294,7 +298,7 @@ export default function FileUpload({ projectId }) {
                 ref={fileInputFolderRef}
                 key="folder-input"
                 id="file-input-folder"
-                className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
+                className="w-full cursor-pointer"
                 type="file"
                 onChange={handleFileSelection}
                 webkitdirectory
