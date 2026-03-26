@@ -10,9 +10,11 @@ export default function FileUpload({ projectId }) {
   const [previewFile, setPreviewFile] = useState(null);
   const [uploadMode, setUploadMode] = useState("files");
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const fileInputMultipleRef = useRef(null);
   const fileInputFolderRef = useRef(null);
+  const dropZoneRef = useRef(null);
 
   const loadFiles = async () => {
     try {
@@ -270,6 +272,106 @@ export default function FileUpload({ projectId }) {
     }, 100);
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+    console.log("🎯 Drag over drop zone");
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set isDragging to false if we're leaving the drop zone container
+    if (e.currentTarget === dropZoneRef.current) {
+      setIsDragging(false);
+      console.log("👋 Drag left drop zone");
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    console.log("📥 Files dropped");
+    const droppedItems = e.dataTransfer.items;
+
+    if (!droppedItems) {
+      console.warn("⚠️ No items in drop event");
+      return;
+    }
+
+    // Collect files from dropped items (handles folders and files)
+    const droppedFiles = [];
+    let folderCount = 0;
+
+    for (let i = 0; i < droppedItems.length; i++) {
+      const item = droppedItems[i];
+
+      if (item.kind === "file") {
+        const entry = item.webkitGetAsEntry?.();
+
+        if (entry?.isDirectory) {
+          folderCount++;
+          console.log(`📂 Folder detected: ${entry.name}`);
+          // For directory drops, we'll collect all files in it
+          collectFilesFromDir(entry, droppedFiles);
+        } else {
+          const file = item.getAsFile();
+          if (file) {
+            droppedFiles.push(file);
+            console.log(`📄 File: ${file.name} (${file.size} bytes)`);
+          }
+        }
+      }
+    }
+
+    if (droppedFiles.length > 0) {
+      console.log(`✅ Dropped ${droppedFiles.length} file(s)`);
+      if (folderCount > 0) {
+        setUploadMode("folder");
+        console.log(
+          `📁 Switched to folder upload mode (${folderCount} folder)`,
+        );
+      }
+      setSelectedFiles(droppedFiles);
+    } else {
+      console.warn("⚠️ No files found in drop");
+    }
+  };
+
+  // Recursively collect files from directory
+  const collectFilesFromDir = async (dirEntry, fileList) => {
+    const reader = dirEntry.createReader();
+
+    return new Promise((resolve) => {
+      const readEntries = () => {
+        reader.readEntries((entries) => {
+          if (entries.length === 0) {
+            resolve();
+            return;
+          }
+
+          entries.forEach((entry) => {
+            if (entry.isDirectory) {
+              collectFilesFromDir(entry, fileList);
+            } else if (entry.isFile) {
+              entry.file((file) => {
+                fileList.push(file);
+                console.log(`  ├─ ${entry.fullPath} (${file.size} bytes)`);
+              });
+            }
+          });
+
+          readEntries();
+        });
+      };
+
+      readEntries();
+    });
+  };
+
   return (
     <section className="panel-card mb-6 p-5">
       {previewFile && (
@@ -321,38 +423,61 @@ export default function FileUpload({ projectId }) {
           </p>
         </div>
 
-        {/* File Input Section */}
+        {/* File Input Section with Drag & Drop */}
         <div className="mb-4">
-          <div className="border-2 border-dashed border-slate-600 rounded-lg p-4 bg-slate-900/50">
-            {uploadMode === "files" && (
-              <input
-                ref={fileInputMultipleRef}
-                key="multiple-files-input"
-                id="file-input-main"
-                name="files-input"
-                className="w-full cursor-pointer"
-                type="file"
-                onChange={handleFileSelection}
-                multiple={true}
-                accept="*/*"
-                disabled={isUploading}
-              />
-            )}
-            {uploadMode === "folder" && (
-              <input
-                ref={fileInputFolderRef}
-                key="folder-input"
-                id="file-input-folder"
-                name="folder-input"
-                className="w-full cursor-pointer"
-                type="file"
-                onChange={handleFileSelection}
-                webkitdirectory=""
-                mozdirectory=""
-                multiple={true}
-                disabled={isUploading}
-              />
-            )}
+          <div
+            ref={dropZoneRef}
+            className={`border-2 border-dashed rounded-lg p-4 transition ${
+              isDragging
+                ? "border-cyan-500 bg-cyan-500/10 bg-opacity-20"
+                : "border-slate-600 bg-slate-900/50"
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <div className="text-center">
+              {isDragging && (
+                <div className="mb-3 text-cyan-400 font-semibold animate-pulse">
+                  📥 Drop files or folders here
+                </div>
+              )}
+              {uploadMode === "files" && (
+                <input
+                  ref={fileInputMultipleRef}
+                  key="multiple-files-input"
+                  id="file-input-main"
+                  name="files-input"
+                  className="w-full cursor-pointer"
+                  type="file"
+                  onChange={handleFileSelection}
+                  multiple={true}
+                  accept="*/*"
+                  disabled={isUploading}
+                />
+              )}
+              {uploadMode === "folder" && (
+                <input
+                  ref={fileInputFolderRef}
+                  key="folder-input"
+                  id="file-input-folder"
+                  name="folder-input"
+                  className="w-full cursor-pointer"
+                  type="file"
+                  onChange={handleFileSelection}
+                  webkitdirectory=""
+                  mozdirectory=""
+                  multiple={true}
+                  disabled={isUploading}
+                />
+              )}
+              {!isDragging && (
+                <p className="text-xs text-slate-400 mt-2">
+                  💡 Or drag and drop{" "}
+                  {uploadMode === "files" ? "files" : "a folder"} here
+                </p>
+              )}
+            </div>
           </div>
 
           {selectedFiles.length > 0 && (
