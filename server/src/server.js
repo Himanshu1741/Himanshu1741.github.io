@@ -40,9 +40,26 @@ const io = new Server(server, {
 // Make io accessible from controllers
 socketInstance.setIo(io);
 
-app.use(cors());
-app.use(express.json());
+// Enhanced CORS configuration
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow all origins including no origin (for mobile apps, Postman, etc.)
+    callback(null, true);
+  },
+  credentials: false,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: "100mb" })); // Support large file uploads
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use(passport.initialize());
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", message: "Server is running" });
+});
 
 // API Routes
 app.use("/api/auth", authRoutes);
