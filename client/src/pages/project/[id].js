@@ -286,7 +286,7 @@ export default function ProjectPage() {
         }
 
         try {
-          const tasksRes = await API.get(`/tasks?projectId=${id}`);
+          const tasksRes = await API.get(`/tasks/${id}`);
           const tasks = tasksRes.data || [];
           setTaskStats({
             total: tasks.length,
