@@ -14,19 +14,34 @@ const PRECACHE = [
   "/icons/icon-512.png",
 ];
 
-// ─── Install: pre-cache core pages ───────────────────────────────────────────
+// ─── Install: pre-cache core pages (with graceful handling) ───────────────────
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       Promise.allSettled(
         PRECACHE.map((url) =>
-          fetch(url)
-            .then((res) => {
-              if (res.ok) return cache.put(url, res);
-            })
-            .catch((err) => {
-              console.warn(`[SW] Failed to precache ${url}:`, err.message);
-            }),
+          new Promise((resolve) => {
+            // Add timeout to prevent hanging on unresponsive pages
+            const timeout = setTimeout(() => {
+              console.warn(`[SW] Timeout precaching ${url}`);
+              resolve();
+            }, 5000);
+
+            fetch(url, { mode: "navigate" })
+              .then((res) => {
+                clearTimeout(timeout);
+                if (res.ok || res.status === 302 || res.status === 307) {
+                  return cache.put(url, res);
+                }
+                console.warn(`[SW] Failed to precache ${url}: ${res.status}`);
+                resolve();
+              })
+              .catch((err) => {
+                clearTimeout(timeout);
+                console.warn(`[SW] Error precaching ${url}:`, err.message);
+                resolve();
+              });
+          }),
         ),
       ),
     ),
