@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import API from "../../services/api";
 import FilePreview from "./FilePreview";
 
@@ -8,9 +8,11 @@ export default function FileUpload({ projectId }) {
   const [userId, setUserId] = useState(null);
   const [canManageFiles, setCanManageFiles] = useState(true);
   const [previewFile, setPreviewFile] = useState(null);
-  const [uploadMode, setUploadMode] = useState("files"); // 'files' or 'folder'
+  const [uploadMode, setUploadMode] = useState("files");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
+  const filesInputRef = useRef(null);
+  const folderInputRef = useRef(null);
 
   const loadFiles = async () => {
     const res = await API.get(`/files/${projectId}`);
@@ -39,7 +41,6 @@ export default function FileUpload({ projectId }) {
         setCanManageFiles(false);
       }
     };
-
     loadPermissions();
   }, [projectId]);
 
@@ -59,19 +60,28 @@ export default function FileUpload({ projectId }) {
       const formData = new FormData();
       formData.append("project_id", projectId);
 
-      // Add all files to FormData
-      selectedFiles.forEach((file) => {
-        formData.append("files", file);
-      });
+      for (let i = 0; i < selectedFiles.length; i++) {
+        formData.append("files", selectedFiles[i]);
+      }
+
+      console.log("Uploading", selectedFiles.length, "files");
 
       const response = await API.post("/files", formData);
 
+      console.log("Upload response:", response.data);
       await loadFiles();
       setSelectedFiles([]);
       setUploadProgress({});
+
+      if (filesInputRef.current) filesInputRef.current.value = "";
+      if (folderInputRef.current) folderInputRef.current.value = "";
+
       alert(`Successfully uploaded ${selectedFiles.length} file(s)`);
     } catch (error) {
-      alert(error?.response?.data?.message || "Upload failed");
+      console.error("Upload error:", error.response?.data || error.message);
+      alert(
+        error?.response?.data?.message || error?.message || "Upload failed",
+      );
     } finally {
       setIsUploading(false);
     }
@@ -106,9 +116,15 @@ export default function FileUpload({ projectId }) {
 
   const handleFileSelection = (e) => {
     const fileList = e.target.files;
-    if (fileList) {
+    if (fileList && fileList.length > 0) {
       const filesArray = Array.from(fileList);
+      console.log(
+        "Selected files:",
+        filesArray.map((f) => f.name),
+      );
       setSelectedFiles(filesArray);
+    } else {
+      console.log("No files selected");
     }
   };
 
@@ -134,7 +150,6 @@ export default function FileUpload({ projectId }) {
       </div>
 
       <div className="mb-4">
-        {/* Upload Mode Toggle */}
         <div className="mb-4 flex items-center gap-2">
           <div className="inline-flex rounded-xl border border-slate-800 bg-slate-900/60 p-1 gap-1">
             <button
@@ -166,11 +181,10 @@ export default function FileUpload({ projectId }) {
           </div>
         </div>
 
-        {/* File Input */}
         <div className="flex flex-col gap-2">
           {uploadMode === "files" ? (
             <input
-              key="files-input"
+              ref={filesInputRef}
               className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
               type="file"
               onChange={handleFileSelection}
@@ -179,16 +193,15 @@ export default function FileUpload({ projectId }) {
             />
           ) : (
             <input
-              key="folder-input"
+              ref={folderInputRef}
               className="input-modern file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-100 hover:file:bg-slate-600"
               type="file"
               onChange={handleFileSelection}
-              webkitdirectory
+              webkitdirectory=""
               disabled={isUploading}
             />
           )}
 
-          {/* Selected Files Preview */}
           {selectedFiles.length > 0 && (
             <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-3">
               <div className="mb-2 text-sm text-slate-300">
@@ -215,7 +228,6 @@ export default function FileUpload({ projectId }) {
             </div>
           )}
 
-          {/* Upload Controls */}
           <div className="flex gap-2">
             <button
               className="btn-primary md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
@@ -267,7 +279,6 @@ export default function FileUpload({ projectId }) {
                 {f.filename}
               </button>
               <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap sm:items-center">
-                {/* Preview button */}
                 <button
                   className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-600 bg-slate-800/80 text-slate-100 transition hover:-translate-y-px hover:bg-slate-700"
                   onClick={() => setPreviewFile(f)}
@@ -303,22 +314,19 @@ export default function FileUpload({ projectId }) {
                       strokeLinejoin="round"
                     />
                     <path
-                      d="M7 10l5 5 5-5"
+                      d="M7 15l5 5 5-5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
-                    <path
-                      d="M5 21h14"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                    <path d="M4 20h16" strokeLinecap="round" />
                   </svg>
                 </button>
-                {userId && f.uploaded_by === userId && canManageFiles ? (
+                {userId === f.uploaded_by && (
                   <button
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/90 text-white transition hover:-translate-y-px hover:bg-rose-500"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-600 bg-slate-800/80 text-slate-100 transition hover:-translate-y-px hover:bg-rose-700/50 hover:border-rose-600"
                     onClick={() => handleDelete(f.id)}
                     aria-label={`Delete ${f.filename}`}
+                    title="Delete"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -327,29 +335,13 @@ export default function FileUpload({ projectId }) {
                       stroke="currentColor"
                       strokeWidth="2"
                     >
-                      <path
-                        d="M3 6h18"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M8 6V4h8v2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M19 6l-1 14H6L5 6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M10 11v6M14 11v6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
                     </svg>
                   </button>
-                ) : null}
+                )}
               </div>
             </div>
           </div>
