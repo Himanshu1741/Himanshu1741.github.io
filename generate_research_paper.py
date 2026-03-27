@@ -144,6 +144,48 @@ arch_text = doc.add_paragraph(
 )
 arch_text.paragraph_format.line_spacing = 1.5
 
+# Add Architecture Diagram
+diagram_fig = doc.add_paragraph()
+diagram_fig.add_run('Figure 1: System Architecture Diagram').bold = True
+diagram_fig.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+# Create architecture visualization table
+arch_table = doc.add_table(rows=5, cols=3)
+arch_table.style = 'Light Grid Accent 1'
+arch_table.autofit = False
+
+# Header
+header_cells = arch_table.rows[0].cells
+header_cells[0].text = 'Client Layer'
+header_cells[1].text = 'Application Layer'
+header_cells[2].text = 'Data Layer'
+
+# Row 2
+cells = arch_table.rows[1].cells
+cells[0].text = 'Next.js\nReact 19\nTailwind CSS'
+cells[1].text = 'Express.js\nSocket.io\nMiddleware'
+cells[2].text = 'MySQL\nSequelize ORM\nIndexing'
+
+# Row 3
+cells = arch_table.rows[2].cells
+cells[0].text = 'Components:\n• Dashboard\n• Projects\n• Files\n• Chat'
+cells[1].text = 'Services:\n• Auth\n• Projects\n• Tasks\n• Messages'
+cells[2].text = 'Models:\n• Users\n• Projects\n• Tasks\n• Files'
+
+# Row 4
+cells = arch_table.rows[3].cells
+cells[0].text = 'State:\n• Context API\n• Local Storage'
+cells[1].text = 'Events:\n• WebSocket\n• REST APIs'
+cells[2].text = 'Transactions:\n• Consistency\n• Integrity'
+
+# Row 5
+cells = arch_table.rows[4].cells
+cells[0].text = 'Port: 3000'
+cells[1].text = 'Port: 5000'
+cells[2].text = 'Port: 3306'
+
+doc.add_paragraph()  # Blank line
+
 meth_text2 = doc.add_paragraph('3.2 Technology Stack')
 meth_text2.runs[0].font.bold = True
 meth_text2.runs[0].font.size = Pt(11)
@@ -241,6 +283,67 @@ challenges = [
 
 for challenge_text in challenges:
     doc.add_paragraph(challenge_text, style='List Bullet').paragraph_format.line_spacing = 1.5
+
+# Add Figures and Screenshots Section
+figures_heading = doc.add_heading('4.4 User Interface and Features', level=2)
+figures_heading.runs[0].font.size = Pt(11)
+
+fig_desc1 = doc.add_paragraph()
+fig_desc1.add_run('Figure 2: Dashboard Overview').bold = True
+fig_desc1.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+dashboard_desc = doc.add_paragraph(
+    'The dashboard provides a comprehensive overview of all active projects, tasks, and team members. Key metrics are displayed including project progress, pending tasks, and upcoming deadlines. '
+    'Real-time notifications alert users to any changes in assigned tasks or project updates. The interface is responsive and optimized for both desktop and mobile viewing.'
+)
+dashboard_desc.paragraph_format.line_spacing = 1.5
+dashboard_desc.paragraph_format.left_indent = Inches(0.5)
+
+fig_desc2 = doc.add_paragraph()
+fig_desc2.add_run('Figure 3: Project Management Interface').bold = True
+fig_desc2.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+project_desc = doc.add_paragraph(
+    'The project management interface enables users to create, edit, and manage projects with intuitive drag-and-drop task organization. Users can assign tasks to team members, set priorities and deadlines, '
+    'and track progress through visual task boards. The interface integrates kanban-style columns (To-Do, In Progress, Done) for effortless workflow management.'
+)
+project_desc.paragraph_format.line_spacing = 1.5
+project_desc.paragraph_format.left_indent = Inches(0.5)
+
+fig_desc3 = doc.add_paragraph()
+fig_desc3.add_run('Figure 4: File Upload and Management').bold = True
+fig_desc3.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+file_desc = doc.add_paragraph(
+    'The file management section supports drag-and-drop file uploads with real-time progress indicators. Users can preview documents directly in the browser, download files, and manage file permissions. '
+    'The implementation includes multiple file upload modes (single/batch) and maintains a complete file history with version tracking capabilities.'
+)
+file_desc.paragraph_format.line_spacing = 1.5
+file_desc.paragraph_format.left_indent = Inches(0.5)
+
+fig_desc4 = doc.add_paragraph()
+fig_desc4.add_run('Figure 5: Real-Time Chat Interface').bold = True
+fig_desc4.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+chat_desc = doc.add_paragraph(
+    'The integrated chat system enables team members to communicate in real-time with message reactions and threading support. Users can mention team members using @ mentions, which trigger instant notifications. '
+    'The chat interface displays typing indicators and online status of team members, enhancing collaboration awareness.'
+)
+chat_desc.paragraph_format.line_spacing = 1.5
+chat_desc.paragraph_format.left_indent = Inches(0.5)
+
+fig_desc5 = doc.add_paragraph()
+fig_desc5.add_run('Figure 6: Analytics and Reporting Dashboard').bold = True
+fig_desc5.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+analytics_desc = doc.add_paragraph(
+    'The analytics section provides comprehensive project metrics including task completion rates, team productivity statistics, and project timeline analysis. Interactive charts and graphs visualize data trends, '
+    'enabling project managers to make data-driven decisions. The dashboard includes exportable reports for project stakeholders.'
+)
+analytics_desc.paragraph_format.line_spacing = 1.5
+analytics_desc.paragraph_format.left_indent = Inches(0.5)
+
+doc.add_paragraph()  # Blank line
 
 # Conclusion
 conclusion_heading = doc.add_heading('5. Conclusion', level=1)
