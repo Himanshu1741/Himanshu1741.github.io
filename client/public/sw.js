@@ -1,17 +1,15 @@
 // CollabHub Service Worker — offline support + cache-first for static assets
-const CACHE_NAME = "collabhub-v2";
+const CACHE_NAME = "collabhub-v3";
 const OFFLINE_PAGE = "/offline";
 
-// Only precache static routes that don't require authentication or dynamic data
+// Only precache public static pages that don't require authentication
 const PRECACHE = [
-  "/",
-  "/offline",
   "/manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
 
-// ─── Install: pre-cache only static pages (with graceful handling) ───────────────────
+// ─── Install: pre-cache core pages (with graceful handling) ───────────────────
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
@@ -25,10 +23,10 @@ self.addEventListener("install", (event) => {
                 resolve();
               }, 5000);
 
-              fetch(url)
+              fetch(url, { mode: "navigate" })
                 .then((res) => {
                   clearTimeout(timeout);
-                  if (res.ok) {
+                  if (res.ok || res.status === 302 || res.status === 307) {
                     return cache.put(url, res);
                   }
                   console.warn(`[SW] Failed to precache ${url}: ${res.status}`);
