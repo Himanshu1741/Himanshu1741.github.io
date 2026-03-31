@@ -24,6 +24,7 @@ import React, {
   useState,
 } from "react";
 import API from "../services/api";
+import "../styles/dashboard.css";
 
 const Pie = dynamic(() => import("react-chartjs-2").then((mod) => mod.Pie), {
   ssr: false,
@@ -67,57 +68,10 @@ function useToast() {
 }
 
 function ToastContainer({ toasts }) {
-  const c = {
-    success: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-    error: "border-rose-500/40 bg-rose-500/10 text-rose-300",
-    info: "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
-    warning: "border-amber-500/40 bg-amber-500/10 text-amber-300",
-  };
   return (
-    <div
-      style={{
-        position: "fixed",
-        right: "20px",
-        top: "20px",
-        zIndex: 9999,
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-        pointerEvents: "none",
-      }}
-    >
+    <div className="toast-container">
       {toasts.map((t) => (
-        <div
-          key={t.id}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            borderRadius: "12px",
-            border: `1px solid ${t.type === "success" ? "rgba(34, 197, 94, 0.4)" : t.type === "error" ? "rgba(255, 92, 124, 0.4)" : t.type === "warning" ? "rgba(246, 166, 35, 0.4)" : "rgba(0, 212, 255, 0.4)"}`,
-            padding: "12px 16px",
-            fontSize: "14px",
-            fontWeight: "500",
-            color:
-              t.type === "success"
-                ? "#22c55e"
-                : t.type === "error"
-                  ? "#ff5c7c"
-                  : t.type === "warning"
-                    ? "#f6a623"
-                    : "#00d4ff",
-            background:
-              t.type === "success"
-                ? "rgba(34, 197, 94, 0.1)"
-                : t.type === "error"
-                  ? "rgba(255, 92, 124, 0.1)"
-                  : t.type === "warning"
-                    ? "rgba(246, 166, 35, 0.1)"
-                    : "rgba(0, 212, 255, 0.1)",
-            pointerEvents: "auto",
-            animation: "slideInRight 0.25s ease",
-          }}
-        >
+        <div key={t.id} className={`toast ${t.type}`}>
           {t.msg}
         </div>
       ))}
@@ -128,75 +82,15 @@ function ToastContainer({ toasts }) {
 function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
   if (!open) return null;
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9990,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px",
-        background: "rgba(0, 0, 0, 0.65)",
-        backdropFilter: "blur(4px)",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "400px",
-          borderRadius: "16px",
-          border: `1px solid ${colors.bg2}`,
-          background: colors.bg1,
-          padding: "24px",
-          boxShadow: "0 20px 25px rgba(0, 0, 0, 0.3)",
-        }}
-      >
-        <h3
-          style={{
-            marginBottom: "8px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            color: "#eef0f8",
-          }}
-        >
-          {title}
-        </h3>
-        <p style={{ marginBottom: "20px", fontSize: "14px", color: "#8890aa" }}>
-          {message}
-        </p>
-        <div
-          style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}
-        >
-          <button
-            style={{
-              borderRadius: "8px",
-              border: `1px solid ${colors.bg2}`,
-              background: colors.bg2,
-              padding: "8px 16px",
-              fontSize: "14px",
-              color: "#8890aa",
-              cursor: "pointer",
-              transition: ".15s",
-            }}
-            onClick={onCancel}
-          >
+    <div className="confirm-modal-overlay">
+      <div className="confirm-modal">
+        <h3>{title}</h3>
+        <p>{message}</p>
+        <div className="confirm-modal-actions">
+          <button className="confirm-modal-cancel" onClick={onCancel}>
             Cancel
           </button>
-          <button
-            style={{
-              borderRadius: "8px",
-              background: colors.rose,
-              color: "#fff",
-              padding: "8px 16px",
-              fontSize: "14px",
-              fontWeight: "600",
-              border: "none",
-              cursor: "pointer",
-              transition: ".15s",
-            }}
-            onClick={onConfirm}
-          >
+          <button className="confirm-modal-confirm" onClick={onConfirm}>
             Confirm
           </button>
         </div>
@@ -207,54 +101,10 @@ function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
 
 function StatCardModern({ label, value, accent }) {
   return (
-    <div
-      style={{
-        background: colors.bg1,
-        border: `1px solid rgba(255,255,255,.07)`,
-        borderRadius: "12px",
-        padding: "14px 16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "4px",
-        position: "relative",
-        overflow: "hidden",
-        transition: ".2s",
-        cursor: "default",
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          top: "-18px",
-          right: "-18px",
-          width: "60px",
-          height: "60px",
-          borderRadius: "50%",
-          opacity: 0.18,
-          filter: "blur(18px)",
-          background: accent,
-        }}
-      />
-      <span
-        style={{
-          fontSize: "10px",
-          fontWeight: "500",
-          color: "#484f66",
-          textTransform: "uppercase",
-          letterSpacing: ".7px",
-        }}
-      >
-        {label}
-      </span>
-      <span
-        style={{
-          fontSize: "26px",
-          fontWeight: "700",
-          letterSpacing: "-1px",
-          lineHeight: 1,
-          color: accent,
-        }}
-      >
+    <div className="stat-card">
+      <div className="stat-card-accent" style={{ background: accent }} />
+      <span className="stat-card-label">{label}</span>
+      <span className="stat-card-value" style={{ color: accent }}>
         {value ?? 0}
       </span>
     </div>
@@ -262,54 +112,11 @@ function StatCardModern({ label, value, accent }) {
 }
 
 const CardModern = React.forwardRef(({ title, note, pill, children }, ref) => (
-  <div
-    ref={ref}
-    style={{
-      background: colors.bg1,
-      border: `1px solid rgba(255,255,255,.07)`,
-      borderRadius: "12px",
-      padding: "16px",
-    }}
-  >
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: "14px",
-        gap: "8px",
-      }}
-    >
-      <span
-        style={{
-          fontSize: "12px",
-          fontWeight: "600",
-          color: "#8890aa",
-          textTransform: "uppercase",
-          letterSpacing: ".6px",
-        }}
-      >
-        {title}
-      </span>
-      {pill && (
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "4px",
-            background: `rgba(0, 212, 255, 0.08)`,
-            color: colors.cyan,
-            fontSize: "10px",
-            padding: "2px 8px",
-            borderRadius: "20px",
-          }}
-        >
-          {pill}
-        </span>
-      )}
-      {note && (
-        <span style={{ fontSize: "10px", color: "#484f66" }}>{note}</span>
-      )}
+  <div ref={ref} className="card-modern">
+    <div className="card-modern-header">
+      <span className="card-modern-title">{title}</span>
+      {pill && <span className="card-modern-pill">{pill}</span>}
+      {note && <span className="card-modern-note">{note}</span>}
     </div>
     {children}
   </div>
@@ -697,84 +504,17 @@ export default function Dashboard() {
 
   return (
     <>
-      <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { min-height: 100vh; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: ${colors.bg0}; color: #eef0f8; font-size: 14px; line-height: 1.5; }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: ${colors.bg1}; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.13); border-radius: 4px; }
-        @keyframes slideInRight { from{opacity:0;transform:translateX(20px);} to{opacity:1;transform:translateX(0);} }
-      `}</style>
       <ToastContainer toasts={toasts} />
       <ConfirmModal {...confirm} onCancel={closeConfirm} />
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          background: colors.bg0,
-        }}
-      >
+      <div className="dashboard-container">
         {/* Top Navigation */}
-        <nav
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "12px 16px",
-            background: colors.bg1,
-            borderBottom: `1px solid rgba(255,255,255,.07)`,
-            position: "sticky",
-            top: 0,
-            zIndex: 100,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "7px",
-                background: `linear-gradient(135deg, ${colors.cyan}, ${colors.violet})`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "13px",
-                fontWeight: "700",
-                color: "#000",
-                flexShrink: 0,
-              }}
-            >
-              P
-            </div>
-            <span
-              style={{
-                fontSize: "15px",
-                fontWeight: "600",
-                letterSpacing: "-.3px",
-              }}
-            >
-              Projex
-            </span>
+        <nav className="dashboard-nav">
+          <div className="nav-brand">
+            <div className="nav-brand-icon">P</div>
+            <span className="nav-brand-text">Projex</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div
-              style={{
-                width: "30px",
-                height: "30px",
-                borderRadius: "8px",
-                background: `rgba(0, 212, 255, 0.15)`,
-                border: `1px solid rgba(0, 212, 255, 0.2)`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "10px",
-                fontWeight: "700",
-                color: colors.cyan,
-                flexShrink: 0,
-                cursor: "pointer",
-              }}
-            >
+          <div className="nav-user">
+            <div className="nav-user-avatar">
               {user.name
                 ?.split(" ")
                 .map((n) => n[0])
@@ -786,108 +526,30 @@ export default function Dashboard() {
         </nav>
 
         {/* Main Content */}
-        <main
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            padding: "20px 24px",
-            gap: "20px",
-            overflowY: "auto",
-          }}
-        >
+        <main className="dashboard-main">
           {/* Welcome Banner */}
-          <div
-            style={{
-              background: colors.bg1,
-              border: `1px solid rgba(255,255,255,.07)`,
-              borderRadius: "16px",
-              padding: "18px 20px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}
-          >
+          <div className="welcome-banner">
             <div>
-              <p
-                style={{
-                  fontSize: "10px",
-                  fontWeight: "600",
-                  color: colors.cyan,
-                  textTransform: "uppercase",
-                  letterSpacing: ".8px",
-                  marginBottom: "5px",
-                }}
-              >
-                Member workspace
-              </p>
-              <h3
-                style={{
-                  fontSize: "17px",
-                  fontWeight: "600",
-                  letterSpacing: "-.3px",
-                  color: "#eef0f8",
-                }}
-              >
+              <p className="welcome-banner-label">Member workspace</p>
+              <h3 className="welcome-banner-title">
                 Welcome back, {user.name}!
               </h3>
-              <p
-                style={{ fontSize: "12px", color: "#8890aa", marginTop: "3px" }}
-              >
+              <p className="welcome-banner-subtitle">
                 Track progress, manage tasks, and collaborate in one place.
               </p>
             </div>
             <button
               onClick={scrollToCreateProject}
-              style={{
-                background: `rgba(0, 212, 255, 0.1)`,
-                border: `1px solid rgba(0, 212, 255, 0.25)`,
-                color: colors.cyan,
-                fontSize: "12px",
-                fontWeight: "600",
-                padding: "8px 16px",
-                borderRadius: "8px",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-                transition: ".15s",
-              }}
-              onMouseEnter={(e) =>
-                (e.target.style.background = `rgba(0, 212, 255, 0.18)`)
-              }
-              onMouseLeave={(e) =>
-                (e.target.style.background = `rgba(0, 212, 255, 0.1)`)
-              }
+              className="welcome-banner-btn"
             >
               + New project
             </button>
           </div>
 
-          {pageError && (
-            <div
-              style={{
-                background: "rgba(255, 92, 124, 0.1)",
-                border: `1px solid rgba(255, 92, 124, 0.4)`,
-                borderRadius: "12px",
-                padding: "12px 16px",
-                fontSize: "14px",
-                color: "#ff5c7c",
-              }}
-            >
-              {pageError}
-            </div>
-          )}
+          {pageError && <div className="error-alert">{pageError}</div>}
 
           {/* KPI Stats */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "10px",
-            }}
-          >
+          <div className="kpi-grid">
             {summary && (
               <>
                 <StatCardModern
@@ -916,21 +578,9 @@ export default function Dashboard() {
 
           {/* Charts Row */}
           {summary && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.6fr 1fr",
-                gap: "12px",
-              }}
-            >
+            <div className="charts-row">
               <CardModern title="Project activity" note="Last 6 months">
-                <div
-                  style={{
-                    position: "relative",
-                    width: "100%",
-                    height: "175px",
-                  }}
-                >
+                <div className="chart-container">
                   <Bar
                     data={{
                       labels: ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"],
@@ -980,13 +630,7 @@ export default function Dashboard() {
                     gap: "12px",
                   }}
                 >
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "155px",
-                      height: "155px",
-                    }}
-                  >
+                  <div className="pie-chart-container">
                     <Pie
                       data={{
                         labels: ["Todo", "In Progress", "Completed"],
@@ -1017,96 +661,32 @@ export default function Dashboard() {
                         },
                       }}
                     />
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        textAlign: "center",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "22px",
-                          fontWeight: "700",
-                          letterSpacing: "-.5px",
-                          color: "#eef0f8",
-                        }}
-                      >
+                    <div className="pie-chart-center">
+                      <div className="pie-chart-value">
                         {taskBreakdown.total}
                       </div>
-                      <div style={{ fontSize: "10px", color: "#8890aa" }}>
-                        total tasks
-                      </div>
+                      <div className="pie-chart-label">total tasks</div>
                     </div>
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "14px",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        fontSize: "11px",
-                        color: "#8890aa",
-                      }}
-                    >
+                  <div className="task-breakdown-legend">
+                    <div className="legend-item">
                       <div
-                        style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "2px",
-                          background: colors.amber,
-                          flexShrink: 0,
-                        }}
+                        className="legend-color"
+                        style={{ background: colors.amber }}
                       />
                       Todo {taskBreakdown.todoPct}%
                     </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        fontSize: "11px",
-                        color: "#8890aa",
-                      }}
-                    >
+                    <div className="legend-item">
                       <div
-                        style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "2px",
-                          background: colors.blue,
-                          flexShrink: 0,
-                        }}
+                        className="legend-color"
+                        style={{ background: colors.blue }}
                       />
                       In progress {taskBreakdown.inProgressPct}%
                     </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        fontSize: "11px",
-                        color: "#8890aa",
-                      }}
-                    >
+                    <div className="legend-item">
                       <div
-                        style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "2px",
-                          background: colors.mint,
-                          flexShrink: 0,
-                        }}
+                        className="legend-color"
+                        style={{ background: colors.mint }}
                       />
                       Done {taskBreakdown.completedPct}%
                     </div>
@@ -1122,40 +702,19 @@ export default function Dashboard() {
             pill={`${filteredProjects.length} shown`}
           >
             {filteredProjects.length === 0 ? (
-              <div
-                style={{
-                  borderRadius: "12px",
-                  border: `2px dashed ${colors.bg2}`,
-                  padding: "40px 20px",
-                  textAlign: "center",
-                }}
-              >
-                <p style={{ fontSize: "12px", color: "#484f66" }}>
+              <div className="no-projects">
+                <p className="no-projects-text">
                   No {projectSlide} projects found.
                 </p>
                 <button
                   onClick={scrollToCreateProject}
-                  style={{
-                    marginTop: "12px",
-                    background: "none",
-                    border: "none",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    color: colors.cyan,
-                    cursor: "pointer",
-                  }}
+                  className="no-projects-btn"
                 >
                   Create your first project →
                 </button>
               </div>
             ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: "10px",
-                }}
-              >
+              <div className="projects-grid">
                 {filteredProjects.map((p, i) => {
                   const pct =
                     p.task_count > 0
@@ -1165,22 +724,16 @@ export default function Dashboard() {
                       : 0;
                   const badgeClass =
                     p.status === "active"
-                      ? {
-                          bg: `rgba(29, 233, 182, 0.12)`,
-                          fg: colors.mint,
-                          text: "Active",
-                        }
+                      ? "project-badge active"
                       : p.status === "hold"
-                        ? {
-                            bg: `rgba(246, 166, 35, 0.12)`,
-                            fg: colors.amber,
-                            text: "On hold",
-                          }
-                        : {
-                            bg: `rgba(79, 158, 255, 0.12)`,
-                            fg: colors.blue,
-                            text: "Done",
-                          };
+                        ? "project-badge hold"
+                        : "project-badge done";
+                  const badgeText =
+                    p.status === "active"
+                      ? "Active"
+                      : p.status === "hold"
+                        ? "On hold"
+                        : "Done";
                   const colors2 = [
                     colors.cyan,
                     colors.violet,
@@ -1191,110 +744,36 @@ export default function Dashboard() {
                   ];
                   const pc = colors2[i % colors2.length];
                   return (
-                    <div
-                      key={p.id}
-                      style={{
-                        background: colors.bg2,
-                        border: `1px solid rgba(255,255,255,.07)`,
-                        borderRadius: "12px",
-                        padding: "14px",
-                        transition: ".2s",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          gap: "8px",
-                          marginBottom: "5px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: "600",
-                            color: "#eef0f8",
-                          }}
-                        >
-                          {p.title}
-                        </div>
-                        <span
-                          style={{
-                            fontSize: "9px",
-                            fontWeight: "700",
-                            textTransform: "uppercase",
-                            letterSpacing: ".4px",
-                            padding: "2px 7px",
-                            borderRadius: "20px",
-                            flexShrink: 0,
-                            background: badgeClass.bg,
-                            color: badgeClass.fg,
-                          }}
-                        >
-                          {badgeClass.text}
-                        </span>
+                    <div key={p.id} className="project-card">
+                      <div className="project-card-header">
+                        <div className="project-card-title">{p.title}</div>
+                        <span className={badgeClass}>{badgeText}</span>
                       </div>
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          color: "#484f66",
-                          marginBottom: "10px",
-                          lineHeight: 1.4,
-                        }}
-                      >
+                      <div className="project-desc">
                         {p.description || "No description"}
                       </div>
                       {p.task_count > 0 && (
-                        <>
+                        <div className="progress-bar">
                           <div
+                            className="progress-fill"
                             style={{
-                              height: "3px",
-                              background: colors.bg0,
-                              borderRadius: "2px",
-                              overflow: "hidden",
-                              marginBottom: "8px",
+                              width: `${pct}%`,
+                              background: pc,
                             }}
-                          >
-                            <div
-                              style={{
-                                height: "100%",
-                                borderRadius: "2px",
-                                width: `${pct}%`,
-                                background: pc,
-                                transition: "width .4s",
-                              }}
-                            />
-                          </div>
-                        </>
+                          />
+                        </div>
                       )}
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          fontSize: "10px",
-                          color: "#484f66",
-                        }}
-                      >
-                        <div style={{ display: "flex", gap: "3px" }}>
+                      <div className="project-footer">
+                        <div className="project-members">
                           {Array.from({
                             length: Math.min(3, p.members?.length || 0),
                           }).map((_, j) => (
                             <div
                               key={j}
+                              className="member-avatar"
                               style={{
-                                width: "18px",
-                                height: "18px",
-                                borderRadius: "4px",
                                 background: `${pc}1a`,
                                 color: pc,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "8px",
-                                fontWeight: "700",
                               }}
                             >
                               {p.members?.[j]?.name
@@ -1315,69 +794,15 @@ export default function Dashboard() {
           </CardModern>
 
           {/* Tasks + Activity + Quick Actions */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 280px",
-              gap: "12px",
-            }}
-          >
+          <div className="three-col-grid">
             {/* Tasks */}
             <CardModern title="My tasks" note="Due this week">
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "6px" }}
-              >
+              <div className="tasks-list">
                 {activity.slice(0, 5).map((a, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      padding: "9px 11px",
-                      background: colors.bg2,
-                      border: `1px solid transparent`,
-                      borderRadius: "9px",
-                      transition: ".15s",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "15px",
-                        height: "15px",
-                        borderRadius: "4px",
-                        border: `1.5px solid rgba(255,255,255,.13)`,
-                        flexShrink: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "9px",
-                      }}
-                    />
-                    <div
-                      style={{
-                        flex: 1,
-                        fontSize: "12px",
-                        color: "#eef0f8",
-                        minWidth: 0,
-                      }}
-                    >
-                      {a.action?.slice(0, 50)}
-                    </div>
-                    <span
-                      style={{
-                        fontSize: "9px",
-                        fontWeight: "600",
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        flexShrink: 0,
-                        background: `rgba(0, 212, 255, 0.1)`,
-                        color: colors.cyan,
-                      }}
-                    >
-                      Dev
-                    </span>
+                  <div key={i} className="task-item">
+                    <div className="task-checkbox" />
+                    <div className="task-text">{a.action?.slice(0, 50)}</div>
+                    <span className="task-tag">Dev</span>
                   </div>
                 ))}
               </div>
@@ -1385,9 +810,7 @@ export default function Dashboard() {
 
             {/* Activity */}
             <CardModern title="Team activity" note="Live">
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "7px" }}
-              >
+              <div className="activity-list">
                 {activity.slice(0, 4).map((a, i) => {
                   const initials =
                     a.user_name
@@ -1402,52 +825,21 @@ export default function Dashboard() {
                     colors.amber,
                   ];
                   return (
-                    <div
-                      key={i}
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "9px",
-                        padding: "7px 8px",
-                        borderRadius: "8px",
-                        transition: ".15s",
-                        cursor: "default",
-                      }}
-                    >
+                    <div key={i} className="activity-item">
                       <div
+                        className="activity-avatar"
                         style={{
-                          width: "26px",
-                          height: "26px",
-                          borderRadius: "6px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "9px",
-                          fontWeight: "700",
-                          flexShrink: 0,
                           background: `${acs[i % acs.length]}1a`,
                           color: acs[i % acs.length],
                         }}
                       >
                         {initials}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: "12px",
-                            color: "#eef0f8",
-                            lineHeight: 1.35,
-                          }}
-                        >
+                      <div className="activity-content">
+                        <div className="activity-action">
                           {a.action?.slice(0, 60)}
                         </div>
-                        <div
-                          style={{
-                            fontSize: "10px",
-                            color: "#484f66",
-                            marginTop: "2px",
-                          }}
-                        >
+                        <div className="activity-meta">
                           {a.user_name} · 2h ago
                         </div>
                       </div>
@@ -1459,142 +851,42 @@ export default function Dashboard() {
 
             {/* Quick Actions */}
             <CardModern title="Quick actions">
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
-                  gap: "8px",
-                  marginBottom: "12px",
-                }}
-              >
+              <div className="quick-actions-grid">
                 {[
                   { icon: "➕", l: "New project", s: "Start from scratch" },
                   { icon: "✓", l: "New task", s: "Add to any project" },
                   { icon: "📤", l: "Upload file", s: "Share with team" },
                   { icon: "👥", l: "Invite member", s: "Grow your team" },
                 ].map((q, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      background: colors.bg2,
-                      border: `1px solid rgba(255,255,255,.07)`,
-                      borderRadius: "9px",
-                      padding: "12px",
-                      cursor: "pointer",
-                      transition: ".2s",
-                    }}
-                  >
-                    <div
-                      style={{
-                        marginBottom: "6px",
-                        color: "#8890aa",
-                        fontSize: "16px",
-                      }}
-                    >
-                      {q.icon}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: "600",
-                        color: "#eef0f8",
-                      }}
-                    >
-                      {q.l}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "10px",
-                        color: "#484f66",
-                        marginTop: "1px",
-                      }}
-                    >
-                      {q.s}
-                    </div>
+                  <div key={i} className="quick-action-btn">
+                    <div className="quick-action-emoji">{q.icon}</div>
+                    <div className="quick-action-title">{q.l}</div>
+                    <div className="quick-action-desc">{q.s}</div>
                   </div>
                 ))}
               </div>
-              <div
-                style={{
-                  background: `rgba(0, 212, 255, 0.04)`,
-                  border: `1px solid rgba(0, 212, 255, 0.13)`,
-                  borderRadius: "9px",
-                  padding: "12px",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "600",
-                    color: colors.cyan,
-                    marginBottom: "3px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "5px",
-                  }}
-                >
-                  🎯 Weekly goal
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "#8890aa",
-                    marginBottom: "8px",
-                    lineHeight: 1.4,
-                  }}
-                >
+              <div className="weekly-goal">
+                <div className="weekly-goal-title">🎯 Weekly goal</div>
+                <div className="weekly-goal-desc">
                   Close 5 tasks in API Revamp
                 </div>
-                <div
-                  style={{
-                    height: "4px",
-                    background: colors.bg0,
-                    borderRadius: "2px",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      width: "60%",
-                      background: `linear-gradient(90deg, ${colors.cyan}, ${colors.violet})`,
-                      borderRadius: "2px",
-                    }}
-                  />
+                <div className="weekly-goal-progress">
+                  <div className="weekly-goal-fill" style={{ width: "60%" }} />
                 </div>
-                <div
-                  style={{
-                    fontSize: "10px",
-                    color: "#484f66",
-                    marginTop: "5px",
-                  }}
-                >
-                  3 of 5 completed · 60%
-                </div>
+                <div className="weekly-goal-stat">3 of 5 completed · 60%</div>
               </div>
             </CardModern>
           </div>
 
           {/* Create Project */}
           <CardModern title="Create New Project" ref={createProjectRef}>
-            <form
-              onSubmit={createProject}
-              style={{ display: "grid", gap: "12px", maxWidth: "500px" }}
-            >
+            <form onSubmit={createProject} className="create-project-form">
               <input
                 type="text"
                 placeholder="Project title *"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                style={{
-                  background: colors.bg2,
-                  border: `1px solid rgba(255,255,255,.07)`,
-                  borderRadius: "8px",
-                  padding: "12px",
-                  color: "#eef0f8",
-                  fontSize: "14px",
-                  fontFamily: "inherit",
-                }}
+                className="form-input"
               />
               <textarea
                 placeholder="Project description (optional)"
@@ -1602,33 +894,9 @@ export default function Dashboard() {
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
-                style={{
-                  background: colors.bg2,
-                  border: `1px solid rgba(255,255,255,.07)`,
-                  borderRadius: "8px",
-                  padding: "12px",
-                  color: "#eef0f8",
-                  fontSize: "14px",
-                  fontFamily: "inherit",
-                  minHeight: "100px",
-                  resize: "none",
-                }}
+                className="form-textarea"
               />
-              <button
-                type="submit"
-                style={{
-                  background: `linear-gradient(135deg, ${colors.cyan}, ${colors.blue})`,
-                  color: "#000",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  border: "none",
-                  cursor: "pointer",
-                  width: "fit-content",
-                  transition: ".15s",
-                }}
-              >
+              <button type="submit" className="form-submit-btn">
                 Create Project
               </button>
             </form>
