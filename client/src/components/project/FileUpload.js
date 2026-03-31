@@ -111,6 +111,28 @@ export default function FileUpload({ projectId }) {
     setIsUploading(true);
 
     try {
+      // First, test if API is reachable
+      console.log("🔍 Testing API connectivity...");
+      try {
+        const healthCheck = await API.get("/health");
+        console.log("✅ API health check passed:", healthCheck.data);
+      } catch (healthError) {
+        console.error("❌ API health check failed:", healthError);
+        alert(
+          "⚠️ Warning: API might not be responding. Attempting upload anyway...",
+        );
+      }
+
+      // Check if user is authenticated
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("❌ Error: You are not authenticated. Please log in first.");
+        setIsUploading(false);
+        return;
+      }
+
+      console.log("✅ Token found in localStorage");
+
       const formData = new FormData();
       formData.append("project_id", projectId);
 
@@ -122,7 +144,15 @@ export default function FileUpload({ projectId }) {
 
       console.log("🌐 Sending POST request to /api/files");
       console.log("API Base URL:", API.defaults.baseURL);
+      console.log("Full URL will be:", `${API.defaults.baseURL}/files`);
       console.log("FormData keys:", Array.from(formData.keys()));
+      console.log("Token prefix:", token.substring(0, 20) + "...");
+
+      // Verify API is set up correctly
+      console.log("API instance:", {
+        baseURL: API.defaults.baseURL,
+        timeout: API.defaults.timeout,
+      });
 
       const response = await API.post("/files", formData);
 
@@ -140,15 +170,27 @@ export default function FileUpload({ projectId }) {
       console.error("❌ Upload FAILED");
       console.error("Error object:", error);
       console.error("Error code:", error.code);
+      console.error("Error name:", error.name);
       console.error("Status:", error.response?.status);
       console.error("Response data:", error.response?.data);
       console.error("Message:", error.message);
       console.error("API Base URL:", API.defaults.baseURL);
+      console.error("Full error stack:", error.stack);
 
       let errorMsg = "Upload failed - check browser console";
 
+      // Check for different error types
       if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
-        errorMsg = `❌ Network Error: Cannot connect to server at ${API.defaults.baseURL}. Ensure the backend server is running on port 5000.`;
+        errorMsg = `❌ Network Error: Cannot connect to server at ${API.defaults.baseURL}. Details: ${error.message}. Check browser console for more info.`;
+      } else if (error.response?.status === 401) {
+        errorMsg =
+          "❌ Unauthorized: Your session has expired. Please log in again.";
+      } else if (error.response?.status === 403) {
+        errorMsg = "❌ Forbidden: You don't have permission to upload files.";
+      } else if (error.response?.status === 400) {
+        errorMsg = `❌ Bad Request: ${error.response.data?.message || "Invalid request"}`;
+      } else if (error.response?.status >= 500) {
+        errorMsg = `❌ Server Error: ${error.response.data?.message || "Something went wrong on the server"}`;
       } else {
         errorMsg =
           error?.response?.data?.message ||
