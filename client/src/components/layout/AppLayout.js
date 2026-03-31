@@ -8,7 +8,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
-import Footer from "../common/Footer";
 import GlobalSearch from "../common/GlobalSearch";
 import NotificationBell from "../common/NotificationBell";
 
@@ -304,9 +303,6 @@ export default function AppLayout({
             {children}
           </div>
         </main>
-
-        {/* Footer */}
-        <Footer />
       </div>
     </div>
   );
