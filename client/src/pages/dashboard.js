@@ -24,7 +24,6 @@ import React, {
   useState,
 } from "react";
 import API from "../services/api";
-import "../styles/dashboard.css";
 
 const Pie = dynamic(() => import("react-chartjs-2").then((mod) => mod.Pie), {
   ssr: false,

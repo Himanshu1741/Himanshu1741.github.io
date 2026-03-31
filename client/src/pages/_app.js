@@ -9,6 +9,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { ThemeProvider } from "../context/ThemeContext";
+import "../styles/dashboard.css";
 import "../styles/globals.css";
 import "../styles/login.css";
 
