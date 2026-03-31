@@ -820,14 +820,15 @@ body {
 .form-submit-btn {
   background: linear-gradient(135deg, var(--cyan), var(--blue));
   color: #000;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  width: 100%;
+  width: auto;
   transition: 0.15s;
+  align-self: start;
 }
 
 .form-submit-btn:hover {
