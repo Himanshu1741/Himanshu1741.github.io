@@ -299,7 +299,7 @@ export default function AppLayout({
         </header>
 
         {/* Scrollable content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto min-h-0">
           <div className="mx-auto max-w-6xl p-4 page-fade sm:p-6">
             {children}
           </div>
