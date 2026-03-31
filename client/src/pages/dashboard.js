@@ -105,14 +105,123 @@ function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
 
 function StatCard({ label, value, accent }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
+    <div className="relative overflow-hidden rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900/80 to-slate-950 p-6 backdrop-blur">
       <div
-        className={`absolute right-0 top-0 h-20 w-20 rounded-full blur-2xl opacity-20 ${accent}`}
+        className={`absolute right-0 top-0 h-24 w-24 rounded-full blur-3xl opacity-25 ${accent}`}
       />
-      <p className="text-[11px] font-medium uppercase tracking-widest text-slate-500">
+      <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
         {label}
       </p>
-      <p className="mt-2 text-3xl font-extrabold text-white">{value ?? 0}</p>
+      <p className="mt-3 text-4xl font-extrabold text-white">{value ?? 0}</p>
+      <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
+    </div>
+  );
+}
+
+function ProjectCard({ project, user, onOpen, onDelete }) {
+  const pct =
+    project.task_count > 0
+      ? Math.round((project.completed_task_count / project.task_count) * 100)
+      : 0;
+  const canDelete =
+    user && (user.id === project.created_by || user.role === "admin");
+
+  const statusColor =
+    {
+      active: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+      completed: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    }[project.status] || "bg-slate-700/30 text-slate-300 border-slate-600/30";
+
+  return (
+    <div className="group rounded-2xl border border-slate-700/50 bg-slate-900/40 p-5 backdrop-blur transition hover:border-slate-600 hover:bg-slate-900/60">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h4 className="truncate text-lg font-bold text-slate-50 group-hover:text-white transition">
+            {project.title}
+          </h4>
+          <p className="mt-1 text-sm text-slate-500 line-clamp-2">
+            {project.description || "No description provided"}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold uppercase ${statusColor}`}
+        >
+          {project.status}
+        </span>
+      </div>
+
+      {project.task_count > 0 && (
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-slate-400">
+              {project.completed_task_count} / {project.task_count} tasks
+            </p>
+            <p className="text-xs font-semibold text-slate-300">{pct}%</p>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={onOpen}
+          className="flex-1 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-500/20 px-3 py-2 text-sm font-semibold text-cyan-300 hover:from-cyan-500/30 hover:to-blue-500/30 transition"
+        >
+          Open Project
+        </button>
+        {canDelete && (
+          <button
+            onClick={onDelete}
+            className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-semibold text-rose-300 hover:bg-rose-500/20 transition"
+          >
+            Delete
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DeadlineItem({ task, projectTitle }) {
+  const daysUntil = Math.ceil(
+    (new Date(task.due_date) - new Date()) / (1000 * 60 * 60 * 24),
+  );
+  const isOverdue = daysUntil < 0;
+  const isToday = daysUntil === 0;
+  const isSoon = daysUntil > 0 && daysUntil <= 3;
+
+  const dateColor = isOverdue
+    ? "text-rose-400"
+    : isToday
+      ? "text-amber-400"
+      : isSoon
+        ? "text-orange-400"
+        : "text-slate-400";
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800/50 bg-slate-900/30 px-3 py-2.5 backdrop-blur">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-slate-200">
+          {task.title}
+        </p>
+        <p className="text-xs text-slate-500">{projectTitle}</p>
+      </div>
+      <span
+        className={`shrink-0 whitespace-nowrap text-xs font-semibold ${dateColor}`}
+      >
+        {isOverdue
+          ? `${Math.abs(daysUntil)}d overdue`
+          : isToday
+            ? "Today"
+            : isSoon
+              ? `${daysUntil}d left`
+              : `${daysUntil}d`}
+      </span>
     </div>
   );
 }
@@ -122,6 +231,7 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [summary, setSummary] = useState(null);
   const [activity, setActivity] = useState([]);
+  const [upcomingTasks, setUpcomingTasks] = useState([]);
   const [form, setForm] = useState({ title: "", description: "" });
   const [projectQuery, setProjectQuery] = useState("");
   const [projectSlide, setProjectSlide] = useState("active");
@@ -180,6 +290,13 @@ export default function Dashboard() {
     } catch {}
   };
 
+  const loadUpcomingTasks = async () => {
+    try {
+      const res = await API.get("/tasks/upcoming");
+      setUpcomingTasks(res.data || []);
+    } catch {}
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -208,6 +325,7 @@ export default function Dashboard() {
     loadProjects();
     loadSummary();
     loadActivity();
+    loadUpcomingTasks();
   }, [router.isReady, router.query.preview]);
 
   const createProject = async (e) => {
@@ -495,19 +613,24 @@ export default function Dashboard() {
       <ConfirmModal {...confirm} onCancel={closeConfirm} />
       <AppLayout user={user} activeTab="dashboard" onLogout={logout}>
         <div className="space-y-6">
-          {/* Welcome banner */}
-          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6">
-            <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-cyan-500/8 blur-3xl" />
-            <div className="absolute right-32 -bottom-8 h-28 w-28 rounded-full bg-violet-500/8 blur-3xl" />
-            <p className="mb-1 text-xs font-bold uppercase tracking-widest text-cyan-500">
-              Member Workspace
-            </p>
-            <h2 className="text-2xl font-extrabold tracking-tight text-white">
-              Welcome back, {user.name}!
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Track progress, manage tasks, and collaborate in one place.
-            </p>
+          {/* Welcome & Quick Actions Header */}
+          <div>
+            <div className="relative overflow-hidden rounded-3xl border border-slate-700/50 bg-gradient-to-br from-slate-900 via-slate-900/80 to-slate-950 p-8">
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl" />
+              <div className="absolute right-40 -bottom-12 h-32 w-32 rounded-full bg-violet-500/10 blur-3xl" />
+              <div className="relative z-10">
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-cyan-400">
+                  Welcome Back
+                </p>
+                <h1 className="text-4xl font-extrabold tracking-tight text-white">
+                  {user.name}
+                </h1>
+                <p className="mt-2 max-w-lg text-base text-slate-400">
+                  Track projects, manage tasks, and collaborate with your team
+                  all in one place.
+                </p>
+              </div>
+            </div>
           </div>
 
           {pageError && (
@@ -523,9 +646,85 @@ export default function Dashboard() {
             onExecuteCommand={executeGuideCommand}
           />
 
-          {/* KPI row */}
+          {/* Projects Section - Prioritized at Top */}
+          <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-white">My Projects</h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  {filteredProjects.length} {projectSlide} project
+                  {filteredProjects.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  className="rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-700 transition"
+                  onClick={() => router.push("/trash")}
+                >
+                  🗑 Trash
+                </button>
+                <div className="inline-flex rounded-xl border border-slate-700 bg-slate-900/50 p-1.5 gap-1">
+                  <button
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                      projectSlide === "active"
+                        ? "bg-cyan-500/25 text-cyan-300 shadow-lg shadow-cyan-500/20"
+                        : "text-slate-400 hover:text-slate-300"
+                    }`}
+                    onClick={() => setProjectSlide("active")}
+                  >
+                    Active
+                  </button>
+                  <button
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                      projectSlide === "completed"
+                        ? "bg-emerald-500/25 text-emerald-300 shadow-lg shadow-emerald-500/20"
+                        : "text-slate-400 hover:text-slate-300"
+                    }`}
+                    onClick={() => setProjectSlide("completed")}
+                  >
+                    Completed
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <input
+              className="input-modern mb-5 w-full"
+              placeholder="🔍 Search projects..."
+              value={projectQuery}
+              onChange={(e) => setProjectQuery(e.target.value)}
+            />
+
+            {filteredProjects.length === 0 ? (
+              <div className="rounded-2xl border-2 border-dashed border-slate-700 py-12 text-center">
+                <p className="text-sm text-slate-500">
+                  No {projectSlide} projects found.
+                </p>
+                <button
+                  onClick={scrollToCreateProject}
+                  className="mt-3 inline-block text-sm font-semibold text-cyan-400 hover:text-cyan-300"
+                >
+                  Create your first project →
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredProjects.map((project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    user={user}
+                    onOpen={() => router.push(`/project/${project.id}`)}
+                    onDelete={() => deleteProject(project)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* KPI Row */}
           {summary && (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 label="Total Projects"
                 value={summary.totalProjects}
@@ -537,24 +736,50 @@ export default function Dashboard() {
                 accent="bg-blue-500"
               />
               <StatCard
-                label="Completed Projects"
-                value={summary.totalCompletedProjects}
+                label="Completed Tasks"
+                value={summary.totalCompletedTasks}
                 accent="bg-emerald-500"
               />
               <StatCard
-                label="Tasks Completed"
-                value={summary.totalCompletedTasks}
+                label="Total Messages"
+                value={summary.totalMessages}
                 accent="bg-violet-500"
               />
             </div>
           )}
 
-          {/* Charts */}
+          {/* Upcoming Deadlines */}
+          {upcomingTasks && upcomingTasks.length > 0 && (
+            <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-lg">
+                  📅
+                </div>
+                <h3 className="text-lg font-bold text-white">
+                  Upcoming Deadlines
+                </h3>
+              </div>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {upcomingTasks.map((task) => (
+                  <DeadlineItem
+                    key={task.id}
+                    task={task}
+                    projectTitle={
+                      projects.find((p) => p.id === task.project_id)?.title ||
+                      "Project"
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Charts Row */}
           {summary && (
             <div className="grid gap-5 lg:grid-cols-2">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
-                <h3 className="mb-4 text-sm font-bold text-white">
-                  Task Breakdown
+              <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
+                <h3 className="mb-4 text-lg font-bold text-white">
+                  📊 Task Breakdown
                 </h3>
                 <div className="h-52">
                   <Pie
@@ -575,21 +800,22 @@ export default function Dashboard() {
                     options={pieOpts}
                   />
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
-                  <div className="rounded-lg bg-amber-500/10 py-1.5 text-amber-300">
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="rounded-lg bg-amber-500/15 py-2 text-amber-300 font-semibold">
                     Todo {taskBreakdown.todoPct}%
                   </div>
-                  <div className="rounded-lg bg-blue-500/10 py-1.5 text-blue-300">
-                    In Progress {taskBreakdown.inProgressPct}%
+                  <div className="rounded-lg bg-blue-500/15 py-2 text-blue-300 font-semibold">
+                    Progress {taskBreakdown.inProgressPct}%
                   </div>
-                  <div className="rounded-lg bg-emerald-500/10 py-1.5 text-emerald-300">
+                  <div className="rounded-lg bg-emerald-500/15 py-2 text-emerald-300 font-semibold">
                     Done {taskBreakdown.completedPct}%
                   </div>
                 </div>
               </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
-                <h3 className="mb-4 text-sm font-bold text-white">
-                  Project Activity
+
+              <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
+                <h3 className="mb-4 text-lg font-bold text-white">
+                  📈 Project Activity
                 </h3>
                 <div className="h-52">
                   <Bar
@@ -634,11 +860,14 @@ export default function Dashboard() {
 
           {/* Activity Feed */}
           {activity.length > 0 && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
-              <h3 className="mb-4 text-sm font-bold text-white">
-                Team Activity
-              </h3>
-              <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+            <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/15 text-lg">
+                  ⚡
+                </div>
+                <h3 className="text-lg font-bold text-white">Team Activity</h3>
+              </div>
+              <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
                 {activity.map((a, i) => {
                   const diff = (Date.now() - new Date(a.created_at)) / 1000;
                   const timeAgo =
@@ -664,10 +893,10 @@ export default function Dashboard() {
                   return (
                     <div
                       key={a.id ?? i}
-                      className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-900/50 px-3 py-2.5"
+                      className="flex items-start gap-3 rounded-xl border border-slate-800/50 bg-slate-900/30 px-3 py-2.5 hover:border-slate-700/50 transition"
                     >
                       <div
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[10px] font-bold text-white ${GRADS[i % GRADS.length]}`}
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white ${GRADS[i % GRADS.length]}`}
                       >
                         {initials}
                       </div>
@@ -675,8 +904,8 @@ export default function Dashboard() {
                         <p className="text-sm leading-snug text-slate-200">
                           {a.action}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-500">
-                          {a.user_name} &middot; {timeAgo}
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {a.user_name} · {timeAgo}
                         </p>
                       </div>
                     </div>
@@ -686,20 +915,20 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Create Project */}
+          {/* Create Project Section */}
           <div
             ref={createProjectRef}
-            className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5"
+            className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur"
           >
-            <div className="mb-4 flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/15 text-base">
-                +
+            <div className="mb-5 flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-lg">
+                ✨
               </div>
-              <h3 className="text-sm font-bold text-white">
-                Create New Project
+              <h3 className="text-lg font-bold text-white">
+                Start a New Project
               </h3>
             </div>
-            <form onSubmit={createProject} className="grid gap-3">
+            <form onSubmit={createProject} className="grid gap-3 max-w-2xl">
               <input
                 className="input-modern"
                 placeholder="Project title *"
@@ -707,7 +936,7 @@ export default function Dashboard() {
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
               <textarea
-                className="input-modern min-h-[80px] resize-none"
+                className="input-modern min-h-[100px] resize-none"
                 placeholder="Project description (optional)"
                 value={form.description}
                 onChange={(e) =>
@@ -718,116 +947,6 @@ export default function Dashboard() {
                 Create Project
               </button>
             </form>
-          </div>
-
-          {/* Project List */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-sm font-bold text-white">
-                My Project Access
-              </h3>
-              <div className="flex items-center gap-2">
-                <button
-                  className="rounded-lg border border-slate-800 bg-slate-900 px-2.5 py-1.5 text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition"
-                  onClick={() => router.push("/trash")}
-                >
-                  🗑 Trash
-                </button>
-                <div className="inline-flex rounded-xl border border-slate-800 bg-slate-900/60 p-1 gap-1">
-                  <button
-                    className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${projectSlide === "active" ? "bg-cyan-500/20 text-cyan-300" : "text-slate-500 hover:text-slate-300"}`}
-                    onClick={() => setProjectSlide("active")}
-                  >
-                    Active
-                  </button>
-                  <button
-                    className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${projectSlide === "completed" ? "bg-emerald-500/20 text-emerald-300" : "text-slate-500 hover:text-slate-300"}`}
-                    onClick={() => setProjectSlide("completed")}
-                  >
-                    Completed
-                  </button>
-                </div>
-                <span className="rounded-full border border-slate-800 bg-slate-900 px-2.5 py-1 text-[11px] text-slate-500">
-                  {filteredProjects.length} shown
-                </span>
-              </div>
-            </div>
-            <input
-              className="input-modern mb-4"
-              placeholder="Search projects by title or description..."
-              value={projectQuery}
-              onChange={(e) => setProjectQuery(e.target.value)}
-            />
-
-            {filteredProjects.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-800 py-10 text-center text-sm text-slate-600">
-                No {projectSlide} projects found.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-                {filteredProjects.map((project) => {
-                  const pct =
-                    project.task_count > 0
-                      ? Math.round(
-                          (project.completed_task_count / project.task_count) *
-                            100,
-                        )
-                      : 0;
-                  const canDelete =
-                    user &&
-                    (user.id === project.created_by || user.role === "admin");
-                  return (
-                    <div
-                      key={project.id}
-                      className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 transition hover:border-slate-700"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className="font-semibold text-slate-100">
-                          {project.title}
-                        </h4>
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${project.status === "completed" ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
-                        >
-                          {project.status}
-                        </span>
-                      </div>
-                      <p className="mb-3 text-xs text-slate-500 line-clamp-1">
-                        {project.description || "No description"}
-                      </p>
-                      {project.task_count > 0 && (
-                        <div className="mb-3 flex items-center gap-2">
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800">
-                            <div
-                              className="h-full rounded-full bg-cyan-500 transition-all"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="shrink-0 text-[10px] text-slate-600">
-                            {pct}%
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          className="btn-primary"
-                          onClick={() => router.push(`/project/${project.id}`)}
-                        >
-                          Open Project
-                        </button>
-                        {canDelete && (
-                          <button
-                            className="btn-danger"
-                            onClick={() => deleteProject(project)}
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </div>
       </AppLayout>
