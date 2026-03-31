@@ -1,5 +1,5 @@
 /**
- * Dashboard Page
+ * Dashboard Page - Modern Design
  *
  * Copyright © 2026 Himanshu Kumar. All rights reserved.
  * Developed by Himanshu Kumar
@@ -16,9 +16,13 @@ import {
 } from "chart.js";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import NewUserGuide from "../components/common/NewUserGuide";
-import AppLayout from "../components/layout/AppLayout";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import API from "../services/api";
 
 const Pie = dynamic(() => import("react-chartjs-2").then((mod) => mod.Pie), {
@@ -37,6 +41,20 @@ ChartJS.register(
   BarElement,
 );
 
+// Color scheme
+const colors = {
+  bg0: "#0c0d12",
+  bg1: "#13141b",
+  bg2: "#1a1c25",
+  bg3: "#21242f",
+  cyan: "#00d4ff",
+  mint: "#1de9b6",
+  violet: "#9d78ff",
+  amber: "#f6a623",
+  rose: "#ff5c7c",
+  blue: "#4f9eff",
+};
+
 // Toast
 function useToast() {
   const [toasts, setToasts] = useState([]);
@@ -47,6 +65,7 @@ function useToast() {
   }, []);
   return { toasts, toast };
 }
+
 function ToastContainer({ toasts }) {
   const c = {
     success: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
@@ -56,14 +75,45 @@ function ToastContainer({ toasts }) {
   };
   return (
     <div
-      className="fixed right-5 top-5 z-[9999] flex flex-col gap-2"
-      style={{ pointerEvents: "none" }}
+      style={{
+        position: "fixed",
+        right: "20px",
+        top: "20px",
+        zIndex: 9999,
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        pointerEvents: "none",
+      }}
     >
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium shadow-xl backdrop-blur-sm ${c[t.type]}`}
           style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            borderRadius: "12px",
+            border: `1px solid ${t.type === "success" ? "rgba(34, 197, 94, 0.4)" : t.type === "error" ? "rgba(255, 92, 124, 0.4)" : t.type === "warning" ? "rgba(246, 166, 35, 0.4)" : "rgba(0, 212, 255, 0.4)"}`,
+            padding: "12px 16px",
+            fontSize: "14px",
+            fontWeight: "500",
+            color:
+              t.type === "success"
+                ? "#22c55e"
+                : t.type === "error"
+                  ? "#ff5c7c"
+                  : t.type === "warning"
+                    ? "#f6a623"
+                    : "#00d4ff",
+            background:
+              t.type === "success"
+                ? "rgba(34, 197, 94, 0.1)"
+                : t.type === "error"
+                  ? "rgba(255, 92, 124, 0.1)"
+                  : t.type === "warning"
+                    ? "rgba(246, 166, 35, 0.1)"
+                    : "rgba(0, 212, 255, 0.1)",
             pointerEvents: "auto",
             animation: "slideInRight 0.25s ease",
           }}
@@ -74,25 +124,77 @@ function ToastContainer({ toasts }) {
     </div>
   );
 }
+
 function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-[9990] flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9990,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        background: "rgba(0, 0, 0, 0.65)",
+        backdropFilter: "blur(4px)",
+      }}
     >
-      <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-        <h3 className="mb-2 text-base font-bold text-white">{title}</h3>
-        <p className="mb-5 text-sm text-slate-400">{message}</p>
-        <div className="flex justify-end gap-2">
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "400px",
+          borderRadius: "16px",
+          border: `1px solid ${colors.bg2}`,
+          background: colors.bg1,
+          padding: "24px",
+          boxShadow: "0 20px 25px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+        <h3
+          style={{
+            marginBottom: "8px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            color: "#eef0f8",
+          }}
+        >
+          {title}
+        </h3>
+        <p style={{ marginBottom: "20px", fontSize: "14px", color: "#8890aa" }}>
+          {message}
+        </p>
+        <div
+          style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}
+        >
           <button
-            className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition"
+            style={{
+              borderRadius: "8px",
+              border: `1px solid ${colors.bg2}`,
+              background: colors.bg2,
+              padding: "8px 16px",
+              fontSize: "14px",
+              color: "#8890aa",
+              cursor: "pointer",
+              transition: ".15s",
+            }}
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
-            className="rounded-lg bg-rose-500 hover:bg-rose-400 px-4 py-2 text-sm font-semibold text-white transition"
+            style={{
+              borderRadius: "8px",
+              background: colors.rose,
+              color: "#fff",
+              padding: "8px 16px",
+              fontSize: "14px",
+              fontWeight: "600",
+              border: "none",
+              cursor: "pointer",
+              transition: ".15s",
+            }}
             onClick={onConfirm}
           >
             Confirm
@@ -103,128 +205,115 @@ function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
   );
 }
 
-function StatCard({ label, value, accent }) {
+function StatCardModern({ label, value, accent }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900/80 to-slate-950 p-6 backdrop-blur">
+    <div
+      style={{
+        background: colors.bg1,
+        border: `1px solid rgba(255,255,255,.07)`,
+        borderRadius: "12px",
+        padding: "14px 16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px",
+        position: "relative",
+        overflow: "hidden",
+        transition: ".2s",
+        cursor: "default",
+      }}
+    >
       <div
-        className={`absolute right-0 top-0 h-24 w-24 rounded-full blur-3xl opacity-25 ${accent}`}
+        style={{
+          position: "absolute",
+          top: "-18px",
+          right: "-18px",
+          width: "60px",
+          height: "60px",
+          borderRadius: "50%",
+          opacity: 0.18,
+          filter: "blur(18px)",
+          background: accent,
+        }}
       />
-      <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-        {label}
-      </p>
-      <p className="mt-3 text-4xl font-extrabold text-white">{value ?? 0}</p>
-      <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
-    </div>
-  );
-}
-
-function ProjectCard({ project, user, onOpen, onDelete }) {
-  const pct =
-    project.task_count > 0
-      ? Math.round((project.completed_task_count / project.task_count) * 100)
-      : 0;
-  const canDelete =
-    user && (user.id === project.created_by || user.role === "admin");
-
-  const statusColor =
-    {
-      active: "bg-blue-500/15 text-blue-300 border-blue-500/30",
-      completed: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-    }[project.status] || "bg-slate-700/30 text-slate-300 border-slate-600/30";
-
-  return (
-    <div className="group rounded-2xl border border-slate-700/50 bg-slate-900/40 p-5 backdrop-blur transition hover:border-slate-600 hover:bg-slate-900/60">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <h4 className="truncate text-lg font-bold text-slate-50 group-hover:text-white transition">
-            {project.title}
-          </h4>
-          <p className="mt-1 text-sm text-slate-500 line-clamp-2">
-            {project.description || "No description provided"}
-          </p>
-        </div>
-        <span
-          className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold uppercase ${statusColor}`}
-        >
-          {project.status}
-        </span>
-      </div>
-
-      {project.task_count > 0 && (
-        <div className="mb-4 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs text-slate-400">
-              {project.completed_task_count} / {project.task_count} tasks
-            </p>
-            <p className="text-xs font-semibold text-slate-300">{pct}%</p>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={onOpen}
-          className="flex-1 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-500/20 px-3 py-2 text-sm font-semibold text-cyan-300 hover:from-cyan-500/30 hover:to-blue-500/30 transition"
-        >
-          Open Project
-        </button>
-        {canDelete && (
-          <button
-            onClick={onDelete}
-            className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-semibold text-rose-300 hover:bg-rose-500/20 transition"
-          >
-            Delete
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function DeadlineItem({ task, projectTitle }) {
-  const daysUntil = Math.ceil(
-    (new Date(task.due_date) - new Date()) / (1000 * 60 * 60 * 24),
-  );
-  const isOverdue = daysUntil < 0;
-  const isToday = daysUntil === 0;
-  const isSoon = daysUntil > 0 && daysUntil <= 3;
-
-  const dateColor = isOverdue
-    ? "text-rose-400"
-    : isToday
-      ? "text-amber-400"
-      : isSoon
-        ? "text-orange-400"
-        : "text-slate-400";
-
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800/50 bg-slate-900/30 px-3 py-2.5 backdrop-blur">
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-slate-200">
-          {task.title}
-        </p>
-        <p className="text-xs text-slate-500">{projectTitle}</p>
-      </div>
       <span
-        className={`shrink-0 whitespace-nowrap text-xs font-semibold ${dateColor}`}
+        style={{
+          fontSize: "10px",
+          fontWeight: "500",
+          color: "#484f66",
+          textTransform: "uppercase",
+          letterSpacing: ".7px",
+        }}
       >
-        {isOverdue
-          ? `${Math.abs(daysUntil)}d overdue`
-          : isToday
-            ? "Today"
-            : isSoon
-              ? `${daysUntil}d left`
-              : `${daysUntil}d`}
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: "26px",
+          fontWeight: "700",
+          letterSpacing: "-1px",
+          lineHeight: 1,
+          color: accent,
+        }}
+      >
+        {value ?? 0}
       </span>
     </div>
   );
 }
+
+const CardModern = React.forwardRef(({ title, note, pill, children }, ref) => (
+  <div
+    ref={ref}
+    style={{
+      background: colors.bg1,
+      border: `1px solid rgba(255,255,255,.07)`,
+      borderRadius: "12px",
+      padding: "16px",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: "14px",
+        gap: "8px",
+      }}
+    >
+      <span
+        style={{
+          fontSize: "12px",
+          fontWeight: "600",
+          color: "#8890aa",
+          textTransform: "uppercase",
+          letterSpacing: ".6px",
+        }}
+      >
+        {title}
+      </span>
+      {pill && (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            background: `rgba(0, 212, 255, 0.08)`,
+            color: colors.cyan,
+            fontSize: "10px",
+            padding: "2px 8px",
+            borderRadius: "20px",
+          }}
+        >
+          {pill}
+        </span>
+      )}
+      {note && (
+        <span style={{ fontSize: "10px", color: "#484f66" }}>{note}</span>
+      )}
+    </div>
+    {children}
+  </div>
+));
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -608,348 +697,944 @@ export default function Dashboard() {
 
   return (
     <>
-      <style>{`@keyframes slideInRight { from{opacity:0;transform:translateX(20px);} to{opacity:1;transform:translateX(0);} }`}</style>
+      <style>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { min-height: 100vh; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: ${colors.bg0}; color: #eef0f8; font-size: 14px; line-height: 1.5; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: ${colors.bg1}; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.13); border-radius: 4px; }
+        @keyframes slideInRight { from{opacity:0;transform:translateX(20px);} to{opacity:1;transform:translateX(0);} }
+      `}</style>
       <ToastContainer toasts={toasts} />
       <ConfirmModal {...confirm} onCancel={closeConfirm} />
-      <AppLayout user={user} activeTab="dashboard" onLogout={logout}>
-        <div className="space-y-6">
-          {/* Welcome & Quick Actions Header */}
-          <div>
-            <div className="relative overflow-hidden rounded-3xl border border-slate-700/50 bg-gradient-to-br from-slate-900 via-slate-900/80 to-slate-950 p-8">
-              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl" />
-              <div className="absolute right-40 -bottom-12 h-32 w-32 rounded-full bg-violet-500/10 blur-3xl" />
-              <div className="relative z-10">
-                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-cyan-400">
-                  Welcome Back
-                </p>
-                <h1 className="text-4xl font-extrabold tracking-tight text-white">
-                  {user.name}
-                </h1>
-                <p className="mt-2 max-w-lg text-base text-slate-400">
-                  Track projects, manage tasks, and collaborate with your team
-                  all in one place.
-                </p>
-              </div>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          background: colors.bg0,
+        }}
+      >
+        {/* Top Navigation */}
+        <nav
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 16px",
+            background: colors.bg1,
+            borderBottom: `1px solid rgba(255,255,255,.07)`,
+            position: "sticky",
+            top: 0,
+            zIndex: 100,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div
+              style={{
+                width: "28px",
+                height: "28px",
+                borderRadius: "7px",
+                background: `linear-gradient(135deg, ${colors.cyan}, ${colors.violet})`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "13px",
+                fontWeight: "700",
+                color: "#000",
+                flexShrink: 0,
+              }}
+            >
+              P
             </div>
+            <span
+              style={{
+                fontSize: "15px",
+                fontWeight: "600",
+                letterSpacing: "-.3px",
+              }}
+            >
+              Projex
+            </span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div
+              style={{
+                width: "30px",
+                height: "30px",
+                borderRadius: "8px",
+                background: `rgba(0, 212, 255, 0.15)`,
+                border: `1px solid rgba(0, 212, 255, 0.2)`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "10px",
+                fontWeight: "700",
+                color: colors.cyan,
+                flexShrink: 0,
+                cursor: "pointer",
+              }}
+            >
+              {user.name
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
+          </div>
+        </nav>
+
+        {/* Main Content */}
+        <main
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            padding: "20px 24px",
+            gap: "20px",
+            overflowY: "auto",
+          }}
+        >
+          {/* Welcome Banner */}
+          <div
+            style={{
+              background: colors.bg1,
+              border: `1px solid rgba(255,255,255,.07)`,
+              borderRadius: "16px",
+              padding: "18px 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  fontSize: "10px",
+                  fontWeight: "600",
+                  color: colors.cyan,
+                  textTransform: "uppercase",
+                  letterSpacing: ".8px",
+                  marginBottom: "5px",
+                }}
+              >
+                Member workspace
+              </p>
+              <h3
+                style={{
+                  fontSize: "17px",
+                  fontWeight: "600",
+                  letterSpacing: "-.3px",
+                  color: "#eef0f8",
+                }}
+              >
+                Welcome back, {user.name}!
+              </h3>
+              <p
+                style={{ fontSize: "12px", color: "#8890aa", marginTop: "3px" }}
+              >
+                Track progress, manage tasks, and collaborate in one place.
+              </p>
+            </div>
+            <button
+              onClick={scrollToCreateProject}
+              style={{
+                background: `rgba(0, 212, 255, 0.1)`,
+                border: `1px solid rgba(0, 212, 255, 0.25)`,
+                color: colors.cyan,
+                fontSize: "12px",
+                fontWeight: "600",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                transition: ".15s",
+              }}
+              onMouseEnter={(e) =>
+                (e.target.style.background = `rgba(0, 212, 255, 0.18)`)
+              }
+              onMouseLeave={(e) =>
+                (e.target.style.background = `rgba(0, 212, 255, 0.1)`)
+              }
+            >
+              + New project
+            </button>
           </div>
 
           {pageError && (
-            <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+            <div
+              style={{
+                background: "rgba(255, 92, 124, 0.1)",
+                border: `1px solid rgba(255, 92, 124, 0.4)`,
+                borderRadius: "12px",
+                padding: "12px 16px",
+                fontSize: "14px",
+                color: "#ff5c7c",
+              }}
+            >
               {pageError}
             </div>
           )}
 
-          <NewUserGuide
-            user={user}
-            projects={projects}
-            onCreateProject={scrollToCreateProject}
-            onExecuteCommand={executeGuideCommand}
-          />
+          {/* KPI Stats */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "10px",
+            }}
+          >
+            {summary && (
+              <>
+                <StatCardModern
+                  label="Total projects"
+                  value={summary.totalProjects}
+                  accent={colors.cyan}
+                />
+                <StatCardModern
+                  label="Active projects"
+                  value={summary.totalActiveProjects}
+                  accent={colors.blue}
+                />
+                <StatCardModern
+                  label="Tasks completed"
+                  value={summary.totalCompletedTasks}
+                  accent={colors.mint}
+                />
+                <StatCardModern
+                  label="Messages"
+                  value={summary.totalMessages}
+                  accent={colors.violet}
+                />
+              </>
+            )}
+          </div>
 
-          {/* Projects Section - Prioritized at Top */}
-          <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold text-white">My Projects</h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  {filteredProjects.length} {projectSlide} project
-                  {filteredProjects.length !== 1 ? "s" : ""}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  className="rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-700 transition"
-                  onClick={() => router.push("/trash")}
+          {/* Charts Row */}
+          {summary && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.6fr 1fr",
+                gap: "12px",
+              }}
+            >
+              <CardModern title="Project activity" note="Last 6 months">
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "175px",
+                  }}
                 >
-                  🗑 Trash
-                </button>
-                <div className="inline-flex rounded-xl border border-slate-700 bg-slate-900/50 p-1.5 gap-1">
-                  <button
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                      projectSlide === "active"
-                        ? "bg-cyan-500/25 text-cyan-300 shadow-lg shadow-cyan-500/20"
-                        : "text-slate-400 hover:text-slate-300"
-                    }`}
-                    onClick={() => setProjectSlide("active")}
-                  >
-                    Active
-                  </button>
-                  <button
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                      projectSlide === "completed"
-                        ? "bg-emerald-500/25 text-emerald-300 shadow-lg shadow-emerald-500/20"
-                        : "text-slate-400 hover:text-slate-300"
-                    }`}
-                    onClick={() => setProjectSlide("completed")}
-                  >
-                    Completed
-                  </button>
+                  <Bar
+                    data={{
+                      labels: ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"],
+                      datasets: [
+                        {
+                          label: "Tasks",
+                          data: [22, 35, 28, 45, 38, 52],
+                          backgroundColor: `rgba(0, 212, 255, 0.65)`,
+                          borderRadius: 5,
+                          borderWidth: 0,
+                        },
+                        {
+                          label: "Completed",
+                          data: [18, 28, 21, 38, 31, 42],
+                          backgroundColor: `rgba(29, 233, 182, 0.55)`,
+                          borderRadius: 5,
+                          borderWidth: 0,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false } },
+                      scales: {
+                        x: {
+                          ticks: { color: "#484f66", font: { size: 10 } },
+                          grid: { color: "rgba(255,255,255,.03)" },
+                          border: { display: false },
+                        },
+                        y: {
+                          ticks: { color: "#484f66", font: { size: 10 } },
+                          grid: { color: "rgba(255,255,255,.04)" },
+                          border: { display: false },
+                        },
+                      },
+                    }}
+                  />
                 </div>
-              </div>
+              </CardModern>
+              <CardModern title="Task breakdown" note="All projects">
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "155px",
+                      height: "155px",
+                    }}
+                  >
+                    <Pie
+                      data={{
+                        labels: ["Todo", "In Progress", "Completed"],
+                        datasets: [
+                          {
+                            data: [
+                              taskBreakdown.todo,
+                              taskBreakdown.inProgress,
+                              taskBreakdown.completed,
+                            ],
+                            backgroundColor: [
+                              colors.amber,
+                              colors.blue,
+                              colors.mint,
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 4,
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: "74%",
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: { enabled: true },
+                        },
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        textAlign: "center",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "22px",
+                          fontWeight: "700",
+                          letterSpacing: "-.5px",
+                          color: "#eef0f8",
+                        }}
+                      >
+                        {taskBreakdown.total}
+                      </div>
+                      <div style={{ fontSize: "10px", color: "#8890aa" }}>
+                        total tasks
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "14px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        fontSize: "11px",
+                        color: "#8890aa",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "2px",
+                          background: colors.amber,
+                          flexShrink: 0,
+                        }}
+                      />
+                      Todo {taskBreakdown.todoPct}%
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        fontSize: "11px",
+                        color: "#8890aa",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "2px",
+                          background: colors.blue,
+                          flexShrink: 0,
+                        }}
+                      />
+                      In progress {taskBreakdown.inProgressPct}%
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        fontSize: "11px",
+                        color: "#8890aa",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "2px",
+                          background: colors.mint,
+                          flexShrink: 0,
+                        }}
+                      />
+                      Done {taskBreakdown.completedPct}%
+                    </div>
+                  </div>
+                </div>
+              </CardModern>
             </div>
+          )}
 
-            <input
-              className="input-modern mb-5 w-full"
-              placeholder="🔍 Search projects..."
-              value={projectQuery}
-              onChange={(e) => setProjectQuery(e.target.value)}
-            />
-
+          {/* Projects */}
+          <CardModern
+            title="My project access"
+            pill={`${filteredProjects.length} shown`}
+          >
             {filteredProjects.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-slate-700 py-12 text-center">
-                <p className="text-sm text-slate-500">
+              <div
+                style={{
+                  borderRadius: "12px",
+                  border: `2px dashed ${colors.bg2}`,
+                  padding: "40px 20px",
+                  textAlign: "center",
+                }}
+              >
+                <p style={{ fontSize: "12px", color: "#484f66" }}>
                   No {projectSlide} projects found.
                 </p>
                 <button
                   onClick={scrollToCreateProject}
-                  className="mt-3 inline-block text-sm font-semibold text-cyan-400 hover:text-cyan-300"
+                  style={{
+                    marginTop: "12px",
+                    background: "none",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    color: colors.cyan,
+                    cursor: "pointer",
+                  }}
                 >
                   Create your first project →
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredProjects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    user={user}
-                    onOpen={() => router.push(`/project/${project.id}`)}
-                    onDelete={() => deleteProject(project)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* KPI Row */}
-          {summary && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                label="Total Projects"
-                value={summary.totalProjects}
-                accent="bg-cyan-500"
-              />
-              <StatCard
-                label="Active Projects"
-                value={summary.totalActiveProjects}
-                accent="bg-blue-500"
-              />
-              <StatCard
-                label="Completed Tasks"
-                value={summary.totalCompletedTasks}
-                accent="bg-emerald-500"
-              />
-              <StatCard
-                label="Total Messages"
-                value={summary.totalMessages}
-                accent="bg-violet-500"
-              />
-            </div>
-          )}
-
-          {/* Upcoming Deadlines */}
-          {upcomingTasks && upcomingTasks.length > 0 && (
-            <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-lg">
-                  📅
-                </div>
-                <h3 className="text-lg font-bold text-white">
-                  Upcoming Deadlines
-                </h3>
-              </div>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {upcomingTasks.map((task) => (
-                  <DeadlineItem
-                    key={task.id}
-                    task={task}
-                    projectTitle={
-                      projects.find((p) => p.id === task.project_id)?.title ||
-                      "Project"
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Charts Row */}
-          {summary && (
-            <div className="grid gap-5 lg:grid-cols-2">
-              <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
-                <h3 className="mb-4 text-lg font-bold text-white">
-                  📊 Task Breakdown
-                </h3>
-                <div className="h-52">
-                  <Pie
-                    data={{
-                      labels: ["Todo", "In Progress", "Completed"],
-                      datasets: [
-                        {
-                          data: [
-                            taskBreakdown.todo,
-                            taskBreakdown.inProgress,
-                            taskBreakdown.completed,
-                          ],
-                          backgroundColor: ["#f59e0b", "#3b82f6", "#22c55e"],
-                          borderWidth: 0,
-                        },
-                      ],
-                    }}
-                    options={pieOpts}
-                  />
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="rounded-lg bg-amber-500/15 py-2 text-amber-300 font-semibold">
-                    Todo {taskBreakdown.todoPct}%
-                  </div>
-                  <div className="rounded-lg bg-blue-500/15 py-2 text-blue-300 font-semibold">
-                    Progress {taskBreakdown.inProgressPct}%
-                  </div>
-                  <div className="rounded-lg bg-emerald-500/15 py-2 text-emerald-300 font-semibold">
-                    Done {taskBreakdown.completedPct}%
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
-                <h3 className="mb-4 text-lg font-bold text-white">
-                  📈 Project Activity
-                </h3>
-                <div className="h-52">
-                  <Bar
-                    data={{
-                      labels: [
-                        "Projects",
-                        "Active",
-                        "Completed",
-                        "Tasks",
-                        "Files",
-                        "Messages",
-                      ],
-                      datasets: [
-                        {
-                          data: [
-                            summary.totalProjects,
-                            summary.totalActiveProjects ?? 0,
-                            summary.totalCompletedProjects ?? 0,
-                            summary.totalTasks,
-                            summary.totalFiles,
-                            summary.totalMessages,
-                          ],
-                          backgroundColor: [
-                            "#06b6d4",
-                            "#3b82f6",
-                            "#22c55e",
-                            "#6366f1",
-                            "#f59e0b",
-                            "#f43f5e",
-                          ],
-                          borderRadius: 8,
-                          borderWidth: 0,
-                        },
-                      ],
-                    }}
-                    options={barOpts}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Activity Feed */}
-          {activity.length > 0 && (
-            <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/15 text-lg">
-                  ⚡
-                </div>
-                <h3 className="text-lg font-bold text-white">Team Activity</h3>
-              </div>
-              <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
-                {activity.map((a, i) => {
-                  const diff = (Date.now() - new Date(a.created_at)) / 1000;
-                  const timeAgo =
-                    diff < 60
-                      ? "just now"
-                      : diff < 3600
-                        ? `${Math.floor(diff / 60)}m ago`
-                        : diff < 86400
-                          ? `${Math.floor(diff / 3600)}h ago`
-                          : `${Math.floor(diff / 86400)}d ago`;
-                  const initials = (a.user_name || "?")
-                    .split(" ")
-                    .map((w) => w[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
-                  const GRADS = [
-                    "from-cyan-500 to-blue-500",
-                    "from-violet-500 to-purple-500",
-                    "from-amber-500 to-orange-500",
-                    "from-emerald-500 to-teal-500",
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: "10px",
+                }}
+              >
+                {filteredProjects.map((p, i) => {
+                  const pct =
+                    p.task_count > 0
+                      ? Math.round(
+                          (p.completed_task_count / p.task_count) * 100,
+                        )
+                      : 0;
+                  const badgeClass =
+                    p.status === "active"
+                      ? {
+                          bg: `rgba(29, 233, 182, 0.12)`,
+                          fg: colors.mint,
+                          text: "Active",
+                        }
+                      : p.status === "hold"
+                        ? {
+                            bg: `rgba(246, 166, 35, 0.12)`,
+                            fg: colors.amber,
+                            text: "On hold",
+                          }
+                        : {
+                            bg: `rgba(79, 158, 255, 0.12)`,
+                            fg: colors.blue,
+                            text: "Done",
+                          };
+                  const colors2 = [
+                    colors.cyan,
+                    colors.violet,
+                    colors.mint,
+                    colors.amber,
+                    colors.rose,
+                    colors.blue,
                   ];
+                  const pc = colors2[i % colors2.length];
                   return (
                     <div
-                      key={a.id ?? i}
-                      className="flex items-start gap-3 rounded-xl border border-slate-800/50 bg-slate-900/30 px-3 py-2.5 hover:border-slate-700/50 transition"
+                      key={p.id}
+                      style={{
+                        background: colors.bg2,
+                        border: `1px solid rgba(255,255,255,.07)`,
+                        borderRadius: "12px",
+                        padding: "14px",
+                        transition: ".2s",
+                        cursor: "pointer",
+                      }}
                     >
                       <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white ${GRADS[i % GRADS.length]}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: "8px",
+                          marginBottom: "5px",
+                        }}
                       >
-                        {initials}
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: "600",
+                            color: "#eef0f8",
+                          }}
+                        >
+                          {p.title}
+                        </div>
+                        <span
+                          style={{
+                            fontSize: "9px",
+                            fontWeight: "700",
+                            textTransform: "uppercase",
+                            letterSpacing: ".4px",
+                            padding: "2px 7px",
+                            borderRadius: "20px",
+                            flexShrink: 0,
+                            background: badgeClass.bg,
+                            color: badgeClass.fg,
+                          }}
+                        >
+                          {badgeClass.text}
+                        </span>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm leading-snug text-slate-200">
-                          {a.action}
-                        </p>
-                        <p className="mt-0.5 text-xs text-slate-500">
-                          {a.user_name} · {timeAgo}
-                        </p>
+                      <div
+                        style={{
+                          fontSize: "11px",
+                          color: "#484f66",
+                          marginBottom: "10px",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {p.description || "No description"}
+                      </div>
+                      {p.task_count > 0 && (
+                        <>
+                          <div
+                            style={{
+                              height: "3px",
+                              background: colors.bg0,
+                              borderRadius: "2px",
+                              overflow: "hidden",
+                              marginBottom: "8px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                height: "100%",
+                                borderRadius: "2px",
+                                width: `${pct}%`,
+                                background: pc,
+                                transition: "width .4s",
+                              }}
+                            />
+                          </div>
+                        </>
+                      )}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          fontSize: "10px",
+                          color: "#484f66",
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: "3px" }}>
+                          {Array.from({
+                            length: Math.min(3, p.members?.length || 0),
+                          }).map((_, j) => (
+                            <div
+                              key={j}
+                              style={{
+                                width: "18px",
+                                height: "18px",
+                                borderRadius: "4px",
+                                background: `${pc}1a`,
+                                color: pc,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "8px",
+                                fontWeight: "700",
+                              }}
+                            >
+                              {p.members?.[j]?.name
+                                ?.split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .slice(0, 2) || "?"}
+                            </div>
+                          ))}
+                        </div>
+                        <span>{pct}%</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </CardModern>
 
-          {/* Create Project Section */}
+          {/* Tasks + Activity + Quick Actions */}
           <div
-            ref={createProjectRef}
-            className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 backdrop-blur"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 280px",
+              gap: "12px",
+            }}
           >
-            <div className="mb-5 flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-lg">
-                ✨
+            {/* Tasks */}
+            <CardModern title="My tasks" note="Due this week">
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+              >
+                {activity.slice(0, 5).map((a, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "9px 11px",
+                      background: colors.bg2,
+                      border: `1px solid transparent`,
+                      borderRadius: "9px",
+                      transition: ".15s",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "15px",
+                        height: "15px",
+                        borderRadius: "4px",
+                        border: `1.5px solid rgba(255,255,255,.13)`,
+                        flexShrink: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "9px",
+                      }}
+                    />
+                    <div
+                      style={{
+                        flex: 1,
+                        fontSize: "12px",
+                        color: "#eef0f8",
+                        minWidth: 0,
+                      }}
+                    >
+                      {a.action?.slice(0, 50)}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: "9px",
+                        fontWeight: "600",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        flexShrink: 0,
+                        background: `rgba(0, 212, 255, 0.1)`,
+                        color: colors.cyan,
+                      }}
+                    >
+                      Dev
+                    </span>
+                  </div>
+                ))}
               </div>
-              <h3 className="text-lg font-bold text-white">
-                Start a New Project
-              </h3>
-            </div>
-            <form onSubmit={createProject} className="grid gap-3 max-w-2xl">
+            </CardModern>
+
+            {/* Activity */}
+            <CardModern title="Team activity" note="Live">
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "7px" }}
+              >
+                {activity.slice(0, 4).map((a, i) => {
+                  const initials =
+                    a.user_name
+                      ?.split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2) || "?";
+                  const acs = [
+                    colors.cyan,
+                    colors.violet,
+                    colors.mint,
+                    colors.amber,
+                  ];
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "9px",
+                        padding: "7px 8px",
+                        borderRadius: "8px",
+                        transition: ".15s",
+                        cursor: "default",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "26px",
+                          height: "26px",
+                          borderRadius: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "9px",
+                          fontWeight: "700",
+                          flexShrink: 0,
+                          background: `${acs[i % acs.length]}1a`,
+                          color: acs[i % acs.length],
+                        }}
+                      >
+                        {initials}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            color: "#eef0f8",
+                            lineHeight: 1.35,
+                          }}
+                        >
+                          {a.action?.slice(0, 60)}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "10px",
+                            color: "#484f66",
+                            marginTop: "2px",
+                          }}
+                        >
+                          {a.user_name} · 2h ago
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardModern>
+
+            {/* Quick Actions */}
+            <CardModern title="Quick actions">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: "8px",
+                  marginBottom: "12px",
+                }}
+              >
+                {[
+                  { icon: "➕", l: "New project", s: "Start from scratch" },
+                  { icon: "✓", l: "New task", s: "Add to any project" },
+                  { icon: "📤", l: "Upload file", s: "Share with team" },
+                  { icon: "👥", l: "Invite member", s: "Grow your team" },
+                ].map((q, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      background: colors.bg2,
+                      border: `1px solid rgba(255,255,255,.07)`,
+                      borderRadius: "9px",
+                      padding: "12px",
+                      cursor: "pointer",
+                      transition: ".2s",
+                    }}
+                  >
+                    <div
+                      style={{
+                        marginBottom: "6px",
+                        color: "#8890aa",
+                        fontSize: "16px",
+                      }}
+                    >
+                      {q.icon}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "600",
+                        color: "#eef0f8",
+                      }}
+                    >
+                      {q.l}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "10px",
+                        color: "#484f66",
+                        marginTop: "1px",
+                      }}
+                    >
+                      {q.s}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  background: `rgba(0, 212, 255, 0.04)`,
+                  border: `1px solid rgba(0, 212, 255, 0.13)`,
+                  borderRadius: "9px",
+                  padding: "12px",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "600",
+                    color: colors.cyan,
+                    marginBottom: "3px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  🎯 Weekly goal
+                </div>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#8890aa",
+                    marginBottom: "8px",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Close 5 tasks in API Revamp
+                </div>
+                <div
+                  style={{
+                    height: "4px",
+                    background: colors.bg0,
+                    borderRadius: "2px",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: "60%",
+                      background: `linear-gradient(90deg, ${colors.cyan}, ${colors.violet})`,
+                      borderRadius: "2px",
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    fontSize: "10px",
+                    color: "#484f66",
+                    marginTop: "5px",
+                  }}
+                >
+                  3 of 5 completed · 60%
+                </div>
+              </div>
+            </CardModern>
+          </div>
+
+          {/* Create Project */}
+          <CardModern title="Create New Project" ref={createProjectRef}>
+            <form
+              onSubmit={createProject}
+              style={{ display: "grid", gap: "12px", maxWidth: "500px" }}
+            >
               <input
-                className="input-modern"
+                type="text"
                 placeholder="Project title *"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
+                style={{
+                  background: colors.bg2,
+                  border: `1px solid rgba(255,255,255,.07)`,
+                  borderRadius: "8px",
+                  padding: "12px",
+                  color: "#eef0f8",
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                }}
               />
               <textarea
-                className="input-modern min-h-[100px] resize-none"
                 placeholder="Project description (optional)"
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
+                style={{
+                  background: colors.bg2,
+                  border: `1px solid rgba(255,255,255,.07)`,
+                  borderRadius: "8px",
+                  padding: "12px",
+                  color: "#eef0f8",
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                  minHeight: "100px",
+                  resize: "none",
+                }}
               />
-              <button type="submit" className="btn-primary w-fit">
+              <button
+                type="submit"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.cyan}, ${colors.blue})`,
+                  color: "#000",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  padding: "10px 16px",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  width: "fit-content",
+                  transition: ".15s",
+                }}
+              >
                 Create Project
               </button>
             </form>
-          </div>
-        </div>
-      </AppLayout>
+          </CardModern>
+        </main>
+      </div>
     </>
   );
 }
