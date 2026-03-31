@@ -93,6 +93,7 @@ The Real-Time Collab Hub is the intellectual property of Himanshu Kumar. Any use
    ```
 
 5. **Start development server**
+
    ```bash
    npm run dev
    ```
@@ -101,7 +102,7 @@ The Real-Time Collab Hub is the intellectual property of Himanshu Kumar. Any use
 
 ## 📁 Project Structure
 
-```
+```tree
 real-time-collab-hub/
 ├── client/                 # Next.js frontend application
 │   ├── src/
@@ -119,7 +120,6 @@ real-time-collab-hub/
 │   │   ├── middleware/    # Custom middleware
 │   │   ├── config/        # Configuration files
 │   │   └── services/      # Business logic services
-│   ├── scripts/           # Utility scripts
 │   └── package.json
 └── database/              # Database schema and migrations
 ```

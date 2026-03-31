@@ -904,7 +904,7 @@
   /* ─── New Tab Bar v2 ──────────────────────────────────────────────────────── */
   .tab-bar-v2 {
     overflow-x: auto;
-    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .tab-bar-v2::-webkit-scrollbar {

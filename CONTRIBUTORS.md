@@ -5,7 +5,7 @@
 **Himanshu Kumar** ✨
 
 - **Role**: Founder and Lead Developer
-- **Email**: hkagarwal256@gmail.com
+- **Email**: [hkagarwal256@gmail.com](mailto:hkagarwal256@gmail.com)
 - **GitHub**: [Himanshu1741](https://github.com/Himanshu1741)
 - **Period**: February 2026 - March 2026
 
