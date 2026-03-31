@@ -820,10 +820,10 @@ body {
 .form-submit-btn {
   background: linear-gradient(135deg, var(--cyan), var(--blue));
   color: #000;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   width: auto;
