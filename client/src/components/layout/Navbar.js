@@ -8,7 +8,7 @@
 import { useRouter } from "next/router";
 import { useTheme } from "../../context/ThemeContext";
 import GlobalSearch from "../common/GlobalSearch";
-import NotificationBell from "../common/NotificationBell";
+import NotificationBellAdvanced from "../common/NotificationBellAdvanced";
 
 export default function Navbar({
   title,
@@ -36,7 +36,7 @@ export default function Navbar({
             <GlobalSearch />
           </div>
         )}
-        <NotificationBell />
+        <NotificationBellAdvanced />
         {showSettings ? (
           <button
             className="btn-secondary !px-2.5"
