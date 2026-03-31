@@ -1,3 +1,12 @@
+/**
+ * Real-Time Collab Hub Server
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ *
+ * Main server entry point for the real-time collaboration platform
+ */
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");

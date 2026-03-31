@@ -1,9 +1,16 @@
-import "../styles/globals.css";
-import "../styles/login.css";
+/**
+ * Next.js App Component
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { ThemeProvider } from "../context/ThemeContext";
 import { useEffect, useState } from "react";
+import { ThemeProvider } from "../context/ThemeContext";
+import "../styles/globals.css";
+import "../styles/login.css";
 
 // ─── Register service worker ──────────────────────────────────────────────────
 function usePWA() {

@@ -9,9 +9,14 @@
     "build": "next build",
     "start": "next start"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "collaboration",
+    "real-time",
+    "project-management"
+  ],
+  "author": "Himanshu Kumar",
+  "license": "MIT",
+  "copyright": "Copyright © 2026 Himanshu Kumar. All rights reserved.",
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",

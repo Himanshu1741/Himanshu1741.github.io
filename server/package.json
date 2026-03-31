@@ -1,4 +1,10 @@
 {
+  "name": "real-time-collab-hub-server",
+  "version": "1.0.0",
+  "description": "Real-time collaboration hub backend server",
+  "author": "Himanshu Kumar",
+  "license": "MIT",
+  "copyright": "Copyright © 2026 Himanshu Kumar. All rights reserved.",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js"

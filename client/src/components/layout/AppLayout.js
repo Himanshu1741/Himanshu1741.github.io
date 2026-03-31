@@ -1,8 +1,16 @@
-import { useEffect, useState } from "react";
+/**
+ * App Layout Component
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import { useRouter } from "next/router";
-import NotificationBell from "../common/NotificationBell";
-import GlobalSearch from "../common/GlobalSearch";
+import { useEffect, useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
+import Footer from "../common/Footer";
+import GlobalSearch from "../common/GlobalSearch";
+import NotificationBell from "../common/NotificationBell";
 
 const NAV = [
   { key: "dashboard", label: "Dashboard", emoji: "🏠", href: "/dashboard" },
@@ -296,6 +304,9 @@ export default function AppLayout({
             {children}
           </div>
         </main>
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );
