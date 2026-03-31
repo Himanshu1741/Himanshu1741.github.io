@@ -12,7 +12,7 @@
 ### Contributions
 
 - 🏗️ **Architecture & Design**: Designed the entire Real-Time Collab Hub architecture
-- 💻 **Full Stack Development**: Built both frontend (Next.js) and backend (Node.js/Express) 
+- 💻 **Full Stack Development**: Built both frontend (Next.js) and backend (Node.js/Express)
 - 🔐 **Authentication**: Implemented OAuth 2.0 (GitHub, Google) with Passport.js
 - ⚡ **Real-time Features**: Developed WebSocket functionality for real-time communication
 - 📊 **Database Design**: Designed MySQL schema with Sequelize ORM

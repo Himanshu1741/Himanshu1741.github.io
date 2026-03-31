@@ -16,7 +16,6 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import API from "../../services/api";
 
-// ─── Priority config ──────────────────────────────────────────────────────────
 const PRIORITY_STYLES = {
   high: "bg-rose-500/20 text-rose-300 border border-rose-500/30",
   medium: "bg-amber-500/20 text-amber-300 border border-amber-500/30",

@@ -9,9 +9,12 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import Head from "next/head";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
 import API from "../services/api";
 
-/* ─── Toast helpers ─────────────────────────────────────────── */
 function useToast() {
   const [toasts, setToasts] = useState([]);
   const toast = (msg, type = "error") => {
