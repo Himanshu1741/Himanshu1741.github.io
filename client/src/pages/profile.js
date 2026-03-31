@@ -1,6 +1,12 @@
-// STUDENT PROFILE PAGE
-import { useEffect, useState, useCallback } from "react";
+/**
+ * Student Profile Page
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import { useRouter } from "next/router";
+import { useCallback, useEffect, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import API from "../services/api";
 

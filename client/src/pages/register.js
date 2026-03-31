@@ -1,7 +1,14 @@
-import { useState } from "react";
-import { useRouter } from "next/router";
-import API from "../services/api";
+/**
+ * Registration Page
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import Head from "next/head";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import API from "../services/api";
 
 function useToast() {
   const [toasts, setToasts] = useState([]);

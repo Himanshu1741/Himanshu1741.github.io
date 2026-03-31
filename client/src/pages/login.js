@@ -1,8 +1,15 @@
-import { useState } from "react";
-import { useRouter } from "next/router";
-import API from "../services/api";
+/**
+ * Login Page
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import API from "../services/api";
 
 /* ─── Toast helpers ─────────────────────────────────────────── */
 function useToast() {

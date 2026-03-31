@@ -1,19 +1,26 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/router";
+/**
+ * Admin Dashboard
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import API from "../services/api";
 
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
+  ArcElement,
   BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
+  LinearScale,
   LineElement,
   PointElement,
-  ArcElement,
   Tooltip,
-  Legend,
-  Filler,
 } from "chart.js";
 
 const Bar = dynamic(() => import("react-chartjs-2").then((m) => m.Bar), {

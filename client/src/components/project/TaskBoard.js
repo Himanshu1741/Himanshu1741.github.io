@@ -1,13 +1,20 @@
-import { useEffect, useState, useCallback } from "react";
-import API from "../../services/api";
+/**
+ * Task Board Component
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import {
   DndContext,
   PointerSensor,
+  useDraggable,
+  useDroppable,
   useSensor,
   useSensors,
-  useDroppable,
-  useDraggable,
 } from "@dnd-kit/core";
+import { useCallback, useEffect, useState } from "react";
+import API from "../../services/api";
 
 // ─── Priority config ──────────────────────────────────────────────────────────
 const PRIORITY_STYLES = {

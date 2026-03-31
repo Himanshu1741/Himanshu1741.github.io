@@ -1,3 +1,10 @@
+/**
+ * File Upload Configuration (Multer)
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");

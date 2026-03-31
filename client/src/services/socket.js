@@ -1,3 +1,10 @@
+/**
+ * WebSocket Service
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import io from "socket.io-client";
 
 const SOCKET_URL =

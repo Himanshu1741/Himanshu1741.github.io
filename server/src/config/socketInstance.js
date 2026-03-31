@@ -1,5 +1,9 @@
 /**
- * Shared Socket.IO instance.
+ * Shared Socket.IO Instance
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ *
  * Set once in server.js after `io` is created,
  * then imported anywhere (controllers, services) that need to emit events.
  */

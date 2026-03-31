@@ -1,3 +1,10 @@
+/**
+ * Chat Box Component
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import { useEffect, useRef, useState } from "react";
 import API from "../../services/api";
 import socket from "../../services/socket";

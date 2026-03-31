@@ -1,3 +1,10 @@
+/**
+ * Authentication Middleware
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 const jwt = require("jsonwebtoken");
 
 module.exports = function (req, res, next) {

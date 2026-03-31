@@ -1,3 +1,10 @@
+/**
+ * Theme Context
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeContext = createContext({ theme: "dark", toggleTheme: () => {} });

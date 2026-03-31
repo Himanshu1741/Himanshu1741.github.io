@@ -1,3 +1,10 @@
+/**
+ * API Service
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import axios from "axios";
 
 const API = axios.create({

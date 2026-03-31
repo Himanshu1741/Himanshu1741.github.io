@@ -1,3 +1,10 @@
+/**
+ * Database Configuration
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
@@ -8,8 +15,8 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: "mysql",
-    logging: false
-  }
+    logging: false,
+  },
 );
 
 module.exports = sequelize;

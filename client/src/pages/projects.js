@@ -1,6 +1,12 @@
-// MY PROJECTS PAGE
-import { useEffect, useState, useMemo, useCallback } from "react";
+/**
+ * My Projects Page
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import { useRouter } from "next/router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import API from "../services/api";
 

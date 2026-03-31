@@ -1,3 +1,10 @@
+/**
+ * Notification Bell Component
+ *
+ * Copyright © 2026 Himanshu Kumar. All rights reserved.
+ * Developed by Himanshu Kumar
+ */
+
 import { useEffect, useState } from "react";
 import API from "../../services/api";
 import socket from "../../services/socket";
@@ -32,9 +39,10 @@ export default function NotificationBell() {
 
     const initNotifications = async () => {
       try {
-        let user = typeof window !== "undefined"
-          ? JSON.parse(localStorage.getItem("user") || "null")
-          : null;
+        let user =
+          typeof window !== "undefined"
+            ? JSON.parse(localStorage.getItem("user") || "null")
+            : null;
 
         if (!user?.id) {
           const meRes = await API.get("/auth/me");
@@ -67,12 +75,18 @@ export default function NotificationBell() {
     };
 
     socket.on("receiveNotification", handleReceiveNotification);
-    window.addEventListener("notifications:refresh", handleRefreshNotifications);
+    window.addEventListener(
+      "notifications:refresh",
+      handleRefreshNotifications,
+    );
 
     return () => {
       isMounted = false;
       socket.off("receiveNotification", handleReceiveNotification);
-      window.removeEventListener("notifications:refresh", handleRefreshNotifications);
+      window.removeEventListener(
+        "notifications:refresh",
+        handleRefreshNotifications,
+      );
     };
   }, []);
 
@@ -94,7 +108,13 @@ export default function NotificationBell() {
         className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/70 text-slate-100 transition hover:border-cyan-400/70 hover:bg-slate-800"
         aria-label="Notifications"
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
           <path d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
           <path d="M9 17a3 3 0 0 0 6 0" />
         </svg>
@@ -109,7 +129,9 @@ export default function NotificationBell() {
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
               Notifications
             </p>
-            <span className="text-[11px] text-cyan-300">{unreadCount} unread</span>
+            <span className="text-[11px] text-cyan-300">
+              {unreadCount} unread
+            </span>
           </div>
           <div className="max-h-72 overflow-y-auto space-y-2">
             {notifications.length === 0 ? (
