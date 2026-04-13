@@ -15,7 +15,6 @@ const API = axios.create({
   timeout: 30000, // Reduced timeout for faster feedback
   withCredentials: false,
   headers: {
-    "Cache-Control": "no-cache",
     "X-Requested-With": "XMLHttpRequest", // Better CORS handling for Edge
   },
 });

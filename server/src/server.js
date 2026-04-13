@@ -57,7 +57,17 @@ const corsOptions = {
   },
   credentials: false,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Cache-Control",
+    "X-Requested-With",
+    "X-CSRF-Token",
+    "Accept",
+    "Accept-Language",
+  ],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  maxAge: 600, // 10 minutes
 };
 
 app.use(cors(corsOptions));
