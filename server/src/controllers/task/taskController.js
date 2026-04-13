@@ -452,3 +452,58 @@ exports.getDeadlines = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+// GET UPCOMING TASKS (for current user)
+exports.getUpcomingTasks = async (req, res) => {
+  try {
+    const { Op } = require("sequelize");
+
+    // Get all projects where user is a member
+    const memberships = await ProjectMember.findAll({
+      where: { user_id: req.user.id },
+      attributes: ["project_id"],
+    });
+    const projectIds = memberships.map((m) => m.project_id);
+    if (!projectIds.length) return res.json([]);
+
+    // Get today's date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrowDate = new Date(today);
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+
+    // Get upcoming tasks (due date is tomorrow or later)
+    const tasks = await Task.findAll({
+      where: {
+        project_id: { [Op.in]: projectIds },
+        due_date: { [Op.gte]: tomorrowDate },
+      },
+      order: [["due_date", "ASC"]],
+      limit: 20, // Limit to 20 upcoming tasks
+      include: [
+        {
+          model: User,
+          as: "assignee",
+          attributes: ["id", "name", "email", "avatar"],
+        },
+      ],
+    });
+
+    // Get project titles
+    const projects = await Project.findAll({
+      where: { id: { [Op.in]: projectIds } },
+      attributes: ["id", "title"],
+    });
+    const projMap = Object.fromEntries(projects.map((p) => [p.id, p.title]));
+
+    const result = tasks.map((t) => ({
+      ...t.toJSON(),
+      project_title: projMap[t.project_id] || "Unknown",
+    }));
+
+    return res.json(result);
+  } catch (error) {
+    console.error("Get upcoming tasks error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};

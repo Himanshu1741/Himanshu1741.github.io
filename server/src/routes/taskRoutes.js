@@ -3,6 +3,7 @@ const router = express.Router();
 const taskController = require("../controllers/task/taskController");
 const authMiddleware = require("../middleware/authMiddleware");
 
+router.get("/upcoming", authMiddleware, taskController.getUpcomingTasks);
 router.post("/", authMiddleware, taskController.createTask);
 router.get("/deadlines", authMiddleware, taskController.getDeadlines);
 router.get("/trash", authMiddleware, taskController.getAllTrashedTasks);
