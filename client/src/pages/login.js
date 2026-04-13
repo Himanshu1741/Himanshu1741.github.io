@@ -194,30 +194,7 @@ export default function Login() {
         else router.push("/dashboard");
       }, 500);
     } catch (error) {
-      console.error("❌ Login error:", {
-        status: error?.response?.status,
-        message: error?.response?.data?.message,
-        errorMsg: error?.message,
-        code: error?.code,
-        fullError: error,
-      });
-
       let errorMessage = "Login failed. Check your credentials.";
-
-      // Check if backend server is not running
-      if (
-        error?.code === "ERR_NETWORK" ||
-        error?.code === "ECONNREFUSED" ||
-        error?.message?.includes("ERR_CONNECTION_REFUSED")
-      ) {
-        errorMessage =
-          "❌ Backend server is not running. Make sure to start the server with: npm run dev (from /server directory)";
-        toast(errorMessage, "error");
-        console.error(
-          "⚠️ Cannot connect to http://localhost:5000/api - Backend server is down",
-        );
-        return;
-      }
 
       if (error?.response?.status === 401) {
         errorMessage = "Invalid email or password.";
@@ -227,8 +204,6 @@ export default function Login() {
         errorMessage = "Too many login attempts. Please try again later.";
       } else if (error?.response?.status === 500) {
         errorMessage = "Server error. Please try again later.";
-      } else if (error?.message === "Network Error") {
-        errorMessage = "Network connection failed. Check your internet.";
       } else if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
