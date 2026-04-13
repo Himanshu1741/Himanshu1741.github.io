@@ -7,15 +7,22 @@
 
 import axios from "axios";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
-  timeout: 60000, // 60 seconds for large file uploads
+  baseURL: API_BASE_URL,
+  timeout: 30000, // Reduced timeout for faster feedback
   withCredentials: false,
   headers: {
     "Cache-Control": "no-cache",
     "X-Requested-With": "XMLHttpRequest", // Better CORS handling for Edge
   },
 });
+
+// Retry logic for network errors
+let retryCount = 0;
+const MAX_RETRIES = 2;
 
 // Attach token automatically and handle FormData
 API.interceptors.request.use(
@@ -60,6 +67,7 @@ API.interceptors.request.use(
 // Handle responses and errors
 API.interceptors.response.use(
   (response) => {
+    retryCount = 0; // Reset retry count on success
     if (typeof window !== "undefined") {
       console.log(`[API Response] ${response.status} ${response.config.url}`);
     }
@@ -69,6 +77,10 @@ API.interceptors.response.use(
     if (typeof window !== "undefined") {
       const isEdge = /Edg/.test(navigator.userAgent);
       const isChromium = /Chrome|Chromium|CriOS/.test(navigator.userAgent);
+      const isConnectionRefused =
+        error.code === "ERR_NETWORK" ||
+        error.code === "ECONNREFUSED" ||
+        error.message?.includes("ERR_CONNECTION_REFUSED");
 
       console.error("[API Error Details]", {
         code: error.code,
@@ -77,16 +89,25 @@ API.interceptors.response.use(
         url: error.config?.url,
         method: error.config?.method,
         responseData: error.response?.data,
-        requestHeaders: error.config?.headers,
         browser: isEdge ? "Edge" : isChromium ? "Chrome" : "Unknown",
-        corsIssue:
-          error.code === "ERR_NETWORK" || error.message.includes("CORS"),
+        connectionRefused: isConnectionRefused,
+        apiBaseUrl: API_BASE_URL,
       });
 
-      // Add Edge-specific error logging
-      if (isEdge && error.code === "ERR_NETWORK") {
+      // Specific error for connection refused
+      if (isConnectionRefused) {
+        console.error(
+          `❌ Cannot connect to API server at ${API_BASE_URL}. Is the backend server running?`,
+        );
         console.warn(
-          "⚠️ Edge browser detected network error. Checking CORS and connectivity...",
+          "⚠️ Make sure the server is running: npm run dev (from /server directory)",
+        );
+      }
+
+      // Add Edge-specific warning
+      if (isEdge && isConnectionRefused) {
+        console.warn(
+          "⚠️ Edge browser detected connection error. Check that backend server is running...",
         );
       }
 

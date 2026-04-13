@@ -198,10 +198,26 @@ export default function Login() {
         status: error?.response?.status,
         message: error?.response?.data?.message,
         errorMsg: error?.message,
+        code: error?.code,
         fullError: error,
       });
 
       let errorMessage = "Login failed. Check your credentials.";
+
+      // Check if backend server is not running
+      if (
+        error?.code === "ERR_NETWORK" ||
+        error?.code === "ECONNREFUSED" ||
+        error?.message?.includes("ERR_CONNECTION_REFUSED")
+      ) {
+        errorMessage =
+          "❌ Backend server is not running. Make sure to start the server with: npm run dev (from /server directory)";
+        toast(errorMessage, "error");
+        console.error(
+          "⚠️ Cannot connect to http://localhost:5000/api - Backend server is down",
+        );
+        return;
+      }
 
       if (error?.response?.status === 401) {
         errorMessage = "Invalid email or password.";
