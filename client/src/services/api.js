@@ -13,6 +13,7 @@ const API = axios.create({
   withCredentials: false,
   headers: {
     "Cache-Control": "no-cache",
+    "X-Requested-With": "XMLHttpRequest", // Better CORS handling for Edge
   },
 });
 
@@ -66,6 +67,9 @@ API.interceptors.response.use(
   },
   (error) => {
     if (typeof window !== "undefined") {
+      const isEdge = /Edg/.test(navigator.userAgent);
+      const isChromium = /Chrome|Chromium|CriOS/.test(navigator.userAgent);
+
       console.error("[API Error Details]", {
         code: error.code,
         message: error.message,
@@ -74,7 +78,18 @@ API.interceptors.response.use(
         method: error.config?.method,
         responseData: error.response?.data,
         requestHeaders: error.config?.headers,
+        browser: isEdge ? "Edge" : isChromium ? "Chrome" : "Unknown",
+        corsIssue:
+          error.code === "ERR_NETWORK" || error.message.includes("CORS"),
       });
+
+      // Add Edge-specific error logging
+      if (isEdge && error.code === "ERR_NETWORK") {
+        console.warn(
+          "⚠️ Edge browser detected network error. Checking CORS and connectivity...",
+        );
+      }
+
       console.error(
         `[API Error] ${error.response?.status || error.code} ${error.config?.url || "unknown"}`,
       );

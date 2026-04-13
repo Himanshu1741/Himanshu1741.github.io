@@ -170,17 +170,54 @@ export default function Login() {
     }
     try {
       setLoading(true);
+      console.log("🔐 Login attempt:", { email: form.email });
+
       const res = await API.post("/auth/login", form);
+      console.log("✅ Login successful:", res.data);
+
+      // Check if storage is available
+      if (typeof Storage === "undefined") {
+        toast(
+          "Browser storage not available. Please check your Edge settings.",
+          "error",
+        );
+        console.error("❌ localStorage not available");
+        return;
+      }
+
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      if (res.data.user?.role === "admin") router.push("/admin");
-      else router.push("/dashboard");
+      toast("Login successful! Redirecting...", "success");
+
+      setTimeout(() => {
+        if (res.data.user?.role === "admin") router.push("/admin");
+        else router.push("/dashboard");
+      }, 500);
     } catch (error) {
-      toast(
-        error?.response?.data?.message ||
-          "Login failed. Check your credentials.",
-        "error",
-      );
+      console.error("❌ Login error:", {
+        status: error?.response?.status,
+        message: error?.response?.data?.message,
+        errorMsg: error?.message,
+        fullError: error,
+      });
+
+      let errorMessage = "Login failed. Check your credentials.";
+
+      if (error?.response?.status === 401) {
+        errorMessage = "Invalid email or password.";
+      } else if (error?.response?.status === 404) {
+        errorMessage = "User account not found.";
+      } else if (error?.response?.status === 429) {
+        errorMessage = "Too many login attempts. Please try again later.";
+      } else if (error?.response?.status === 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error?.message === "Network Error") {
+        errorMessage = "Network connection failed. Check your internet.";
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast(errorMessage, "error");
     } finally {
       setLoading(false);
     }
