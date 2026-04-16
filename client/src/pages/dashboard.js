@@ -1,5 +1,5 @@
 /**
- * Dashboard Page - Modern Design
+ * Dashboard Page - Admin Style Design
  *
  * Copyright © 2026 Himanshu Kumar. All rights reserved.
  * Developed by Himanshu Kumar
@@ -16,13 +16,7 @@ import {
 } from "chart.js";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import API from "../services/api";
 
 const Pie = dynamic(() => import("react-chartjs-2").then((mod) => mod.Pie), {
@@ -41,20 +35,6 @@ ChartJS.register(
   BarElement,
 );
 
-// Color scheme
-const colors = {
-  bg0: "#0c0d12",
-  bg1: "#13141b",
-  bg2: "#1a1c25",
-  bg3: "#21242f",
-  cyan: "#00d4ff",
-  mint: "#1de9b6",
-  violet: "#9d78ff",
-  amber: "#f6a623",
-  rose: "#ff5c7c",
-  blue: "#4f9eff",
-};
-
 // Toast
 function useToast() {
   const [toasts, setToasts] = useState([]);
@@ -67,10 +47,28 @@ function useToast() {
 }
 
 function ToastContainer({ toasts }) {
+  const icons = { success: "✓", error: "✕", info: "ℹ", warning: "!" };
+  const colors = {
+    success: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+    error: "border-rose-500/40 bg-rose-500/10 text-rose-300",
+    info: "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
+    warning: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  };
   return (
-    <div className="toast-container">
+    <div
+      className="fixed right-5 top-5 z-[9999] flex flex-col gap-2"
+      style={{ pointerEvents: "none" }}
+    >
       {toasts.map((t) => (
-        <div key={t.id} className={`toast ${t.type}`}>
+        <div
+          key={t.id}
+          className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-medium shadow-xl backdrop-blur-sm ${colors[t.type]}`}
+          style={{
+            pointerEvents: "auto",
+            animation: "slideInRight 0.25s ease",
+          }}
+        >
+          <span className="text-xs font-black">{icons[t.type]}</span>
           {t.msg}
         </div>
       ))}
@@ -78,94 +76,109 @@ function ToastContainer({ toasts }) {
   );
 }
 
-function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
-  if (!open) return null;
+// Badge
+function Badge({ children, color = "slate" }) {
+  const map = {
+    red: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+    green: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    blue: "bg-sky-500/15 text-sky-300 border-sky-500/30",
+    amber: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+    violet: "bg-violet-500/15 text-violet-300 border-violet-500/30",
+    slate: "bg-slate-700/60 text-slate-400 border-slate-600/60",
+    cyan: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
+  };
   return (
-    <div className="confirm-modal-overlay">
-      <div className="confirm-modal">
-        <h3>{title}</h3>
-        <p>{message}</p>
-        <div className="confirm-modal-actions">
-          <button className="confirm-modal-cancel" onClick={onCancel}>
-            Cancel
-          </button>
-          <button className="confirm-modal-confirm" onClick={onConfirm}>
-            Confirm
-          </button>
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${map[color]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+// StatCard
+function StatCard({ label, value, icon, accent, sub }) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 p-5 transition hover:border-slate-700`}
+    >
+      <div
+        className={`absolute right-0 top-0 h-20 w-20 rounded-full blur-2xl opacity-20 ${accent}`}
+      />
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-slate-500">
+            {label}
+          </p>
+          <p className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+            {value ?? 0}
+          </p>
+          {sub && <p className="mt-1 text-[11px] text-slate-600">{sub}</p>}
+        </div>
+        <div
+          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-xl ${accent}`}
+        >
+          {icon}
         </div>
       </div>
     </div>
   );
 }
 
-function StatCardModern({ label, value, accent }) {
+// Avatar
+function Avatar({ name, size = "md" }) {
+  const initials = (name || "?")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  const colours = [
+    "from-cyan-500 to-blue-500",
+    "from-violet-500 to-purple-500",
+    "from-emerald-500 to-teal-500",
+    "from-amber-500 to-orange-500",
+    "from-rose-500 to-pink-500",
+  ];
+  const bg = colours[initials.charCodeAt(0) % colours.length];
+  const sz = {
+    sm: "h-7 w-7 text-[10px]",
+    md: "h-9 w-9 text-xs",
+    lg: "h-11 w-11 text-sm",
+  };
   return (
-    <div className="stat-card">
-      <div className="stat-card-accent" style={{ background: accent }} />
-      <span className="stat-card-label">{label}</span>
-      <span className="stat-card-value" style={{ color: accent }}>
-        {value ?? 0}
-      </span>
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-bold text-white ${bg} ${sz[size]}`}
+    >
+      {initials}
     </div>
   );
 }
-
-const CardModern = React.forwardRef(({ title, note, pill, children }, ref) => (
-  <div ref={ref} className="card-modern">
-    <div className="card-modern-header">
-      <span className="card-modern-title">{title}</span>
-      {pill && <span className="card-modern-pill">{pill}</span>}
-      {note && <span className="card-modern-note">{note}</span>}
-    </div>
-    {children}
-  </div>
-));
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [user, setUser] = useState(null);
   const [summary, setSummary] = useState(null);
   const [activity, setActivity] = useState([]);
-  const [upcomingTasks, setUpcomingTasks] = useState([]);
-  const [form, setForm] = useState({ title: "", description: "" });
-  const [projectQuery, setProjectQuery] = useState("");
-  const [projectSlide, setProjectSlide] = useState("active");
-  const [pageError, setPageError] = useState("");
-  const [confirm, setConfirm] = useState({
-    open: false,
-    title: "",
-    message: "",
-    onConfirm: null,
-  });
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { toasts, toast } = useToast();
-  const createProjectRef = useRef(null);
   const router = useRouter();
 
-  const ask = (title, message, onConfirm) =>
-    setConfirm({ open: true, title, message, onConfirm });
-  const closeConfirm = () => setConfirm((c) => ({ ...c, open: false }));
-
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     try {
       const res = await API.get("/projects");
       setProjects(res.data);
-      setPageError("");
     } catch (error) {
       if (error?.response?.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         router.push("/login");
-        return;
       }
-      setPageError(
-        error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          "Failed to load projects",
-      );
     }
-  };
+  }, [router]);
 
-  const loadSummary = async () => {
+  const loadSummary = useCallback(async () => {
     try {
       const res = await API.get("/projects/summary");
       setSummary(res.data);
@@ -176,21 +189,14 @@ export default function Dashboard() {
         router.push("/login");
       }
     }
-  };
+  }, [router]);
 
-  const loadActivity = async () => {
+  const loadActivity = useCallback(async () => {
     try {
       const res = await API.get("/projects/activity");
       setActivity(res.data || []);
     } catch {}
-  };
-
-  const loadUpcomingTasks = async () => {
-    try {
-      const res = await API.get("/tasks/upcoming");
-      setUpcomingTasks(res.data || []);
-    } catch {}
-  };
+  }, []);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -204,13 +210,10 @@ export default function Dashboard() {
       router.push("/login");
       return;
     }
-    const isAdminPreviewMode = router.query.preview === "member";
     API.get("/auth/me")
       .then((res) => {
         setUser(res.data.user);
         localStorage.setItem("user", JSON.stringify(res.data.user));
-        if (res.data.user?.role === "admin" && !isAdminPreviewMode)
-          router.push("/admin");
       })
       .catch(() => {
         localStorage.removeItem("token");
@@ -220,58 +223,7 @@ export default function Dashboard() {
     loadProjects();
     loadSummary();
     loadActivity();
-    loadUpcomingTasks();
-  }, [router.isReady, router.query.preview]);
-
-  const createProject = async (e) => {
-    e.preventDefault();
-    if (!form.title.trim()) {
-      toast("Project title is required", "warning");
-      return;
-    }
-    try {
-      await API.post("/projects", form);
-      setForm({ title: "", description: "" });
-      await loadProjects();
-      await loadSummary();
-      toast("Project created!", "success");
-    } catch (err) {
-      toast(
-        err?.response?.data?.message || "Failed to create project",
-        "error",
-      );
-    }
-  };
-
-  const deleteProject = async (project) => {
-    ask(
-      "Delete Project",
-      `Delete "${project.title}"? This cannot be undone.`,
-      async () => {
-        closeConfirm();
-        try {
-          await API.delete(`/projects/${project.id}`);
-          await loadProjects();
-          await loadSummary();
-          toast(`"${project.title}" deleted`, "success");
-        } catch (err) {
-          toast(err?.response?.data?.message || "Delete failed", "error");
-        }
-      },
-    );
-  };
-
-  const filteredProjects = useMemo(() => {
-    const q = projectQuery.trim().toLowerCase();
-    const searched = !q
-      ? projects
-      : projects.filter((p) =>
-          `${p.title} ${p.description || ""}`.toLowerCase().includes(q),
-        );
-    return projectSlide === "completed"
-      ? searched.filter((p) => p.status === "completed")
-      : searched.filter((p) => p.status !== "completed");
-  }, [projects, projectQuery, projectSlide]);
+  }, [router.isReady, loadProjects, loadSummary, loadActivity, router]);
 
   const taskBreakdown = useMemo(() => {
     const total = Number(summary?.totalTasks ?? 0);
@@ -299,191 +251,9 @@ export default function Dashboard() {
     };
   }, [summary]);
 
-  const scrollToCreateProject = () =>
-    createProjectRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+  if (!user) return null;
 
-  const findProject = (value) => {
-    const key = String(value || "").trim();
-    if (!key) return null;
-    const lk = key.toLowerCase();
-    return (
-      projects.find((p) => String(p.id) === key) ||
-      projects.find((p) => String(p.title || "").toLowerCase() === lk) ||
-      projects.find((p) =>
-        String(p.title || "")
-          .toLowerCase()
-          .includes(lk),
-      ) ||
-      null
-    );
-  };
-
-  const executeGuideCommand = async (command) => {
-    if (!command?.type) return { message: "Unknown command." };
-    if (command.type === "help")
-      return {
-        message:
-          "Commands: help, list projects, create project <title> | <description>, open project <id|title>, delete project <id|title>, complete project <id|title>, activate project <id|title>, rename project <id|title> | <new title>, update project description <id|title> | <desc>, show active projects, show completed projects, search project <text>, clear search, go to create project, open settings, open dashboard, open admin, logout.",
-      };
-    if (command.type === "list_projects") {
-      if (!projects.length) return { message: "No projects found." };
-      return {
-        message: `Projects (${projects.length}): ${projects
-          .slice(0, 8)
-          .map((p) => `${p.id}: ${p.title}`)
-          .join(", ")}`,
-      };
-    }
-    if (command.type === "create_project") {
-      const title = String(command.title || "").trim();
-      const description = String(command.description || "").trim();
-      if (!title)
-        return {
-          message: "Provide a title. Example: create project Demo App | Setup",
-        };
-      try {
-        await API.post("/projects", { title, description });
-        await loadProjects();
-        await loadSummary();
-        return {
-          message: `Project "${title}" created.`,
-          actions: [
-            { label: "Go to Dashboard", type: "route", path: "/dashboard" },
-          ],
-        };
-      } catch (error) {
-        return {
-          message: error?.response?.data?.message || "Failed to create.",
-        };
-      }
-    }
-    if (command.type === "open_settings") {
-      router.push("/settings");
-      return { message: "Opening settings..." };
-    }
-    if (command.type === "open_dashboard") {
-      router.push("/dashboard");
-      return { message: "Opening dashboard..." };
-    }
-    if (command.type === "open_admin") {
-      if (user?.role !== "admin") return { message: "Admin access required." };
-      router.push("/admin");
-      return { message: "Opening admin..." };
-    }
-    if (command.type === "go_create_project") {
-      scrollToCreateProject();
-      return { message: "Jumped to Create Project section." };
-    }
-    if (command.type === "show_projects") {
-      setProjectSlide(command.status === "completed" ? "completed" : "active");
-      return {
-        message: `Showing ${command.status === "completed" ? "completed" : "active"} projects.`,
-      };
-    }
-    if (command.type === "search_project") {
-      setProjectQuery(String(command.query || "").trim());
-      return {
-        message: command.query
-          ? `Searching for "${command.query}".`
-          : "Search cleared.",
-      };
-    }
-    if (command.type === "clear_search") {
-      setProjectQuery("");
-      return { message: "Search cleared." };
-    }
-    if (command.type === "open_project") {
-      const p = findProject(String(command.project || "").trim());
-      if (p) {
-        router.push(`/project/${p.id}`);
-        return { message: `Opening "${p.title}"...` };
-      }
-      return { message: `No project found for "${command.project}".` };
-    }
-    if (command.type === "open_project_settings") {
-      const p = findProject(String(command.project || "").trim());
-      if (!p) return { message: `No project found for "${command.project}".` };
-      router.push(`/project/${p.id}/settings`);
-      return { message: `Opening settings for "${p.title}"...` };
-    }
-    if (command.type === "delete_project") {
-      const p = findProject(String(command.project || "").trim());
-      if (!p) return { message: `No project found for "${command.project}".` };
-      if (!user || (user.id !== p.created_by && user.role !== "admin"))
-        return { message: "No permission to delete." };
-      try {
-        await API.delete(`/projects/${p.id}`);
-        await loadProjects();
-        await loadSummary();
-        return { message: `"${p.title}" deleted.` };
-      } catch (error) {
-        return { message: error?.response?.data?.message || "Delete failed." };
-      }
-    }
-    if (command.type === "set_project_status") {
-      const p = findProject(String(command.project || "").trim());
-      if (!p) return { message: `No project found.` };
-      try {
-        await API.put(`/projects/${p.id}/status`, { status: command.status });
-        await loadProjects();
-        await loadSummary();
-        return { message: `"${p.title}" marked as ${command.status}.` };
-      } catch (error) {
-        return { message: error?.response?.data?.message || "Failed." };
-      }
-    }
-    if (command.type === "rename_project") {
-      const p = findProject(command.project);
-      const t = String(command.title || "").trim();
-      if (!p) return { message: `No project found.` };
-      if (!t) return { message: "New title required." };
-      try {
-        await API.put(`/projects/${p.id}`, {
-          title: t,
-          description: p.description || "",
-        });
-        await loadProjects();
-        return { message: `Renamed to "${t}".` };
-      } catch (error) {
-        return { message: error?.response?.data?.message || "Rename failed." };
-      }
-    }
-    if (command.type === "update_project_description") {
-      const p = findProject(command.project);
-      const desc = String(command.description || "").trim();
-      if (!p) return { message: `No project found.` };
-      try {
-        await API.put(`/projects/${p.id}`, {
-          title: p.title,
-          description: desc,
-        });
-        await loadProjects();
-        return { message: `Description updated for "${p.title}".` };
-      } catch (error) {
-        return { message: error?.response?.data?.message || "Failed." };
-      }
-    }
-    if (command.type === "logout") {
-      logout();
-      return { message: "Logging out..." };
-    }
-    return { message: "Command not supported yet." };
-  };
-
-  const pieOpts = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: { color: "#94a3b8", usePointStyle: true, boxWidth: 8 },
-      },
-    },
-  };
-  const barOpts = {
+  const chartOpts = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
@@ -499,489 +269,416 @@ export default function Dashboard() {
     },
   };
 
-  if (!user) return null;
-
   return (
-    <>
+    <div className="flex min-h-screen bg-slate-950">
+      <style>{`
+        @keyframes slideInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .tab-content { animation: fadeUp 0.2s ease; }
+      `}</style>
+
       <ToastContainer toasts={toasts} />
-      <ConfirmModal {...confirm} onCancel={closeConfirm} />
-      <div className="dashboard-container">
-        {/* Top Navigation */}
-        <nav className="dashboard-nav">
-          <div
-            className="nav-brand"
-            onClick={() => router.push("/dashboard")}
-            style={{ cursor: "pointer" }}
+
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-10 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-20 flex flex-col border-r border-slate-800 bg-slate-950 transition-all duration-300 md:relative ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+        style={{ width: sidebarOpen ? 220 : 64 }}
+      >
+        {/* Brand */}
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-slate-800 px-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-sm font-black text-white shadow-lg shadow-cyan-500/20">
+            P
+          </div>
+          {sidebarOpen && (
+            <span className="truncate text-sm font-bold text-white">
+              Projex<span className="text-cyan-400"></span>
+            </span>
+          )}
+          <button
+            className="ml-auto shrink-0 rounded-lg p-1.5 text-xs text-slate-500 hover:bg-slate-800 hover:text-slate-300 transition"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            <div className="nav-brand-icon">P</div>
-            <span className="nav-brand-text">Projex</span>
-          </div>
-          <div className="nav-user">
-            <div
-              className="nav-user-avatar"
-              onClick={() => router.push("/settings")}
-              style={{ cursor: "pointer" }}
-              title="Go to settings"
+            {sidebarOpen ? "<<" : ">>"}
+          </button>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+          {[
+            {
+              key: "projects",
+              icon: "📁",
+              label: "My Projects",
+              action: () => router.push("/projects"),
+            },
+            {
+              key: "tasks",
+              icon: "✓",
+              label: "Tasks",
+              action: () => router.push("/deadlines"),
+            },
+            {
+              key: "files",
+              icon: "📄",
+              label: "Files",
+              action: () => router.push("/projects"),
+            },
+            {
+              key: "chat",
+              icon: "💬",
+              label: "Messages",
+              action: () => router.push("/projects"),
+            },
+          ].map((item) => (
+            <button
+              key={item.key}
+              onClick={item.action}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all text-slate-500 hover:bg-slate-800/60 hover:text-slate-300 border border-transparent"
             >
-              {user.name
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
-          </div>
+              <span className="shrink-0 text-base leading-none">
+                {item.icon}
+              </span>
+              {sidebarOpen && (
+                <span className="flex-1 truncate text-left">{item.label}</span>
+              )}
+            </button>
+          ))}
         </nav>
 
-        {/* Main Content */}
-        <main className="dashboard-main">
-          {/* Welcome Banner */}
-          <div className="welcome-banner">
-            <div>
-              <p className="welcome-banner-label">Member workspace</p>
-              <h3 className="welcome-banner-title">
-                Welcome back, {user.name}!
-              </h3>
-              <p className="welcome-banner-subtitle">
-                Track progress, manage tasks, and collaborate in one place.
-              </p>
-            </div>
-            <button
-              onClick={scrollToCreateProject}
-              className="welcome-banner-btn"
+        {/* User */}
+        <div className="border-t border-slate-800 p-3">
+          <div
+            className={`flex items-center gap-2.5 ${sidebarOpen ? "" : "justify-center"}`}
+          >
+            <Avatar name={user.name} size="sm" />
+            {sidebarOpen && (
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-slate-200">
+                  {user.name}
+                </p>
+                <p className="text-[10px] text-slate-600">Member</p>
+              </div>
+            )}
+            {sidebarOpen && (
+              <button
+                onClick={logout}
+                className="shrink-0 rounded-lg px-1.5 py-1 text-[10px] font-semibold text-slate-600 hover:bg-rose-500/10 hover:text-rose-400 transition border border-transparent hover:border-rose-500/20"
+              >
+                Exit
+              </button>
+            )}
+          </div>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header */}
+        <header
+          className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-800 bg-slate-950/80 px-3 z-10 sm:gap-4 sm:px-6"
+          style={{ backdropFilter: "blur(12px)" }}
+        >
+          <button
+            className="rounded-lg border border-slate-800 bg-slate-900 p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-200 md:hidden"
+            onClick={() => setMobileOpen((o) => !o)}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
             >
-              + New project
+              <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" />
+            </svg>
+          </button>
+
+          <div>
+            <h1 className="text-sm font-bold text-white sm:text-base">
+              📊 Dashboard
+            </h1>
+            <p className="hidden text-[11px] text-slate-600 lg:block">
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition"
+              onClick={() => router.push("/settings")}
+            >
+              Settings
             </button>
           </div>
+        </header>
 
-          {pageError && <div className="error-alert">{pageError}</div>}
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-7xl p-3 sm:p-6">
+            <div className="tab-content space-y-6">
+              {/* Welcome Banner */}
+              <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6">
+                <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-cyan-500/8 blur-3xl" />
+                <div className="absolute right-32 -bottom-8 h-28 w-28 rounded-full bg-violet-500/8 blur-3xl" />
+                <p className="mb-1 text-xs font-bold uppercase tracking-widest text-cyan-500">
+                  Member Workspace
+                </p>
+                <h2 className="text-2xl font-extrabold tracking-tight text-white">
+                  Welcome back, {user.name}!
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Track progress, manage projects, and collaborate with your
+                  team.
+                </p>
+              </div>
 
-          {/* KPI Stats */}
-          <div className="kpi-grid">
-            {summary && (
-              <>
-                <StatCardModern
-                  label="Total projects"
-                  value={summary.totalProjects}
-                  accent={colors.cyan}
-                />
-                <StatCardModern
-                  label="Active projects"
-                  value={summary.totalActiveProjects}
-                  accent={colors.blue}
-                />
-                <StatCardModern
-                  label="Tasks completed"
-                  value={summary.totalCompletedTasks}
-                  accent={colors.mint}
-                />
-                <StatCardModern
-                  label="Messages"
-                  value={summary.totalMessages}
-                  accent={colors.violet}
-                />
-              </>
-            )}
-          </div>
-
-          {/* Charts Row */}
-          {summary && (
-            <div className="charts-row">
-              <CardModern title="Project activity" note="Last 6 months">
-                <div className="chart-container">
-                  <Bar
-                    data={{
-                      labels: ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"],
-                      datasets: [
-                        {
-                          label: "Tasks",
-                          data: [22, 35, 28, 45, 38, 52],
-                          backgroundColor: `rgba(0, 212, 255, 0.65)`,
-                          borderRadius: 5,
-                          borderWidth: 0,
-                        },
-                        {
-                          label: "Completed",
-                          data: [18, 28, 21, 38, 31, 42],
-                          backgroundColor: `rgba(29, 233, 182, 0.55)`,
-                          borderRadius: 5,
-                          borderWidth: 0,
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { legend: { display: false } },
-                      scales: {
-                        x: {
-                          ticks: { color: "#484f66", font: { size: 10 } },
-                          grid: { color: "rgba(255,255,255,.03)" },
-                          border: { display: false },
-                        },
-                        y: {
-                          ticks: { color: "#484f66", font: { size: 10 } },
-                          grid: { color: "rgba(255,255,255,.04)" },
-                          border: { display: false },
-                        },
-                      },
-                    }}
+              {/* Stats */}
+              {summary && (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <StatCard
+                    label="Total Projects"
+                    value={summary.totalProjects}
+                    icon="📁"
+                    accent="bg-cyan-500/20"
+                  />
+                  <StatCard
+                    label="Active Projects"
+                    value={summary.totalActiveProjects}
+                    icon="🚀"
+                    accent="bg-emerald-500/20"
+                  />
+                  <StatCard
+                    label="Tasks Completed"
+                    value={summary.totalCompletedTasks}
+                    icon="✅"
+                    accent="bg-violet-500/20"
+                  />
+                  <StatCard
+                    label="Messages"
+                    value={summary.totalMessages}
+                    icon="💬"
+                    accent="bg-amber-500/20"
                   />
                 </div>
-              </CardModern>
-              <CardModern title="Task breakdown" note="All projects">
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "12px",
-                  }}
-                >
-                  <div className="pie-chart-container">
-                    <Pie
-                      data={{
-                        labels: ["Todo", "In Progress", "Completed"],
-                        datasets: [
-                          {
-                            data: [
-                              taskBreakdown.todo,
-                              taskBreakdown.inProgress,
-                              taskBreakdown.completed,
-                            ],
-                            backgroundColor: [
-                              colors.amber,
-                              colors.blue,
-                              colors.mint,
-                            ],
-                            borderWidth: 0,
-                            hoverOffset: 4,
-                          },
-                        ],
-                      }}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        cutout: "74%",
-                        plugins: {
-                          legend: { display: false },
-                          tooltip: { enabled: true },
-                        },
-                      }}
-                    />
-                    <div className="pie-chart-center">
-                      <div className="pie-chart-value">
-                        {taskBreakdown.total}
-                      </div>
-                      <div className="pie-chart-label">total tasks</div>
+              )}
+
+              {/* Charts */}
+              {summary && (
+                <div className="grid gap-6 lg:grid-cols-2">
+                  {/* Project Activity */}
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+                    <h3 className="mb-4 text-sm font-semibold text-white">
+                      Project Activity
+                    </h3>
+                    <div style={{ height: 280 }}>
+                      <Bar
+                        data={{
+                          labels: ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"],
+                          datasets: [
+                            {
+                              label: "Tasks",
+                              data: [22, 35, 28, 45, 38, 52],
+                              backgroundColor: "rgba(34,211,238,0.65)",
+                              borderRadius: 5,
+                              borderWidth: 0,
+                            },
+                            {
+                              label: "Completed",
+                              data: [18, 28, 21, 38, 31, 42],
+                              backgroundColor: "rgba(29,233,182,0.55)",
+                              borderRadius: 5,
+                              borderWidth: 0,
+                            },
+                          ],
+                        }}
+                        options={chartOpts}
+                      />
                     </div>
                   </div>
-                  <div className="task-breakdown-legend">
-                    <div className="legend-item">
-                      <div
-                        className="legend-color"
-                        style={{ background: colors.amber }}
+
+                  {/* Task Breakdown */}
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+                    <h3 className="mb-4 text-sm font-semibold text-white">
+                      Task Breakdown
+                    </h3>
+                    <div style={{ height: 280 }}>
+                      <Pie
+                        data={{
+                          labels: ["Todo", "In Progress", "Completed"],
+                          datasets: [
+                            {
+                              data: [
+                                taskBreakdown.todo,
+                                taskBreakdown.inProgress,
+                                taskBreakdown.completed,
+                              ],
+                              backgroundColor: [
+                                "#f6a623",
+                                "#4f9eff",
+                                "#1de9b6",
+                              ],
+                              borderWidth: 0,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          cutout: "72%",
+                          plugins: {
+                            legend: {
+                              position: "bottom",
+                              labels: { color: "#94a3b8" },
+                            },
+                          },
+                        }}
                       />
-                      Todo {taskBreakdown.todoPct}%
                     </div>
-                    <div className="legend-item">
-                      <div
-                        className="legend-color"
-                        style={{ background: colors.blue }}
-                      />
-                      In progress {taskBreakdown.inProgressPct}%
-                    </div>
-                    <div className="legend-item">
-                      <div
-                        className="legend-color"
-                        style={{ background: colors.mint }}
-                      />
-                      Done {taskBreakdown.completedPct}%
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      <div className="text-center text-xs">
+                        <span
+                          className="block h-2 w-2 rounded-full mx-auto mb-1"
+                          style={{ background: "#f6a623" }}
+                        />
+                        Todo {taskBreakdown.todoPct}%
+                      </div>
+                      <div className="text-center text-xs">
+                        <span
+                          className="block h-2 w-2 rounded-full mx-auto mb-1"
+                          style={{ background: "#4f9eff" }}
+                        />
+                        In Progress {taskBreakdown.inProgressPct}%
+                      </div>
+                      <div className="text-center text-xs">
+                        <span
+                          className="block h-2 w-2 rounded-full mx-auto mb-1"
+                          style={{ background: "#1de9b6" }}
+                        />
+                        Done {taskBreakdown.completedPct}%
+                      </div>
                     </div>
                   </div>
                 </div>
-              </CardModern>
-            </div>
-          )}
+              )}
 
-          {/* Projects */}
-          <CardModern
-            title="My project access"
-            pill={`${filteredProjects.length} shown`}
-          >
-            {filteredProjects.length === 0 ? (
-              <div className="no-projects">
-                <p className="no-projects-text">
-                  No {projectSlide} projects found.
-                </p>
-                <button
-                  onClick={scrollToCreateProject}
-                  className="no-projects-btn"
-                >
-                  Create your first project →
-                </button>
-              </div>
-            ) : (
-              <div className="projects-grid">
-                {filteredProjects.map((p, i) => {
-                  const pct =
-                    p.task_count > 0
-                      ? Math.round(
-                          (p.completed_task_count / p.task_count) * 100,
-                        )
-                      : 0;
-                  const badgeClass =
-                    p.status === "active"
-                      ? "project-badge active"
-                      : p.status === "hold"
-                        ? "project-badge hold"
-                        : "project-badge done";
-                  const badgeText =
-                    p.status === "active"
-                      ? "Active"
-                      : p.status === "hold"
-                        ? "On hold"
-                        : "Done";
-                  const colors2 = [
-                    colors.cyan,
-                    colors.violet,
-                    colors.mint,
-                    colors.amber,
-                    colors.rose,
-                    colors.blue,
-                  ];
-                  const pc = colors2[i % colors2.length];
-                  return (
-                    <div
-                      key={p.id}
-                      className="project-card"
-                      onClick={() => router.push(`/project/${p.id}`)}
-                      style={{ cursor: "pointer" }}
+              {/* Projects */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white">
+                    My Projects
+                  </h3>
+                  <Badge color="cyan">{projects.length} Projects</Badge>
+                </div>
+                {projects.length === 0 ? (
+                  <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 p-6 text-center">
+                    <p className="text-sm text-slate-400">
+                      No projects yet. Create one to get started!
+                    </p>
+                    <button
+                      onClick={() => toast("Create new project here", "info")}
+                      className="mt-3 rounded-lg bg-cyan-600 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-500"
                     >
-                      <div className="project-card-header">
-                        <div className="project-card-title">{p.title}</div>
-                        <span className={badgeClass}>{badgeText}</span>
-                      </div>
-                      <div className="project-desc">
-                        {p.description || "No description"}
-                      </div>
-                      {p.task_count > 0 && (
-                        <div className="progress-bar">
-                          <div
-                            className="progress-fill"
-                            style={{
-                              width: `${pct}%`,
-                              background: pc,
-                            }}
-                          />
-                        </div>
-                      )}
-                      <div className="project-footer">
-                        <div className="project-members">
-                          {Array.from({
-                            length: Math.min(3, p.members?.length || 0),
-                          }).map((_, j) => (
-                            <div
-                              key={j}
-                              className="member-avatar"
-                              style={{
-                                background: `${pc}1a`,
-                                color: pc,
-                              }}
-                            >
-                              {p.members?.[j]?.name
-                                ?.split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .slice(0, 2) || "?"}
-                            </div>
-                          ))}
-                        </div>
-                        <span>{pct}%</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardModern>
-
-          {/* Tasks + Activity + Quick Actions */}
-          <div className="three-col-grid">
-            {/* Tasks */}
-            <CardModern title="My tasks" note="Due this week">
-              <div className="tasks-list">
-                {activity.length > 0 ? (
-                  activity.slice(0, 5).map((a, i) => (
-                    <div
-                      key={i}
-                      className="task-item"
-                      onClick={() => router.push("/projects")}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <div className="task-checkbox" />
-                      <div className="task-text">{a.action?.slice(0, 50)}</div>
-                      <span className="task-tag">Dev</span>
-                    </div>
-                  ))
+                      + New Project
+                    </button>
+                  </div>
                 ) : (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      color: "#8890aa",
-                      padding: "20px",
-                    }}
-                  >
-                    No tasks yet
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {projects.map((p) => {
+                      const pct =
+                        p.task_count > 0
+                          ? Math.round(
+                              (p.completed_task_count / p.task_count) * 100,
+                            )
+                          : 0;
+                      const statusColor =
+                        p.status === "active"
+                          ? "green"
+                          : p.status === "hold"
+                            ? "amber"
+                            : "slate";
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => router.push(`/project/${p.id}`)}
+                          className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900/40 p-4 transition hover:border-slate-700 hover:bg-slate-900/60"
+                        >
+                          <div className="mb-3 flex items-start justify-between">
+                            <h4 className="text-sm font-semibold text-white">
+                              {p.title}
+                            </h4>
+                            <Badge color={statusColor}>{p.status}</Badge>
+                          </div>
+                          <p className="text-xs text-slate-400 mb-3">
+                            {p.description || "No description"}
+                          </p>
+                          {p.task_count > 0 && (
+                            <>
+                              <div className="mb-2 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                <div
+                                  className="h-full bg-cyan-500"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <p className="text-[10px] text-slate-500">
+                                {pct}% complete
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
-            </CardModern>
 
-            {/* Activity */}
-            <CardModern title="Team activity" note="Live">
-              <div className="activity-list">
-                {activity.length > 0 ? (
-                  activity.slice(0, 4).map((a, i) => {
-                    const initials =
-                      a.user_name
-                        ?.split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2) || "?";
-                    const acs = [
-                      colors.cyan,
-                      colors.violet,
-                      colors.mint,
-                      colors.amber,
-                    ];
-                    return (
+              {/* Activity */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+                <h3 className="mb-4 text-sm font-semibold text-white">
+                  Recent Activity
+                </h3>
+                {activity.length === 0 ? (
+                  <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 p-6 text-center">
+                    <p className="text-sm text-slate-400">No activity yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {activity.slice(0, 8).map((a, i) => (
                       <div
                         key={i}
-                        className="activity-item"
-                        onClick={() => router.push("/projects")}
-                        style={{ cursor: "pointer" }}
+                        className="flex items-start gap-3 rounded-lg border border-slate-800/30 bg-slate-900/20 p-3 hover:bg-slate-900/40 transition cursor-pointer"
                       >
-                        <div
-                          className="activity-avatar"
-                          style={{
-                            background: `${acs[i % acs.length]}1a`,
-                            color: acs[i % acs.length],
-                          }}
-                        >
-                          {initials}
-                        </div>
-                        <div className="activity-content">
-                          <div className="activity-action">
+                        <Avatar name={a.user_name} size="sm" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-slate-200">
+                            {a.user_name}
+                          </p>
+                          <p className="text-[11px] text-slate-500">
                             {a.action?.slice(0, 60)}
-                          </div>
-                          <div className="activity-meta">
-                            {a.user_name} · 2h ago
-                          </div>
+                          </p>
+                          <p className="text-[10px] text-slate-600 mt-1">
+                            2h ago
+                          </p>
                         </div>
                       </div>
-                    );
-                  })
-                ) : (
-                  <div style={{ textAlign: "center", color: "#8890aa", padding: "20px" }}>
-                    No activity yet
+                    ))}
                   </div>
                 )}
               </div>
-            </CardModern>
-
-            {/* Quick Actions */}
-            <CardModern title="Quick actions">
-              <div className="quick-actions-grid">
-                {[
-                  {
-                    icon: "➕",
-                    l: "New project",
-                    s: "Start from scratch",
-                    action: scrollToCreateProject,
-                  },
-                  {
-                    icon: "✓",
-                    l: "New task",
-                    s: "Add to any project",
-                    action: () =>
-                      projects.length > 0
-                        ? router.push(`/project/${projects[0].id}`)
-                        : toast("Create a project first", "info"),
-                  },
-                  {
-                    icon: "📤",
-                    l: "Upload file",
-                    s: "Share with team",
-                    action: () =>
-                      projects.length > 0
-                        ? router.push(`/project/${projects[0].id}?tab=files`)
-                        : toast("Create a project first", "info"),
-                  },
-                  {
-                    icon: "👥",
-                    l: "Invite member",
-                    s: "Grow your team",
-                    action: () =>
-                      projects.length > 0
-                        ? router.push(`/project/${projects[0].id}?tab=members`)
-                        : toast("Create a project first", "info"),
-                  },
-                ].map((q, i) => (
-                  <div
-                    key={i}
-                    className="quick-action-btn"
-                    onClick={q.action}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="quick-action-emoji">{q.icon}</div>
-                    <div className="quick-action-title">{q.l}</div>
-                    <div className="quick-action-desc">{q.s}</div>
-                  </div>
-                ))}
-              </div>
-              <div
-                className="weekly-goal"
-                onClick={() => router.push("/projects")}
-                style={{ cursor: "pointer" }}
-              >
-                <div className="weekly-goal-title">🎯 Weekly goal</div>
-                <div className="weekly-goal-desc">
-                  Close 5 tasks in API Revamp
-                </div>
-                <div className="weekly-goal-progress">
-                  <div className="weekly-goal-fill" style={{ width: "60%" }} />
-                </div>
-                <div className="weekly-goal-stat">3 of 5 completed · 60%</div>
-              </div>
-            </CardModern>
+            </div>
           </div>
-
-          {/* Create Project */}
-          <CardModern title="Create New Project" ref={createProjectRef}>
-            <form onSubmit={createProject} className="create-project-form">
-              <input
-                type="text"
-                placeholder="Project title *"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="form-input"
-              />
-              <textarea
-                placeholder="Project description (optional)"
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                className="form-textarea"
-              />
-              <button type="submit" className="form-submit-btn">
-                Create Project
-              </button>
-            </form>
-          </CardModern>
         </main>
       </div>
-    </>
+    </div>
   );
 }
