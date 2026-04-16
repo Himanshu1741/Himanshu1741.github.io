@@ -743,7 +743,12 @@ export default function Dashboard() {
                   ];
                   const pc = colors2[i % colors2.length];
                   return (
-                    <div key={p.id} className="project-card">
+                    <div
+                      key={p.id}
+                      className="project-card"
+                      onClick={() => router.push(`/project/${p.id}`)}
+                      style={{ cursor: "pointer" }}
+                    >
                       <div className="project-card-header">
                         <div className="project-card-title">{p.title}</div>
                         <span className={badgeClass}>{badgeText}</span>
