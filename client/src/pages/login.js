@@ -13,12 +13,12 @@ import API from "../services/api";
 
 function useToast() {
   const [toasts, setToasts] = useState([]);
-  const toast = (msg, type = "error") => {
+  const addToast = (msg, type = "error") => {
     const id = Date.now();
     setToasts((t) => [...t, { id, msg, type }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
   };
-  return { toasts, toast };
+  return { toasts, addToast, toast: addToast };
 }
 
 function ToastContainer({ toasts }) {
@@ -159,13 +159,20 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [errorDetails, setErrorDetails] = useState(null);
   const { toasts, toast } = useToast();
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setErrorDetails(null);
+
     if (!form.email.trim() || !form.password) {
-      toast("Please fill in all fields", "error");
+      const msg = "Please fill in all fields";
+      setError(msg);
+      toast(msg, "error");
       return;
     }
     try {
@@ -177,10 +184,10 @@ export default function Login() {
 
       // Check if storage is available
       if (typeof Storage === "undefined") {
-        toast(
-          "Browser storage not available. Please check your Edge settings.",
-          "error",
-        );
+        const msg =
+          "Browser storage not available. Please check your Edge settings.";
+        setError(msg);
+        toast(msg, "error");
         console.error("❌ localStorage not available");
         return;
       }
@@ -195,19 +202,47 @@ export default function Login() {
       }, 500);
     } catch (error) {
       let errorMessage = "Login failed. Check your credentials.";
+      let errorHint = "Please verify your email and password are correct.";
+      let errorCode = "UNKNOWN_ERROR";
 
-      if (error?.response?.status === 401) {
+      console.error("❌ Login error:", {
+        status: error?.response?.status,
+        message: error?.message,
+        data: error?.response?.data,
+      });
+
+      if (error?.message === "Network Error" || !error?.response) {
+        errorMessage = "Unable to connect to server.";
+        errorCode = "NETWORK_ERROR";
+        errorHint =
+          "Backend server may not be running. Start the server with: npm start in /server directory, or ensure it's running on http://localhost:5000";
+      } else if (error?.response?.status === 401) {
         errorMessage = "Invalid email or password.";
+        errorCode = "INVALID_CREDENTIALS";
+        errorHint =
+          "The email or password you entered is incorrect. Please try again.";
       } else if (error?.response?.status === 404) {
         errorMessage = "User account not found.";
+        errorCode = "USER_NOT_FOUND";
+        errorHint =
+          "This email is not registered. Create a new account to get started.";
       } else if (error?.response?.status === 429) {
-        errorMessage = "Too many login attempts. Please try again later.";
+        errorMessage = "Too many login attempts.";
+        errorCode = "RATE_LIMITED";
+        errorHint =
+          "Please wait a few minutes before trying again to prevent account lockout.";
       } else if (error?.response?.status === 500) {
-        errorMessage = "Server error. Please try again later.";
+        errorMessage = "Server error.";
+        errorCode = "SERVER_ERROR";
+        errorHint =
+          "Something went wrong on the server. Please try again later.";
       } else if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
+        errorCode = error.response.data.code || "SERVER_MESSAGE";
       }
 
+      setError(errorMessage);
+      setErrorDetails({ code: errorCode, hint: errorHint });
       toast(errorMessage, "error");
     } finally {
       setLoading(false);
@@ -343,6 +378,36 @@ export default function Login() {
         .auth-card-sub { font-size:14px;color:#64748b;margin-bottom:32px; }
 
         .auth-field { margin-bottom:18px; }
+
+        .auth-error-alert {
+          margin-bottom:20px;padding:14px;border-radius:12px;
+          background:linear-gradient(135deg,rgba(220,38,38,.1) 0%,rgba(190,24,93,.05) 100%);
+          border:1.5px solid rgba(220,38,38,.4);
+          animation:fadeUp .3s ease-out;
+        }
+        .auth-error-header {
+          display:flex;align-items:center;gap:10px;
+          color:#fca5a5;font-size:14px;font-weight:600;margin-bottom:8px;
+        }
+        .auth-error-header svg {
+          width:18px;height:18px;flex-shrink:0;
+        }
+        .auth-error-title {
+          flex:1;
+        }
+        .auth-error-details {
+          margin-top:10px;padding-top:10px;border-top:1px solid rgba(220,38,38,.2);
+        }
+        .auth-error-code {
+          font-size:12px;color:#fecaca;font-family:monospace;margin-bottom:6px;
+          opacity:0.8;
+        }
+        .auth-error-hint {
+          font-size:13px;color:#fed7aa;line-height:1.4;
+          background:rgba(139,92,246,.08);padding:8px 10px;border-radius:6px;
+          border-left:2px solid rgba(139,92,246,.4);
+        }
+
         .auth-label-row { display:flex;justify-content:space-between;align-items:center;margin-bottom:8px; }
         .auth-label { font-size:13px;font-weight:600;color:#cbd5e1;display:block; }
         .auth-forgot { font-size:12px;color:#818cf8;font-weight:500;text-decoration:none;transition:color .2s; }
@@ -523,6 +588,34 @@ export default function Login() {
                 </p>
 
                 <form onSubmit={handleSubmit}>
+                  {error && (
+                    <div className="auth-error-alert">
+                      <div className="auth-error-header">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span className="auth-error-title">{error}</span>
+                      </div>
+                      {errorDetails && (
+                        <div className="auth-error-details">
+                          <div className="auth-error-code">
+                            Error Code: {errorDetails.code}
+                          </div>
+                          <div className="auth-error-hint">
+                            {errorDetails.hint}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="auth-field">
                     <label className="auth-label">Email address</label>
                     <div className="auth-inp-wrap">
