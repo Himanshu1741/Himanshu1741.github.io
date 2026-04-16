@@ -508,12 +508,21 @@ export default function Dashboard() {
       <div className="dashboard-container">
         {/* Top Navigation */}
         <nav className="dashboard-nav">
-          <div className="nav-brand">
+          <div
+            className="nav-brand"
+            onClick={() => router.push("/dashboard")}
+            style={{ cursor: "pointer" }}
+          >
             <div className="nav-brand-icon">P</div>
             <span className="nav-brand-text">Projex</span>
           </div>
           <div className="nav-user">
-            <div className="nav-user-avatar">
+            <div
+              className="nav-user-avatar"
+              onClick={() => router.push("/settings")}
+              style={{ cursor: "pointer" }}
+              title="Go to settings"
+            >
               {user.name
                 ?.split(" ")
                 .map((n) => n[0])
@@ -802,54 +811,82 @@ export default function Dashboard() {
             {/* Tasks */}
             <CardModern title="My tasks" note="Due this week">
               <div className="tasks-list">
-                {activity.slice(0, 5).map((a, i) => (
-                  <div key={i} className="task-item">
-                    <div className="task-checkbox" />
-                    <div className="task-text">{a.action?.slice(0, 50)}</div>
-                    <span className="task-tag">Dev</span>
+                {activity.length > 0 ? (
+                  activity.slice(0, 5).map((a, i) => (
+                    <div
+                      key={i}
+                      className="task-item"
+                      onClick={() => router.push("/projects")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <div className="task-checkbox" />
+                      <div className="task-text">{a.action?.slice(0, 50)}</div>
+                      <span className="task-tag">Dev</span>
+                    </div>
+                  ))
+                ) : (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      color: "#8890aa",
+                      padding: "20px",
+                    }}
+                  >
+                    No tasks yet
                   </div>
-                ))}
+                )}
               </div>
             </CardModern>
 
             {/* Activity */}
             <CardModern title="Team activity" note="Live">
               <div className="activity-list">
-                {activity.slice(0, 4).map((a, i) => {
-                  const initials =
-                    a.user_name
-                      ?.split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2) || "?";
-                  const acs = [
-                    colors.cyan,
-                    colors.violet,
-                    colors.mint,
-                    colors.amber,
-                  ];
-                  return (
-                    <div key={i} className="activity-item">
+                {activity.length > 0 ? (
+                  activity.slice(0, 4).map((a, i) => {
+                    const initials =
+                      a.user_name
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2) || "?";
+                    const acs = [
+                      colors.cyan,
+                      colors.violet,
+                      colors.mint,
+                      colors.amber,
+                    ];
+                    return (
                       <div
-                        className="activity-avatar"
-                        style={{
-                          background: `${acs[i % acs.length]}1a`,
-                          color: acs[i % acs.length],
-                        }}
+                        key={i}
+                        className="activity-item"
+                        onClick={() => router.push("/projects")}
+                        style={{ cursor: "pointer" }}
                       >
-                        {initials}
-                      </div>
-                      <div className="activity-content">
-                        <div className="activity-action">
-                          {a.action?.slice(0, 60)}
+                        <div
+                          className="activity-avatar"
+                          style={{
+                            background: `${acs[i % acs.length]}1a`,
+                            color: acs[i % acs.length],
+                          }}
+                        >
+                          {initials}
                         </div>
-                        <div className="activity-meta">
-                          {a.user_name} · 2h ago
+                        <div className="activity-content">
+                          <div className="activity-action">
+                            {a.action?.slice(0, 60)}
+                          </div>
+                          <div className="activity-meta">
+                            {a.user_name} · 2h ago
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div style={{ textAlign: "center", color: "#8890aa", padding: "20px" }}>
+                    No activity yet
+                  </div>
+                )}
               </div>
             </CardModern>
 
@@ -857,19 +894,57 @@ export default function Dashboard() {
             <CardModern title="Quick actions">
               <div className="quick-actions-grid">
                 {[
-                  { icon: "➕", l: "New project", s: "Start from scratch" },
-                  { icon: "✓", l: "New task", s: "Add to any project" },
-                  { icon: "📤", l: "Upload file", s: "Share with team" },
-                  { icon: "👥", l: "Invite member", s: "Grow your team" },
+                  {
+                    icon: "➕",
+                    l: "New project",
+                    s: "Start from scratch",
+                    action: scrollToCreateProject,
+                  },
+                  {
+                    icon: "✓",
+                    l: "New task",
+                    s: "Add to any project",
+                    action: () =>
+                      projects.length > 0
+                        ? router.push(`/project/${projects[0].id}`)
+                        : toast("Create a project first", "info"),
+                  },
+                  {
+                    icon: "📤",
+                    l: "Upload file",
+                    s: "Share with team",
+                    action: () =>
+                      projects.length > 0
+                        ? router.push(`/project/${projects[0].id}?tab=files`)
+                        : toast("Create a project first", "info"),
+                  },
+                  {
+                    icon: "👥",
+                    l: "Invite member",
+                    s: "Grow your team",
+                    action: () =>
+                      projects.length > 0
+                        ? router.push(`/project/${projects[0].id}?tab=members`)
+                        : toast("Create a project first", "info"),
+                  },
                 ].map((q, i) => (
-                  <div key={i} className="quick-action-btn">
+                  <div
+                    key={i}
+                    className="quick-action-btn"
+                    onClick={q.action}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="quick-action-emoji">{q.icon}</div>
                     <div className="quick-action-title">{q.l}</div>
                     <div className="quick-action-desc">{q.s}</div>
                   </div>
                 ))}
               </div>
-              <div className="weekly-goal">
+              <div
+                className="weekly-goal"
+                onClick={() => router.push("/projects")}
+                style={{ cursor: "pointer" }}
+              >
                 <div className="weekly-goal-title">🎯 Weekly goal</div>
                 <div className="weekly-goal-desc">
                   Close 5 tasks in API Revamp
