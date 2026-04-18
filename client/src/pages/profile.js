@@ -208,25 +208,11 @@ export default function ProfilePage() {
     if (user) loadStats();
   }, [user]);
 
-  const logout = useCallback(async () => {
-    try {
-      console.log("👋 Logging out...");
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("email");
-      setUser(null);
-      console.log("✅ Logout successful");
-      setTimeout(() => {
-        router.push("/login").catch((err) => {
-          console.error("❌ Navigation error:", err);
-          window.location.href = "/login";
-        });
-      }, 100);
-    } catch (err) {
-      console.error("❌ Logout error:", err);
-      window.location.href = "/login";
-    }
-  }, [router]);
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.push("/login");
+  };
 
   const saveProfile = async (e) => {
     e.preventDefault();
