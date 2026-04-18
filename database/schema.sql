@@ -2,18 +2,27 @@ CREATE DATABASE IF NOT EXISTS student_collab_hub;
 
 USE student_collab_hub;
 
+-- ============================================================
+-- CORE USERS TABLE
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `reset_token` varchar(255) DEFAULT NULL,
   `reset_token_expiry` datetime DEFAULT NULL,
   `role` enum('admin','member') DEFAULT 'member',
+  `is_suspended` tinyint(1) DEFAULT '0',
+  `bio` text DEFAULT NULL,
+  `skills` varchar(500) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
+  UNIQUE KEY `email` (`email`),
+  INDEX `idx_users_role` (`role`),
+  INDEX `idx_users_suspended` (`is_suspended`)
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE IF NOT EXISTS `projects` (
@@ -72,6 +81,7 @@ CREATE TABLE IF NOT EXISTS `messages` (
   PRIMARY KEY (`id`),
   KEY `idx_messages_project_id` (`project_id`),
   KEY `idx_messages_sender_id` (`sender_id`),
+  KEY `idx_messages_created` (`created_at`),
   CONSTRAINT `fk_messages_project_id` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_messages_sender_id` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -94,12 +104,70 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   `id` int NOT NULL AUTO_INCREMENT,
   `message` text NOT NULL,
   `user_id` int NOT NULL,
+  `type` enum('mention','message','task_assigned','task_completed','milestone','file_shared','project_update','deadline_reminder') DEFAULT 'project_update',
+  `severity` enum('low','medium','high','critical') DEFAULT 'medium',
   `is_read` tinyint(1) DEFAULT '0',
+  `is_read_at` datetime DEFAULT NULL,
+  `mentioned_users` json DEFAULT NULL,
+  `related_resource` json DEFAULT NULL,
+  `action_url` varchar(255) DEFAULT NULL,
+  `escalated` tinyint(1) DEFAULT '0',
+  `escalated_at` datetime DEFAULT NULL,
+  `in_digest` tinyint(1) DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_notifications_user_id` (`user_id`),
   KEY `idx_notifications_user_read` (`user_id`,`is_read`),
+  KEY `idx_notifications_type` (`type`),
+  KEY `idx_notifications_severity` (`severity`),
+  KEY `idx_notifications_created` (`created_at`),
   CONSTRAINT `fk_notifications_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ============================================================
+-- NOTIFICATION PREFERENCES TABLE
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS `notification_preferences` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `project_id` int DEFAULT NULL,
+  `notification_type` enum('mention','message','task_assigned','task_completed','milestone','file_shared','project_update','deadline_reminder') NOT NULL,
+  `enabled` tinyint(1) DEFAULT '1',
+  `frequency` enum('instant','daily_digest','weekly_digest','never') DEFAULT 'instant',
+  `channels` json DEFAULT '["in_app"]',
+  `escalate_if_unread` tinyint(1) DEFAULT '0',
+  `escalation_delay_hours` int DEFAULT '24',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_np_user` (`user_id`),
+  KEY `idx_np_project` (`project_id`),
+  KEY `idx_np_type` (`notification_type`),
+  CONSTRAINT `fk_np_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_np_project` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ============================================================
+-- DO NOT DISTURB SCHEDULE TABLE
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS `do_not_disturb_schedules` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `enabled` tinyint(1) DEFAULT '0',
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `days_of_week` json DEFAULT '[1,2,3,4,5]',
+  `silence_all` tinyint(1) DEFAULT '0',
+  `allow_critical_only` tinyint(1) DEFAULT '1',
+  `timezone` varchar(100) DEFAULT 'UTC',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_dnd_user` (`user_id`),
+  CONSTRAINT `fk_dnd_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE IF NOT EXISTS `activities` (
@@ -119,10 +187,34 @@ CREATE TABLE IF NOT EXISTS `invitations` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- ==========================================
--- Permission/Settings Safety Migration Block
--- Ensures DB supports creator/uploader rules
--- ==========================================
+-- ============================================================
+-- MIGRATION: Add missing columns to existing tables
+-- ============================================================
+
+-- Add bio and skills to users if not exists
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `bio` text DEFAULT NULL;
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `skills` varchar(500) DEFAULT NULL;
+
+-- Add type, severity, and other notification fields if not exists
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `type` enum('mention','message','task_assigned','task_completed','milestone','file_shared','project_update','deadline_reminder') DEFAULT 'project_update';
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `severity` enum('low','medium','high','critical') DEFAULT 'medium';
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `is_read_at` datetime DEFAULT NULL;
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `mentioned_users` json DEFAULT NULL;
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `related_resource` json DEFAULT NULL;
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `action_url` varchar(255) DEFAULT NULL;
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `escalated` tinyint(1) DEFAULT '0';
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `escalated_at` datetime DEFAULT NULL;
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `in_digest` tinyint(1) DEFAULT '0';
+ALTER TABLE `notifications` ADD COLUMN IF NOT EXISTS `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+-- Add indexes for performance
+ALTER TABLE `notifications` ADD INDEX IF NOT EXISTS `idx_notifications_type` (`type`);
+ALTER TABLE `notifications` ADD INDEX IF NOT EXISTS `idx_notifications_severity` (`severity`);
+ALTER TABLE `notifications` ADD INDEX IF NOT EXISTS `idx_notifications_created` (`created_at`);
+
+-- ============================================================
+-- PERMISSION/SETTINGS SAFETY MIGRATION BLOCK
+-- ============================================================
 
 -- projects.created_by must exist and be required
 SET @has_projects_created_by := (
@@ -158,7 +250,7 @@ PREPARE stmt_projects_status FROM @sql_projects_status;
 EXECUTE stmt_projects_status;
 DEALLOCATE PREPARE stmt_projects_status;
 
--- files.uploaded_by must exist (used for file delete permission)
+-- files.uploaded_by must exist
 SET @has_files_uploaded_by := (
   SELECT COUNT(*)
   FROM INFORMATION_SCHEMA.COLUMNS
@@ -175,143 +267,20 @@ PREPARE stmt_files_uploaded_by FROM @sql_files_uploaded_by;
 EXECUTE stmt_files_uploaded_by;
 DEALLOCATE PREPARE stmt_files_uploaded_by;
 
--- project_members.can_manage_tasks must exist
-SET @has_pm_can_manage_tasks := (
-  SELECT COUNT(*)
-  FROM INFORMATION_SCHEMA.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'project_members'
-    AND COLUMN_NAME = 'can_manage_tasks'
-);
-SET @sql_pm_can_manage_tasks := IF(
-  @has_pm_can_manage_tasks = 0,
-  'ALTER TABLE project_members ADD COLUMN can_manage_tasks BOOLEAN DEFAULT TRUE',
-  'SELECT 1'
-);
-PREPARE stmt_pm_can_manage_tasks FROM @sql_pm_can_manage_tasks;
-EXECUTE stmt_pm_can_manage_tasks;
-DEALLOCATE PREPARE stmt_pm_can_manage_tasks;
+-- project_members permission columns
+ALTER TABLE `project_members` ADD COLUMN IF NOT EXISTS `can_manage_tasks` BOOLEAN DEFAULT TRUE;
+ALTER TABLE `project_members` ADD COLUMN IF NOT EXISTS `can_manage_files` BOOLEAN DEFAULT TRUE;
+ALTER TABLE `project_members` ADD COLUMN IF NOT EXISTS `can_chat` BOOLEAN DEFAULT TRUE;
+ALTER TABLE `project_members` ADD COLUMN IF NOT EXISTS `can_change_project_name` BOOLEAN DEFAULT FALSE;
+ALTER TABLE `project_members` ADD COLUMN IF NOT EXISTS `can_add_members` BOOLEAN DEFAULT FALSE;
+ALTER TABLE `project_members` ADD COLUMN IF NOT EXISTS `member_role` VARCHAR(30) DEFAULT 'member';
 
--- project_members.can_manage_files must exist
-SET @has_pm_can_manage_files := (
-  SELECT COUNT(*)
-  FROM INFORMATION_SCHEMA.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'project_members'
-    AND COLUMN_NAME = 'can_manage_files'
-);
-SET @sql_pm_can_manage_files := IF(
-  @has_pm_can_manage_files = 0,
-  'ALTER TABLE project_members ADD COLUMN can_manage_files BOOLEAN DEFAULT TRUE',
-  'SELECT 1'
-);
-PREPARE stmt_pm_can_manage_files FROM @sql_pm_can_manage_files;
-EXECUTE stmt_pm_can_manage_files;
-DEALLOCATE PREPARE stmt_pm_can_manage_files;
+-- users columns
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `reset_token` VARCHAR(255);
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `reset_token_expiry` DATETIME;
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `is_suspended` BOOLEAN DEFAULT FALSE;
 
--- project_members.can_chat must exist
-SET @has_pm_can_chat := (
-  SELECT COUNT(*)
-  FROM INFORMATION_SCHEMA.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'project_members'
-    AND COLUMN_NAME = 'can_chat'
-);
-SET @sql_pm_can_chat := IF(
-  @has_pm_can_chat = 0,
-  'ALTER TABLE project_members ADD COLUMN can_chat BOOLEAN DEFAULT TRUE',
-  'SELECT 1'
-);
-PREPARE stmt_pm_can_chat FROM @sql_pm_can_chat;
-EXECUTE stmt_pm_can_chat;
-DEALLOCATE PREPARE stmt_pm_can_chat;
-
--- project_members.can_change_project_name must exist
-SET @has_pm_can_change_project_name := (
-  SELECT COUNT(*)
-  FROM INFORMATION_SCHEMA.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'project_members'
-    AND COLUMN_NAME = 'can_change_project_name'
-);
-SET @sql_pm_can_change_project_name := IF(
-  @has_pm_can_change_project_name = 0,
-  'ALTER TABLE project_members ADD COLUMN can_change_project_name BOOLEAN DEFAULT FALSE',
-  'SELECT 1'
-);
-PREPARE stmt_pm_can_change_project_name FROM @sql_pm_can_change_project_name;
-EXECUTE stmt_pm_can_change_project_name;
-DEALLOCATE PREPARE stmt_pm_can_change_project_name;
-
--- project_members.can_add_members must exist
-SET @has_pm_can_add_members := (
-  SELECT COUNT(*)
-  FROM INFORMATION_SCHEMA.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'project_members'
-    AND COLUMN_NAME = 'can_add_members'
-);
-SET @sql_pm_can_add_members := IF(
-  @has_pm_can_add_members = 0,
-  'ALTER TABLE project_members ADD COLUMN can_add_members BOOLEAN DEFAULT FALSE',
-  'SELECT 1'
-);
-PREPARE stmt_pm_can_add_members FROM @sql_pm_can_add_members;
-EXECUTE stmt_pm_can_add_members;
-DEALLOCATE PREPARE stmt_pm_can_add_members;
-
--- project_members.member_role must exist
-SET @has_pm_member_role := (
-  SELECT COUNT(*)
-  FROM INFORMATION_SCHEMA.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'project_members'
-    AND COLUMN_NAME = 'member_role'
-);
-SET @sql_pm_member_role := IF(
-  @has_pm_member_role = 0,
-  'ALTER TABLE project_members ADD COLUMN member_role VARCHAR(30) DEFAULT ''member''',
-  'SELECT 1'
-);
-PREPARE stmt_pm_member_role FROM @sql_pm_member_role;
-EXECUTE stmt_pm_member_role;
-DEALLOCATE PREPARE stmt_pm_member_role;
-
--- users.reset_token must exist
-SET @has_users_reset_token := (
-  SELECT COUNT(*)
-  FROM INFORMATION_SCHEMA.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'users'
-    AND COLUMN_NAME = 'reset_token'
-);
-SET @sql_users_reset_token := IF(
-  @has_users_reset_token = 0,
-  'ALTER TABLE users ADD COLUMN reset_token VARCHAR(255)',
-  'SELECT 1'
-);
-PREPARE stmt_users_reset_token FROM @sql_users_reset_token;
-EXECUTE stmt_users_reset_token;
-DEALLOCATE PREPARE stmt_users_reset_token;
-
--- users.reset_token_expiry must exist
-SET @has_users_reset_token_expiry := (
-  SELECT COUNT(*)
-  FROM INFORMATION_SCHEMA.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'users'
-    AND COLUMN_NAME = 'reset_token_expiry'
-);
-SET @sql_users_reset_token_expiry := IF(
-  @has_users_reset_token_expiry = 0,
-  'ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME',
-  'SELECT 1'
-);
-PREPARE stmt_users_reset_token_expiry FROM @sql_users_reset_token_expiry;
-EXECUTE stmt_users_reset_token_expiry;
-DEALLOCATE PREPARE stmt_users_reset_token_expiry;
-
--- Ensure foreign key projects.created_by -> users.id exists
+-- Ensure foreign key projects.created_by -> users.id
 SET @has_fk_projects_creator := (
   SELECT COUNT(*)
   FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
@@ -329,7 +298,7 @@ PREPARE stmt_fk_projects_creator FROM @sql_fk_projects_creator;
 EXECUTE stmt_fk_projects_creator;
 DEALLOCATE PREPARE stmt_fk_projects_creator;
 
--- Ensure foreign key files.uploaded_by -> users.id exists
+-- Ensure foreign key files.uploaded_by -> users.id
 SET @has_fk_files_uploader := (
   SELECT COUNT(*)
   FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
@@ -348,42 +317,7 @@ EXECUTE stmt_fk_files_uploader;
 DEALLOCATE PREPARE stmt_fk_files_uploader;
 
 -- projects.github_repo must exist
-SET @has_projects_github_repo := (
-  SELECT COUNT(*)
-  FROM INFORMATION_SCHEMA.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'projects'
-    AND COLUMN_NAME = 'github_repo'
-);
-SET @sql_projects_github_repo := IF(
-  @has_projects_github_repo = 0,
-  'ALTER TABLE projects ADD COLUMN github_repo VARCHAR(255)',
-  'SELECT 1'
-);
-PREPARE stmt_projects_github_repo FROM @sql_projects_github_repo;
-EXECUTE stmt_projects_github_repo;
-DEALLOCATE PREPARE stmt_projects_github_repo;
-
--- ============================================================
--- NEW FEATURE TABLES (added in v2)
--- ============================================================
-
--- New columns on tasks: priority, due_date, estimated_hours, milestone_id
-SET @has_tasks_priority := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tasks' AND COLUMN_NAME = 'priority');
-SET @sql_tasks_priority := IF(@has_tasks_priority = 0, "ALTER TABLE tasks ADD COLUMN priority ENUM('low','medium','high') DEFAULT 'medium'", 'SELECT 1');
-PREPARE stmt FROM @sql_tasks_priority; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-SET @has_tasks_due_date := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tasks' AND COLUMN_NAME = 'due_date');
-SET @sql_tasks_due_date := IF(@has_tasks_due_date = 0, 'ALTER TABLE tasks ADD COLUMN due_date DATE DEFAULT NULL', 'SELECT 1');
-PREPARE stmt FROM @sql_tasks_due_date; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-SET @has_tasks_estimated_hours := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tasks' AND COLUMN_NAME = 'estimated_hours');
-SET @sql_tasks_estimated_hours := IF(@has_tasks_estimated_hours = 0, 'ALTER TABLE tasks ADD COLUMN estimated_hours DECIMAL(6,2) DEFAULT NULL', 'SELECT 1');
-PREPARE stmt FROM @sql_tasks_estimated_hours; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-SET @has_tasks_milestone_id := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tasks' AND COLUMN_NAME = 'milestone_id');
-SET @sql_tasks_milestone_id := IF(@has_tasks_milestone_id = 0, 'ALTER TABLE tasks ADD COLUMN milestone_id INT DEFAULT NULL', 'SELECT 1');
-PREPARE stmt FROM @sql_tasks_milestone_id; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+ALTER TABLE `projects` ADD COLUMN IF NOT EXISTS `github_repo` VARCHAR(255);
 
 -- Task comments
 CREATE TABLE IF NOT EXISTS `task_comments` (
