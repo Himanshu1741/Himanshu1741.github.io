@@ -14,7 +14,14 @@ const sequelize = require("../config/db");
 // GET DASHBOARD DATA
 exports.getDashboard = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      console.error("❌ Dashboard: No user ID in request");
+      return res.status(401).json({ error: "Unauthorized: No user ID" });
+    }
+
+    console.log(`🔍 Loading dashboard for user ${userId}...`);
 
     // Get user's project memberships
     const memberships = await ProjectMember.findAll({
@@ -23,10 +30,13 @@ exports.getDashboard = async (req, res) => {
       raw: true,
     });
 
+    console.log(`📊 Found ${memberships.length} projects for user`);
+
     const projectIds = memberships.map((m) => m.project_id);
 
     // If no projects, return empty dashboard
     if (projectIds.length === 0) {
+      console.log("ℹ️ No projects - returning empty dashboard");
       return res.json({
         totalProjects: 0,
         activeTasks: 0,
@@ -130,7 +140,10 @@ exports.getDashboard = async (req, res) => {
       recentProjects: processedProjects,
     });
   } catch (error) {
-    console.error("Dashboard error:", error);
-    res.status(500).json({ error: error.message });
+    console.error("❌ Dashboard error:", error);
+    res.status(500).json({ 
+      error: error.message,
+      details: process.env.NODE_ENV === "development" ? error.stack : undefined
+    });
   }
 };

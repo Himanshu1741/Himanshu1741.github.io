@@ -129,13 +129,24 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [dashData, setDashData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadData = useCallback(async () => {
     try {
+      setError(null);
+      setLoading(true);
+      console.log("🔄 Loading dashboard data...");
       const res = await API.get("/dashboard");
+      console.log("✅ Dashboard data loaded:", res.data);
       setDashData(res.data);
     } catch (err) {
-      console.error("Dashboard error:", err);
+      console.error("❌ Dashboard error:", err);
+      setError(
+        err?.response?.data?.error ||
+          err?.message ||
+          "Failed to load dashboard",
+      );
+      setDashData(null);
     } finally {
       setLoading(false);
     }
@@ -163,6 +174,33 @@ export default function Dashboard() {
   }, [mounted, router, loadData]);
 
   if (!mounted || !user || loading || !dashData) {
+    if (error) {
+      return (
+        <AppLayout>
+          <div className="p-4 sm:p-6">
+            <div className="flex flex-col items-center justify-center h-96 gap-4">
+              <div className="text-5xl">⚠️</div>
+              <p className="text-slate-300 font-semibold text-center max-w-md">
+                Failed to load dashboard
+              </p>
+              <p className="text-slate-500 text-sm text-center max-w-md">
+                {error}
+              </p>
+              <button
+                onClick={loadData}
+                className="mt-4 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-medium rounded-lg transition"
+              >
+                🔄 Try Again
+              </button>
+              <p className="text-xs text-slate-600 mt-4">
+                Check browser console for details (F12)
+              </p>
+            </div>
+          </div>
+        </AppLayout>
+      );
+    }
+
     return (
       <AppLayout>
         <div className="p-4 sm:p-6">
