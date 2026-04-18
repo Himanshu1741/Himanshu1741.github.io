@@ -1,7 +1,7 @@
 // DEADLINE TRACKER PAGE
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import API from "../services/api";
 import socket from "../services/socket";
@@ -175,6 +175,7 @@ function StatCard({ label, value, color }) {
 /* ─── Page ──────────────────────────────────────────────────────────────────── */
 export default function DeadlinesPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -186,7 +187,14 @@ export default function DeadlinesPage() {
   const [selected, setSelected] = useState(null);
   const { toasts, add: toast } = useToast();
 
+  // Mount effect - runs only on client after hydration
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const token = localStorage.getItem("token");
     const stored = localStorage.getItem("user");
     if (!token || !stored) {
@@ -198,7 +206,7 @@ export default function DeadlinesPage() {
     } catch {
       router.push("/login");
     }
-  }, []);
+  }, [mounted, router]);
 
   const loadDeadlines = useCallback(
     async (silent = false) => {
@@ -480,7 +488,7 @@ export default function DeadlinesPage() {
           </div>
 
           {/* ── CALENDAR VIEW ── */}
-          {view === "calendar" && (
+          {mounted && view === "calendar" && (
             <DeadlineCalendar
               events={calEvents}
               onSelectEvent={(ev) => setSelected(ev._task)}
