@@ -131,6 +131,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.push("/login");
+  };
+
   const loadData = useCallback(async () => {
     try {
       setError(null);
@@ -138,7 +144,17 @@ export default function Dashboard() {
       console.log("🔄 Loading dashboard data...");
       const res = await API.get("/dashboard");
       console.log("✅ Dashboard data loaded:", res.data);
-      setDashData(res.data);
+
+      // Ensure we have default values for all expected fields
+      const data = {
+        totalProjects: res.data?.totalProjects || 0,
+        activeTasks: res.data?.activeTasks || 0,
+        upcomingDeadlines: res.data?.upcomingDeadlines || 0,
+        taskCompletion: res.data?.taskCompletion || { completed: 0, total: 0 },
+        recentProjects: res.data?.recentProjects || [],
+      };
+
+      setDashData(data);
     } catch (err) {
       console.error("❌ Dashboard error:", err);
       setError(
@@ -146,7 +162,15 @@ export default function Dashboard() {
           err?.message ||
           "Failed to load dashboard",
       );
-      setDashData(null);
+
+      // Set default empty data so dashboard can still render
+      setDashData({
+        totalProjects: 0,
+        activeTasks: 0,
+        upcomingDeadlines: 0,
+        taskCompletion: { completed: 0, total: 0 },
+        recentProjects: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -171,38 +195,64 @@ export default function Dashboard() {
     }
 
     loadData();
-  }, [mounted, router, loadData]);
 
-  if (!mounted || !user || loading || !dashData) {
-    if (error) {
-      return (
-        <AppLayout>
-          <div className="p-4 sm:p-6">
-            <div className="flex flex-col items-center justify-center h-96 gap-4">
-              <div className="text-5xl">⚠️</div>
-              <p className="text-slate-300 font-semibold text-center max-w-md">
-                Failed to load dashboard
-              </p>
-              <p className="text-slate-500 text-sm text-center max-w-md">
-                {error}
-              </p>
-              <button
-                onClick={loadData}
-                className="mt-4 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-medium rounded-lg transition"
-              >
-                🔄 Try Again
-              </button>
-              <p className="text-xs text-slate-600 mt-4">
-                Check browser console for details (F12)
-              </p>
-            </div>
-          </div>
-        </AppLayout>
-      );
-    }
+    // Timeout failsafe - if still loading after 15 seconds, show error
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.error("⏱️ Dashboard loading timeout - API not responding");
+        setError("Dashboard loading timed out. Please check your connection.");
+        setLoading(false);
+      }
+    }, 15000);
 
+    return () => clearTimeout(timeout);
+  }, [mounted, router, loadData, loading]);
+
+  if (!mounted || !user) {
     return (
       <AppLayout>
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col items-center justify-center h-96 gap-4">
+            <div className="w-12 h-12 border-4 border-slate-700 border-t-cyan-400 rounded-full animate-spin" />
+            <p className="text-slate-400 font-semibold">
+              Loading your dashboard...
+            </p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout user={user} activeTab="dashboard" onLogout={logout}>
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col items-center justify-center h-96 gap-4">
+            <div className="text-5xl">⚠️</div>
+            <p className="text-slate-300 font-semibold text-center max-w-md">
+              Failed to load dashboard
+            </p>
+            <p className="text-slate-500 text-sm text-center max-w-md">
+              {error}
+            </p>
+            <button
+              onClick={loadData}
+              className="mt-4 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-medium rounded-lg transition"
+            >
+              🔄 Try Again
+            </button>
+            <p className="text-xs text-slate-600 mt-4">
+              Check browser console for details (F12)
+            </p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (loading) {
+    return (
+      <AppLayout user={user} activeTab="dashboard" onLogout={logout}>
         <div className="p-4 sm:p-6">
           <div className="flex flex-col items-center justify-center h-96 gap-4">
             <div className="w-12 h-12 border-4 border-slate-700 border-t-cyan-400 rounded-full animate-spin" />
@@ -266,7 +316,7 @@ export default function Dashboard() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout user={user} activeTab="dashboard" onLogout={logout}>
       <div className="p-4 sm:p-6 space-y-6">
         {/* Welcome Section */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6">

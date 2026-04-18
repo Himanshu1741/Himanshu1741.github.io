@@ -15,7 +15,7 @@ const sequelize = require("../config/db");
 exports.getDashboard = async (req, res) => {
   try {
     const userId = req.user?.id;
-    
+
     if (!userId) {
       console.error("❌ Dashboard: No user ID in request");
       return res.status(401).json({ error: "Unauthorized: No user ID" });
@@ -141,9 +141,9 @@ exports.getDashboard = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Dashboard error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: error.message,
-      details: process.env.NODE_ENV === "development" ? error.stack : undefined
+      details: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 };

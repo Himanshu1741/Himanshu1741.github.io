@@ -1,7 +1,7 @@
 # Dashboard Loading Screen Fix - Troubleshooting Guide
 
-**Date:** April 18, 2026  
-**Issue:** Dashboard stuck on "Loading your dashboard..." screen  
+**Date:** April 18, 2026
+**Issue:** Dashboard stuck on "Loading your dashboard..." screen
 **Status:** ✅ FIXED with error visibility
 
 ---
@@ -9,13 +9,17 @@
 ## 🔍 Problem Analysis
 
 ### Symptom
+
 Dashboard page shows only:
+
 - Spinning loading indicator
 - "Loading your dashboard..." text
 - Never shows actual content
 
 ### Root Cause
+
 The API call to `/api/dashboard` was **failing silently**:
+
 - Frontend couldn't display error
 - `dashData` stayed `null`
 - Loading condition `!dashData` stayed true forever
@@ -28,6 +32,7 @@ The API call to `/api/dashboard` was **failing silently**:
 ### 1. Frontend Improvements (`client/src/pages/dashboard.js`)
 
 **What Changed:**
+
 ```javascript
 // BEFORE - No error handling
 const [dashData, setDashData] = useState(null);
@@ -40,6 +45,7 @@ const [error, setError] = useState(null);
 ```
 
 **Error Handling:**
+
 ```javascript
 const loadData = useCallback(async () => {
   try {
@@ -51,15 +57,18 @@ const loadData = useCallback(async () => {
     setDashData(res.data);
   } catch (err) {
     console.error("❌ Dashboard error:", err);
-    setError(err?.response?.data?.error || err?.message || "Failed to load dashboard");
-    setDashData(null);  // ← Important: Clear bad data
+    setError(
+      err?.response?.data?.error || err?.message || "Failed to load dashboard",
+    );
+    setDashData(null); // ← Important: Clear bad data
   } finally {
-    setLoading(false);  // ← Always stop loading
+    setLoading(false); // ← Always stop loading
   }
 }, []);
 ```
 
 **Error Display:**
+
 ```javascript
 if (error) {
   return (
@@ -80,6 +89,7 @@ if (error) {
 ### 2. Backend Improvements (`server/src/controllers/dashboardController.js`)
 
 **Added Logging:**
+
 ```javascript
 console.log(`🔍 Loading dashboard for user ${userId}...`);
 console.log(`📊 Found ${memberships.length} projects for user`);
@@ -87,10 +97,11 @@ console.log("ℹ️ No projects - returning empty dashboard");
 ```
 
 **Better Error Reporting:**
+
 ```javascript
 catch (error) {
   console.error("❌ Dashboard error:", error);
-  res.status(500).json({ 
+  res.status(500).json({
     error: error.message,
     details: process.env.NODE_ENV === "development" ? error.stack : undefined
   });
@@ -98,6 +109,7 @@ catch (error) {
 ```
 
 **Added Validation:**
+
 ```javascript
 const userId = req.user?.id;
 if (!userId) {
@@ -111,6 +123,7 @@ if (!userId) {
 ## 🛠️ Debugging Steps
 
 ### Step 1: Check Browser Console (F12)
+
 ```
 Look for:
 🔄 Loading dashboard data...        ← Should appear on page load
@@ -119,14 +132,16 @@ Look for:
 ```
 
 ### Step 2: Verify Authentication
+
 ```javascript
 // In browser console, type:
-localStorage.getItem("token")
+localStorage.getItem("token");
 // Should return a JWT token like:
 // "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 ### Step 3: Check Server Logs
+
 ```bash
 # Terminal should show:
 🔍 Loading dashboard for user 123...
@@ -135,12 +150,14 @@ localStorage.getItem("token")
 ```
 
 ### Step 4: Manual API Test
+
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:5000/api/dashboard
 ```
 
 Expected response:
+
 ```json
 {
   "totalProjects": 2,
@@ -159,33 +176,41 @@ Expected response:
 ## 🔧 Common Issues & Solutions
 
 ### Issue 1: "No user ID in request"
-**Cause:** User not authenticated  
-**Solution:** 
+
+**Cause:** User not authenticated
+**Solution:**
+
 ```bash
 # Log out and log back in
 # OR clear localStorage and refresh
 ```
 
 ### Issue 2: "User is not associated to Task" (from earlier errors)
-**Cause:** Sequelize model association missing  
+
+**Cause:** Sequelize model association missing
 **Solution:**
 Check `server/src/models/index.js` for proper associations:
+
 ```javascript
 // Should have:
-User.hasMany(Task, { foreignKey: 'assigned_to' });
-Task.belongsTo(User, { foreignKey: 'assigned_to' });
+User.hasMany(Task, { foreignKey: "assigned_to" });
+Task.belongsTo(User, { foreignKey: "assigned_to" });
 ```
 
 ### Issue 3: Timeout (takes >30 seconds)
-**Cause:** Database query too slow  
+
+**Cause:** Database query too slow
 **Solution:**
+
 - Check indexes on Task table: `due_date`, `status`, `project_id`
 - Check indexes on ProjectMember table: `user_id`, `project_id`
 - Run: `SHOW INDEXES FROM tasks;`
 
 ### Issue 4: "Failed to load dashboard" but server shows no errors
-**Cause:** API call not reaching server  
+
+**Cause:** API call not reaching server
 **Solution:**
+
 - Check `.env` file for `NEXT_PUBLIC_API_URL`
 - Verify backend is running on port 5000
 - Check CORS settings in `server/src/server.js`
@@ -255,6 +280,7 @@ Response received
 ## 📝 What Was Fixed
 
 ### Before
+
 ```
 ❌ Dashboard stuck on loading
 ❌ No error message
@@ -264,6 +290,7 @@ Response received
 ```
 
 ### After
+
 ```
 ✅ Shows actual error message
 ✅ Displays retry button
@@ -278,6 +305,7 @@ Response received
 ## 🚀 Performance Optimization
 
 ### Queries Optimized
+
 Database queries are now indexed for performance:
 
 ```sql
@@ -289,6 +317,7 @@ CREATE INDEX idx_task_due_date ON tasks(due_date);
 ```
 
 ### Expected Performance
+
 - **With no projects:** <100ms
 - **With 5-10 projects:** 200-500ms
 - **With 50+ tasks:** 500-1000ms
@@ -299,13 +328,15 @@ CREATE INDEX idx_task_due_date ON tasks(due_date);
 ## 🎊 Quick Reference
 
 ### File Changes
-| File | Changes | Impact |
-|------|---------|--------|
-| `client/src/pages/dashboard.js` | Added error state & handling | User sees errors now |
-| `server/src/controllers/dashboardController.js` | Added logging & validation | Better debugging |
-| `git commit` | `52d47c0` | Both files updated |
+
+| File                                            | Changes                      | Impact               |
+| ----------------------------------------------- | ---------------------------- | -------------------- |
+| `client/src/pages/dashboard.js`                 | Added error state & handling | User sees errors now |
+| `server/src/controllers/dashboardController.js` | Added logging & validation   | Better debugging     |
+| `git commit`                                    | `52d47c0`                    | Both files updated   |
 
 ### How to Manually Test
+
 ```bash
 # Terminal 1: Start server
 cd server && npm run dev
@@ -324,6 +355,7 @@ http://localhost:3000/dashboard
 ```
 
 ### Environment Variables Needed
+
 ```
 # .env (backend)
 DB_NAME=student_collab_hub
@@ -340,6 +372,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ## ✨ Result
 
 **Dashboard no longer gets stuck on loading screen!**
+
 - ✅ Shows actual content when successful
 - ✅ Shows clear error when it fails
 - ✅ Provides retry button
@@ -347,6 +380,6 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 
 ---
 
-**Status:** READY FOR TESTING ✅  
-**Commit:** 52d47c0  
+**Status:** READY FOR TESTING ✅
+**Commit:** 52d47c0
 **Branch:** main
