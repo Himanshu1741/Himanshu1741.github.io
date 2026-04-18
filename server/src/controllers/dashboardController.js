@@ -8,9 +8,6 @@
 const Project = require("../models/Project");
 const ProjectMember = require("../models/ProjectMember");
 const Task = require("../models/Task");
-const User = require("../models/User");
-const Activity = require("../models/Activity");
-const Notification = require("../models/Notification");
 const { Op } = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -23,10 +20,12 @@ exports.getDashboard = async (req, res) => {
     const memberships = await ProjectMember.findAll({
       where: { user_id: userId },
       attributes: ["project_id"],
+      raw: true,
     });
 
     const projectIds = memberships.map((m) => m.project_id);
 
+    // If no projects, return empty dashboard
     if (projectIds.length === 0) {
       return res.json({
         totalProjects: 0,
@@ -34,188 +33,101 @@ exports.getDashboard = async (req, res) => {
         upcomingDeadlines: 0,
         taskCompletion: { completed: 0, total: 0 },
         recentProjects: [],
-        recentActivity: [],
-        deadlines: [],
-        activityTrend: [],
       });
     }
 
-    // Fetch all data in parallel
-    const [
-      projects,
-      tasks,
-      completedTasks,
-      activeTasks,
-      upcomingDeadlines,
-      recentActivity,
-      activityTrend,
-    ] = await Promise.all([
-      // Recent projects
-      Project.findAll({
-        where: { id: { [Op.in]: projectIds } },
-        attributes: [
-          "id",
-          "title",
-          "description",
-          "status",
-          "created_at",
-          "updated_at",
-        ],
-        order: [["updated_at", "DESC"]],
-        limit: 6,
-        include: [
-          {
-            model: ProjectMember,
-            as: "members",
-            attributes: ["user_id"],
-            where: { project_id: { [Op.in]: projectIds } },
-            raw: true,
-            duplicating: false,
-          },
-          {
-            model: Task,
-            as: "tasks",
-            attributes: ["id"],
-            raw: true,
-            duplicating: false,
-          },
-        ],
-      }),
+    // Fetch projects
+    const projects = await Project.findAll({
+      where: { id: { [Op.in]: projectIds } },
+      attributes: ["id", "title", "description", "status", "created_at"],
+      order: [["created_at", "DESC"]],
+      limit: 6,
+      raw: true,
+    });
 
-      // Total tasks
-      Task.count({
-        where: { project_id: { [Op.in]: projectIds } },
-      }),
+    // Get member counts for each project
+    const projectMemberCounts = await ProjectMember.findAll({
+      where: { project_id: { [Op.in]: projectIds } },
+      attributes: [
+        "project_id",
+        [sequelize.fn("COUNT", sequelize.col("user_id")), "member_count"],
+      ],
+      group: ["project_id"],
+      raw: true,
+      subQuery: false,
+    });
 
-      // Completed tasks
-      Task.count({
-        where: {
-          project_id: { [Op.in]: projectIds },
-          status: "completed",
-        },
-      }),
+    const memberCountMap = {};
+    projectMemberCounts.forEach((m) => {
+      memberCountMap[m.project_id] = parseInt(m.member_count) || 0;
+    });
 
-      // Active tasks
-      Task.count({
-        where: {
-          project_id: { [Op.in]: projectIds },
-          status: { [Op.ne]: "completed" },
-        },
-      }),
+    // Get task counts for each project
+    const projectTaskCounts = await Task.findAll({
+      where: { project_id: { [Op.in]: projectIds } },
+      attributes: [
+        "project_id",
+        [sequelize.fn("COUNT", sequelize.col("id")), "task_count"],
+      ],
+      group: ["project_id"],
+      raw: true,
+      subQuery: false,
+    });
 
-      // Upcoming deadlines
-      Task.findAll({
-        where: {
-          project_id: { [Op.in]: projectIds },
-          due_date: {
-            [Op.between]: [
-              new Date(),
-              new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-            ],
-          },
-        },
-        attributes: ["id", "title", "due_date", "project_id", "status"],
-        order: [["due_date", "ASC"]],
-        limit: 10,
-        include: [
-          {
-            model: Project,
-            as: "project",
-            attributes: ["title"],
-          },
-        ],
-      }),
+    const taskCountMap = {};
+    projectTaskCounts.forEach((t) => {
+      taskCountMap[t.project_id] = parseInt(t.task_count) || 0;
+    });
 
-      // Recent activity
-      Activity.findAll({
-        where: { user_id: userId },
-        attributes: ["id", "action", "user_id", "created_at"],
-        order: [["created_at", "DESC"]],
-        limit: 20,
-      }),
-
-      // Activity trend (last 7 days)
-      sequelize.query(
-        `
-        SELECT DATE(created_at) as date, COUNT(*) as count
-        FROM activities
-        WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-        GROUP BY DATE(created_at)
-        ORDER BY date ASC
-      `,
-        {
-          replacements: [userId],
-          type: sequelize.QueryTypes.SELECT,
-        },
-      ),
-    ]);
-
-    // Process recent projects with member and task counts
+    // Process projects
     const processedProjects = projects.map((p) => ({
       id: p.id,
       title: p.title,
       description: p.description,
       status: p.status,
       created_at: p.created_at,
-      updated_at: p.updated_at,
-      member_count: new Set(p.members ? p.members.map((m) => m.user_id) : [])
-        .size,
-      task_count: p.tasks ? p.tasks.length : 0,
+      member_count: memberCountMap[p.id] || 0,
+      task_count: taskCountMap[p.id] || 0,
     }));
 
-    // Process recent activity
-    const processedActivity = recentActivity.map((a) => {
-      const actionStr = a.action || "";
-      const target = actionStr.includes(":")
-        ? actionStr.split(":")[1]?.trim()
-        : null;
-      const action = actionStr.includes("Created")
-        ? "CREATED_PROJECT"
-        : actionStr.includes("Updated")
-          ? "UPDATED_PROJECT"
-          : actionStr.includes("Completed")
-            ? "COMPLETED_TASK"
-            : actionStr.includes("Added")
-              ? "ADDED_COMMENT"
-              : "OTHER_ACTION";
-
-      return {
-        id: a.id,
-        action,
-        target,
-        created_at: a.created_at,
-      };
+    // Get task statistics
+    const totalTasks = await Task.count({
+      where: { project_id: { [Op.in]: projectIds } },
     });
 
-    // Process deadlines
-    const processedDeadlines = upcomingDeadlines.map((d) => ({
-      id: d.id,
-      title: d.title,
-      deadline: d.due_date,
-      project: d.project?.title || "Unknown",
-      status: d.status,
-    }));
+    const completedTasks = await Task.count({
+      where: {
+        project_id: { [Op.in]: projectIds },
+        status: "completed",
+      },
+    });
 
-    // Calculate upcoming deadline count
-    const upcomingCount = upcomingDeadlines.filter(
-      (d) => new Date(d.due_date) > new Date(),
-    ).length;
+    const activeTasks = await Task.count({
+      where: {
+        project_id: { [Op.in]: projectIds },
+        status: { [Op.ne]: "completed" },
+      },
+    });
+
+    // Get upcoming deadlines count (simple query)
+    const upcomingDeadlines = await Task.count({
+      where: {
+        project_id: { [Op.in]: projectIds },
+        due_date: {
+          [Op.gte]: new Date(),
+        },
+      },
+    });
 
     return res.json({
       totalProjects: projectIds.length,
       activeTasks,
-      upcomingDeadlines: upcomingCount,
+      upcomingDeadlines,
       taskCompletion: {
         completed: completedTasks,
-        total: tasks,
+        total: totalTasks,
       },
       recentProjects: processedProjects,
-      recentActivity: processedActivity.slice(0, 10),
-      deadlines: processedDeadlines.slice(0, 5),
-      activityTrend: activityTrend.map((a) => ({
-        date: a.date,
-        count: a.count,
-      })),
     });
   } catch (error) {
     console.error("Dashboard error:", error);

@@ -79,7 +79,9 @@ const DONUT_OPTS = {
 function StatCard({ label, value, icon }) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 hover:border-slate-700 transition">
-      <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+        {label}
+      </p>
       <div className="mt-4 flex items-end justify-between">
         <p className="text-4xl font-extrabold text-white">{value ?? 0}</p>
         <span className="text-3xl">{icon}</span>
@@ -129,9 +131,13 @@ export default function Dashboard() {
     );
   }
 
-  const taskPercent = dashData?.taskCompletion?.total > 0
-    ? Math.round((dashData.taskCompletion.completed / dashData.taskCompletion.total) * 100)
-    : 0;
+  const taskPercent =
+    dashData?.taskCompletion?.total > 0
+      ? Math.round(
+          (dashData.taskCompletion.completed / dashData.taskCompletion.total) *
+            100,
+        )
+      : 0;
 
   // Activity data (mock: last 6 months)
   const activityData = {
@@ -194,9 +200,21 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatCard label="Total Projects" value={dashData?.totalProjects} icon="📁" />
-          <StatCard label="Active Projects" value={dashData?.activeTasks > 0 ? 1 : 0} icon="🚀" />
-          <StatCard label="Tasks Completed" value={dashData?.taskCompletion?.completed} icon="✅" />
+          <StatCard
+            label="Total Projects"
+            value={dashData?.totalProjects}
+            icon="📁"
+          />
+          <StatCard
+            label="Active Projects"
+            value={dashData?.activeTasks > 0 ? 1 : 0}
+            icon="🚀"
+          />
+          <StatCard
+            label="Tasks Completed"
+            value={dashData?.taskCompletion?.completed}
+            icon="✅"
+          />
           <StatCard label="Messages" value={6} icon="💬" />
         </div>
 
@@ -205,7 +223,9 @@ export default function Dashboard() {
           {/* Project Activity */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Project Activity</h3>
+              <h3 className="text-lg font-semibold text-white">
+                Project Activity
+              </h3>
               <span className="text-xs text-slate-500">Last 6 months</span>
             </div>
             <div style={{ height: "300px" }}>
@@ -216,17 +236,24 @@ export default function Dashboard() {
           {/* Task Breakdown */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-white">Task Breakdown</h3>
+              <h3 className="text-lg font-semibold text-white">
+                Task Breakdown
+              </h3>
               <p className="mt-1 text-xs text-slate-500">
                 {dashData?.taskCompletion?.total} total tasks
               </p>
             </div>
-            <div style={{ height: "300px" }} className="flex items-center justify-center">
+            <div
+              style={{ height: "300px" }}
+              className="flex items-center justify-center"
+            >
               <div className="relative w-full">
                 <Doughnut data={taskBreakdownData} options={DONUT_OPTS} />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-cyan-400">{taskPercent}%</p>
+                    <p className="text-2xl font-bold text-cyan-400">
+                      {taskPercent}%
+                    </p>
                     <p className="text-xs text-slate-500">complete</p>
                   </div>
                 </div>
@@ -238,7 +265,9 @@ export default function Dashboard() {
         {/* Recent Projects */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Recent Projects</h3>
+            <h3 className="text-lg font-semibold text-white">
+              Recent Projects
+            </h3>
             <button
               onClick={() => router.push("/projects")}
               className="text-xs text-cyan-400 hover:text-cyan-300 transition"
@@ -249,7 +278,9 @@ export default function Dashboard() {
 
           {dashData?.recentProjects?.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-slate-500 text-sm">No projects yet. Start by creating your first project!</p>
+              <p className="text-slate-500 text-sm">
+                No projects yet. Start by creating your first project!
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -261,7 +292,8 @@ export default function Dashboard() {
                   <div className="flex-1">
                     <p className="font-semibold text-white">{project.title}</p>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {project.task_count} tasks • {project.member_count} member{project.member_count !== 1 ? "s" : ""}
+                      {project.task_count} tasks • {project.member_count} member
+                      {project.member_count !== 1 ? "s" : ""}
                     </p>
                   </div>
                   <button
