@@ -133,6 +133,7 @@ function StatCard({ label, value, icon, trend }) {
 // --- Main Dashboard ---
 export default function Dashboard() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
   const [dashData, setDashData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -148,7 +149,15 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Mount effect - runs only on client after hydration
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Load user and dashboard data after mount
+  useEffect(() => {
+    if (!mounted) return;
+
     const stored = localStorage.getItem("user");
     const parsed = stored ? JSON.parse(stored) : null;
     setUser(parsed);
@@ -159,9 +168,9 @@ export default function Dashboard() {
     }
 
     loadData();
-  }, [router, loadData]);
+  }, [mounted, router, loadData]);
 
-  if (!user || loading || !dashData) {
+  if (!mounted || !user || loading || !dashData) {
     return (
       <AppLayout>
         <div className="p-4 sm:p-6">
