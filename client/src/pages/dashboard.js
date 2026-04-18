@@ -108,7 +108,7 @@ export default function Dashboard() {
     }
 
     loadData();
-  }, [router]);
+  }, [router, loadData]);
 
   const loadData = useCallback(async () => {
     try {
