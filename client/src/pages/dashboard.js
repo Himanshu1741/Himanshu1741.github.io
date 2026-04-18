@@ -97,6 +97,17 @@ export default function Dashboard() {
   const [dashData, setDashData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const loadData = useCallback(async () => {
+    try {
+      const res = await API.get("/dashboard");
+      setDashData(res.data);
+    } catch (err) {
+      console.error("Dashboard error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const stored = localStorage.getItem("user");
     const parsed = stored ? JSON.parse(stored) : null;
@@ -109,17 +120,6 @@ export default function Dashboard() {
 
     loadData();
   }, [router, loadData]);
-
-  const loadData = useCallback(async () => {
-    try {
-      const res = await API.get("/dashboard");
-      setDashData(res.data);
-    } catch (err) {
-      console.error("Dashboard error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   if (!user || loading || !dashData) {
     return (
