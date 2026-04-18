@@ -194,9 +194,19 @@ export default function AppLayout({
             )}
             {sidebarOpen && (
               <button
-                onClick={onLogout}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("🔐 Exit button clicked");
+                  if (onLogout) {
+                    onLogout();
+                  } else {
+                    console.error("❌ onLogout function not defined");
+                  }
+                }}
                 className="shrink-0 rounded-lg px-1.5 py-1 text-[10px] font-semibold text-slate-500 hover:bg-rose-500/10 hover:text-rose-600 transition border border-transparent hover:border-rose-500/20 dark:text-slate-600 dark:hover:text-rose-400"
                 title="Sign out"
+                type="button"
               >
                 Exit
               </button>

@@ -131,11 +131,35 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    router.push("/login");
-  };
+  const logout = useCallback(async () => {
+    try {
+      console.log("👋 Logging out...");
+
+      // Clear all stored data
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("email");
+
+      // Clear all state
+      setUser(null);
+      setDashData(null);
+      setError(null);
+      setLoading(false);
+
+      console.log("✅ Logout successful");
+
+      // Redirect to login with a small delay to ensure state updates
+      setTimeout(() => {
+        router.push("/login").catch((err) => {
+          console.error("❌ Navigation error:", err);
+          window.location.href = "/login";
+        });
+      }, 100);
+    } catch (err) {
+      console.error("❌ Logout error:", err);
+      window.location.href = "/login";
+    }
+  }, [router]);
 
   const loadData = useCallback(async () => {
     try {

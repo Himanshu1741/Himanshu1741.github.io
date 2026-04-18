@@ -272,11 +272,26 @@ export default function ProjectsPage() {
     }
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    router.push("/login");
-  };
+  const logout = useCallback(async () => {
+    try {
+      console.log("👋 Logging out...");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("email");
+      setUser(null);
+      setProjects([]);
+      console.log("✅ Logout successful");
+      setTimeout(() => {
+        router.push("/login").catch((err) => {
+          console.error("❌ Navigation error:", err);
+          window.location.href = "/login";
+        });
+      }, 100);
+    } catch (err) {
+      console.error("❌ Logout error:", err);
+      window.location.href = "/login";
+    }
+  }, [router]);
 
   /* load projects */
   const loadProjects = useCallback(async () => {

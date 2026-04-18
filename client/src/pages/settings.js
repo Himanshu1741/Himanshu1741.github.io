@@ -43,7 +43,24 @@ export default function SettingsPage() {
   const { toasts, toast } = useToast();
   const router = useRouter();
 
-  const logout = () => { localStorage.removeItem("token"); localStorage.removeItem("user"); router.push("/login"); };
+  const logout = useCallback(async () => {
+    try {
+      console.log("👋 Logging out...");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("email");
+      console.log("✅ Logout successful");
+      setTimeout(() => {
+        router.push("/login").catch(err => {
+          console.error("❌ Navigation error:", err);
+          window.location.href = "/login";
+        });
+      }, 100);
+    } catch (err) {
+      console.error("❌ Logout error:", err);
+      window.location.href = "/login";
+    }
+  }, [router]);
 
   useEffect(() => {
     if (!localStorage.getItem("token")) { router.push("/login"); return; }
