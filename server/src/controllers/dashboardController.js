@@ -5,14 +5,14 @@
  * Developed by Himanshu Kumar
  */
 
-const Project = require("../../models/Project");
-const ProjectMember = require("../../models/ProjectMember");
-const Task = require("../../models/Task");
-const User = require("../../models/User");
-const Activity = require("../../models/Activity");
-const Notification = require("../../models/Notification");
+const Project = require("../models/Project");
+const ProjectMember = require("../models/ProjectMember");
+const Task = require("../models/Task");
+const User = require("../models/User");
+const Activity = require("../models/Activity");
+const Notification = require("../models/Notification");
 const { Op } = require("sequelize");
-const sequelize = require("../../config/db");
+const sequelize = require("../config/db");
 
 // GET DASHBOARD DATA
 exports.getDashboard = async (req, res) => {
