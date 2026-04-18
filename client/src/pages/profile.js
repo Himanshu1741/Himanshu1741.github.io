@@ -149,6 +149,7 @@ function ProgressRing({ percent }) {
 /* ─── Page ──────────────────────────────────────────────────────────────────── */
 export default function ProfilePage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -157,7 +158,14 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const { toasts, add: toast } = useToast();
 
+  // Mount effect - runs only on client after hydration
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const token = localStorage.getItem("token");
     const stored = localStorage.getItem("user");
     if (!token || !stored) {
@@ -169,7 +177,7 @@ export default function ProfilePage() {
     } catch {
       router.push("/login");
     }
-  }, []);
+  }, [mounted, router]);
 
   const loadStats = useCallback(async () => {
     setLoading(true);
@@ -276,176 +284,328 @@ export default function ProfilePage() {
 
   const grad = userGrad(user?.name || "");
 
-  if (!user) return null;
+  if (!user || !mounted) return null;
+
+  // Calculate profile completion
+  const profileCompletion = stats
+    ? [
+        stats.user?.name ? 25 : 0,
+        stats.user?.bio ? 25 : 0,
+        stats.user?.skills ? 25 : 0,
+        stats.user?.role ? 25 : 0,
+      ].reduce((a, b) => a + b, 0)
+    : 0;
 
   return (
     <>
       <ToastContainer toasts={toasts} />
       <AppLayout user={user} activeTab="profile" onLogout={logout}>
-        <div className="mx-auto max-w-3xl space-y-6">
-          {/* ── Profile card ── */}
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80">
-            {/* Gradient banner */}
-            <div className={`h-24 bg-gradient-to-r ${grad} opacity-80`} />
+        <div className="mx-auto max-w-4xl space-y-6">
+          {/* ── Header ── */}
+          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6">
+            <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-cyan-500/8 blur-3xl" />
+            <div className="absolute right-32 -bottom-8 h-28 w-28 rounded-full bg-violet-500/8 blur-3xl" />
+            <p className="mb-1 text-xs font-bold uppercase tracking-widest text-cyan-500">
+              Personal Profile
+            </p>
+            <h2 className="text-2xl font-extrabold tracking-tight text-white">
+              Your Professional Profile
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Manage your profile, track your achievements, and showcase your
+              work.
+            </p>
+          </div>
 
-            <div className="relative px-6 pb-6">
+          {/* ── Profile card ── */}
+          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl">
+            {/* Gradient banner */}
+            <div className={`h-32 bg-gradient-to-r ${grad} opacity-70`} />
+
+            <div className="relative px-6 pb-8">
               {/* Avatar */}
               <div
-                className={`-mt-10 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br text-2xl font-extrabold text-white shadow-lg ${grad} dark:border-slate-900`}
+                className={`-mt-14 flex h-28 w-28 items-center justify-center rounded-2xl border-4 border-slate-900 bg-gradient-to-br text-4xl font-extrabold text-white shadow-lg ${grad}`}
               >
                 {initials(stats?.user?.name || user.name)}
               </div>
 
-              <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-extrabold text-white">
                     {stats?.user?.name || user.name}
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-sm text-slate-400 mt-1">
                     {stats?.user?.email || user.email}
                   </p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="rounded-full border border-violet-400/30 bg-violet-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="rounded-lg border border-violet-400/40 bg-violet-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-violet-300">
                       {stats?.user?.role || user.role}
                     </span>
-                    <span className="text-[11px] text-slate-400">
-                      Member since {memberSince(stats?.user?.created_at)}
+                    <span className="text-xs text-slate-500">
+                      📅 Member since {memberSince(stats?.user?.created_at)}
                     </span>
                   </div>
+                  {stats?.user?.bio && (
+                    <p className="mt-3 text-sm text-slate-300 leading-relaxed max-w-2xl">
+                      {stats.user.bio}
+                    </p>
+                  )}
+                  {stats?.user?.skills && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {stats.user.skills
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                        .map((sk) => (
+                          <span
+                            key={sk}
+                            className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300"
+                          >
+                            {sk}
+                          </span>
+                        ))}
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => setEditing(true)}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-violet-400 hover:text-violet-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                  className="px-6 py-2.5 bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-violet-500/50 hover:scale-105 transition duration-300 whitespace-nowrap"
                 >
                   ✏️ Edit Profile
                 </button>
               </div>
 
-              {/* Bio */}
-              {stats?.user?.bio && (
-                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {stats.user.bio}
-                </p>
-              )}
-
-              {/* Skills */}
-              {stats?.user?.skills && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {stats.user.skills
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean)
-                    .map((sk) => (
-                      <span
-                        key={sk}
-                        className="rounded-full border border-cyan-300/40 bg-cyan-50 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-700 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-300"
-                      >
-                        {sk}
-                      </span>
-                    ))}
+              {/* Profile completion bar */}
+              <div className="mt-6 pt-6 border-t border-slate-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-slate-400">
+                    Profile Completion
+                  </span>
+                  <span className="text-xs font-bold text-cyan-400">
+                    {profileCompletion}%
+                  </span>
                 </div>
-              )}
+                <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"
+                    style={{ width: `${profileCompletion}%` }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* ── Stats ── */}
-          {loading ? (
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-24 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-              <StatTile
-                icon="📁"
-                label="Projects"
-                value={stats?.stats?.projectCount}
-                color="border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-              />
-              <StatTile
-                icon="📋"
-                label="Assigned"
-                value={stats?.stats?.tasksAssigned}
-                color="border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-              />
-              <StatTile
-                icon="✅"
-                label="Completed"
-                value={stats?.stats?.tasksCompleted}
-                color="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
-              />
-              <StatTile
-                icon="⚙️"
-                label="In Progress"
-                value={stats?.stats?.tasksInProgress}
-                color="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
-              />
-              <StatTile
-                icon="🔴"
-                label="Overdue"
-                value={stats?.stats?.tasksOverdue}
-                color={`border-red-200 bg-red-50 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 ${(stats?.stats?.tasksOverdue ?? 0) > 0 ? "ring-2 ring-red-400/30" : ""}`}
-              />
-              <div className="flex flex-col items-center gap-1 rounded-2xl border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/20 dark:bg-violet-500/10">
-                <div className="relative flex items-center justify-center">
-                  <ProgressRing percent={stats?.stats?.completionRate} />
-                  <span
-                    className="absolute text-base font-extrabold text-violet-700 dark:text-violet-300"
-                    style={{ transform: "rotate(90deg)" }}
-                  >
-                    {stats?.stats?.completionRate ?? 0}%
-                  </span>
-                </div>
-                <span className="text-[11px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400 opacity-80">
-                  Rate
-                </span>
+          {/* ── Stats Grid ── */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">
+              Your Stats
+            </h3>
+            {loading ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-28 animate-pulse rounded-xl bg-slate-800"
+                  />
+                ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3">
+                  {/* Projects */}
+                  <div className="group relative overflow-hidden rounded-xl border border-slate-800 bg-gradient-to-br from-slate-800 to-slate-900 p-4 hover:border-slate-700 transition">
+                    <div className="absolute top-0 right-0 h-24 w-24 bg-blue-500/8 rounded-full blur-2xl group-hover:bg-blue-500/15 transition" />
+                    <div className="relative">
+                      <p className="text-3xl font-bold text-white">
+                        {stats?.stats?.projectCount || 0}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-400 mt-1">
+                        📁 Projects
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tasks Assigned */}
+                  <div className="group relative overflow-hidden rounded-xl border border-slate-800 bg-gradient-to-br from-slate-800 to-slate-900 p-4 hover:border-slate-700 transition">
+                    <div className="absolute top-0 right-0 h-24 w-24 bg-cyan-500/8 rounded-full blur-2xl group-hover:bg-cyan-500/15 transition" />
+                    <div className="relative">
+                      <p className="text-3xl font-bold text-white">
+                        {stats?.stats?.tasksAssigned || 0}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-400 mt-1">
+                        📋 Assigned
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tasks Completed */}
+                  <div className="group relative overflow-hidden rounded-xl border border-emerald-800/50 bg-gradient-to-br from-emerald-500/10 to-slate-900 p-4 hover:border-emerald-700 transition">
+                    <div className="absolute top-0 right-0 h-24 w-24 bg-emerald-500/15 rounded-full blur-2xl group-hover:bg-emerald-500/25 transition" />
+                    <div className="relative">
+                      <p className="text-3xl font-bold text-emerald-400">
+                        {stats?.stats?.tasksCompleted || 0}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-400 mt-1">
+                        ✅ Completed
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
+                  {/* In Progress */}
+                  <div className="group relative overflow-hidden rounded-xl border border-blue-800/50 bg-gradient-to-br from-blue-500/10 to-slate-900 p-4 hover:border-blue-700 transition">
+                    <div className="absolute top-0 right-0 h-24 w-24 bg-blue-500/15 rounded-full blur-2xl group-hover:bg-blue-500/25 transition" />
+                    <div className="relative">
+                      <p className="text-3xl font-bold text-blue-400">
+                        {stats?.stats?.tasksInProgress || 0}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-400 mt-1">
+                        ⚙️ In Progress
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Overdue */}
+                  <div
+                    className={`group relative overflow-hidden rounded-xl border transition p-4 ${
+                      (stats?.stats?.tasksOverdue ?? 0) > 0
+                        ? "border-red-800/50 bg-gradient-to-br from-red-500/10 to-slate-900 hover:border-red-700"
+                        : "border-slate-800 bg-gradient-to-br from-slate-800 to-slate-900 hover:border-slate-700"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-0 right-0 h-24 w-24 rounded-full blur-2xl transition ${
+                        (stats?.stats?.tasksOverdue ?? 0) > 0
+                          ? "bg-red-500/15 group-hover:bg-red-500/25"
+                          : "bg-slate-600/8 group-hover:bg-slate-600/15"
+                      }`}
+                    />
+                    <div className="relative">
+                      <p
+                        className={`text-3xl font-bold ${(stats?.stats?.tasksOverdue ?? 0) > 0 ? "text-red-400" : "text-slate-300"}`}
+                      >
+                        {stats?.stats?.tasksOverdue || 0}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-400 mt-1">
+                        🔴 Overdue
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Completion Rate */}
+                <div className="rounded-xl border border-violet-800/50 bg-gradient-to-br from-violet-500/10 to-slate-900 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-4xl font-extrabold text-violet-400">
+                        {stats?.stats?.completionRate ?? 0}%
+                      </p>
+                      <p className="text-sm font-semibold text-slate-400 mt-1">
+                        Task Completion Rate
+                      </p>
+                      <p className="text-xs text-slate-500 mt-2">
+                        {Math.round(
+                          ((stats?.stats?.tasksCompleted ?? 0) /
+                            Math.max(stats?.stats?.tasksAssigned ?? 1, 1)) *
+                            100,
+                        )}
+                        % of assigned tasks completed
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <ProgressRing percent={stats?.stats?.completionRate} />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* ── Achievements ── */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/80">
-            <h3 className="mb-4 text-sm font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-              🏅 Achievements
-            </h3>
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                  🏅 Achievements
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Earned{" "}
+                  <span className="font-semibold text-cyan-400">
+                    {achievements.filter((a) => a.earned).length}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold">{achievements.length}</span>{" "}
+                  badges
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-extrabold text-cyan-400">
+                  {Math.round(
+                    (achievements.filter((a) => a.earned).length /
+                      achievements.length) *
+                      100,
+                  )}
+                  %
+                </p>
+                <p className="text-xs text-slate-500 mt-1">Complete</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {achievements.map((a) => (
-                <Badge key={a.label} {...a} />
+                <div
+                  key={a.label}
+                  className={`group flex flex-col items-center gap-2 rounded-lg p-3 border transition ${
+                    a.earned
+                      ? "border-yellow-600/60 bg-gradient-to-br from-yellow-500/15 to-slate-900 hover:border-yellow-500 hover:shadow-lg hover:shadow-yellow-500/20"
+                      : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                  }`}
+                >
+                  <span
+                    className={`text-3xl transition ${!a.earned ? "grayscale opacity-40" : "group-hover:scale-110"}`}
+                  >
+                    {a.icon}
+                  </span>
+                  <span
+                    className={`text-center text-xs font-bold uppercase tracking-wide ${
+                      a.earned ? "text-yellow-300" : "text-slate-500"
+                    }`}
+                  >
+                    {a.label}
+                  </span>
+                </div>
               ))}
             </div>
-            <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-600">
-              Earned {achievements.filter((a) => a.earned).length} /{" "}
-              {achievements.length} badges
-            </p>
           </div>
 
           {/* ── Edit modal ── */}
           {editing && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-              <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-                <h3 className="mb-4 text-base font-bold text-white">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+              <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-8 shadow-2xl">
+                <h3 className="mb-2 text-xl font-bold text-white">
                   Edit Profile
                 </h3>
-                <form onSubmit={saveProfile} className="space-y-4">
+                <p className="mb-6 text-sm text-slate-400">
+                  Update your profile information
+                </p>
+                <form onSubmit={saveProfile} className="space-y-5">
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-400">
-                      Name <span className="text-rose-400">*</span>
+                    <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-300">
+                      Full Name <span className="text-rose-400">*</span>
                     </label>
                     <input
                       value={form.name}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, name: e.target.value }))
                       }
-                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm text-white placeholder-slate-600 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition"
                       autoFocus
+                      placeholder="Your name"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-400">
+                    <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-300">
                       Bio
                     </label>
                     <textarea
@@ -453,15 +613,17 @@ export default function ProfilePage() {
                       onChange={(e) =>
                         setForm((f) => ({ ...f, bio: e.target.value }))
                       }
-                      placeholder="Tell your team a bit about yourself…"
+                      placeholder="Tell your team about yourself…"
                       rows={3}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm text-white placeholder-slate-600 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition resize-none"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition resize-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-400">
+                    <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-300">
                       Skills{" "}
-                      <span className="text-slate-500">(comma-separated)</span>
+                      <span className="text-slate-500 font-normal">
+                        (comma-separated)
+                      </span>
                     </label>
                     <input
                       value={form.skills}
@@ -469,21 +631,21 @@ export default function ProfilePage() {
                         setForm((f) => ({ ...f, skills: e.target.value }))
                       }
                       placeholder="React, Node.js, SQL, Design…"
-                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm text-white placeholder-slate-600 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition"
                     />
                   </div>
-                  <div className="flex justify-end gap-3 pt-1">
+                  <div className="flex justify-end gap-3 pt-4">
                     <button
                       type="button"
                       onClick={() => setEditing(false)}
-                      className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-400 hover:bg-slate-800 transition"
+                      className="rounded-lg border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-700/50 hover:border-slate-500 transition"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={saving}
-                      className="rounded-xl bg-violet-500 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-600 disabled:opacity-60 transition"
+                      className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-2.5 text-sm font-semibold text-white hover:shadow-lg hover:shadow-cyan-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition"
                     >
                       {saving ? "Saving…" : "Save Changes"}
                     </button>
